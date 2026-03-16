@@ -58,8 +58,9 @@
     <string name="fallback_041">E041: 스티커 변환 중 예기치 않은 IOException 발생</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (팩: %2$s)</string>
-    <string name="options_insensitive_sort">대소문자를 구분하지 않는 패키지 정렬 활성화</string>
+    <string name="options_insensitive_sort">Enable case-insensitive 검색</string>
     <string name="imported_032">E032: 일부 스티커 가져오기 실패 (%1$d개 가져옴). 최대 팩 크기에 도달함</string>
     <string name="imported_031">E031: 일부 스티커 가져오기 실패 (%1$d개 가져옴). 최대 스티커 개수에 도달함</string>
     <string name="imported_033">E033: 일부 스티커 가져오기 실패 (%1$d개 가져옴). 지원하지 않는 형식을 발견함</string>
+    <string name="version_text" translatable="false">[디버그]</string>
 </resources>
