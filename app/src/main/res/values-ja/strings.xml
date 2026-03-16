@@ -50,9 +50,10 @@
     <string name="fallback_041">E041: ステッカーを変換する際に予期しないIOExceptionが発生しました</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s（パック: %2$s）</string>
-    <string name="options_insensitive_sort">大文字と小文字を区別しないパックのソートを有効にする</string>
+    <string name="options_insensitive_sort">ケースインセンティブ検索を有効にする</string>
     <string name="imported_032">E032: 一部のステッカーのインポートに失敗しました（%1$d 個インポート済み）。最大パックサイズに達しました</string>
     <string name="imported_031">E031: 一部のステッカーのインポートに失敗しました（%1$d 個インポート済み）。最大ステッカー数に達しました</string>
     <string name="imported_033">E033: 一部のステッカーのインポートに失敗しました（%1$d 個インポート済み）。サポートされていないフォーマットが見つかりました</string>
     <string name="app_name" translatable="false"></string>
+    <string name="version_text" translatable="false">[デバッグ]</string>
 </resources>
