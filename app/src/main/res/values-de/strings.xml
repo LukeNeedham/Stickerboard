@@ -41,14 +41,7 @@
     <string name="license_text">Copyright © FredHappyface\nCopyright © Randy Zhou</string>
     <!-- Links -->
 	<string name="links_heading">Links</string>
-    <string name="links_text">"- Der Quellcode für EweSticker ist verfügbar unter https://github.com/FredHappyface/Android.EweSticker
-
-- Die Tutorials führen dich schrittweise durch eine Reihe von Schritten, um die Software zu verwenden. Starte hier, wenn du neu bist: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials
-
-- Der Hilfsleitfaden bietet einen Ausgangspunkt und erläutert häufig auftretende Probleme, die auftreten können: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help
-
-- MIT Lizenz
-(Siehe die Lizenz für weitere Informationen https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
+    <string name="links_text">- Der Quellcode für EweSticker ist verfügbar unter https://github.com/FredHappyface/Android.EweSticker\n\n- Die Tutorials führen dich schrittweise durch eine Reihe von Schritten, um die Software zu verwenden. Starte hier, wenn du neu bist: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- Der Hilfsleitfaden bietet einen Ausgangspunkt und erläutert häufig auftretende Probleme, die auftreten können: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- MIT Lizenz\n(Siehe die Lizenz für weitere Informationen https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
     <!-- Interaktive Nachrichten -->
     <string name="version_heading">Details zum Artikel</string>
     <string name="pref_000">Einstellungen geändert. Lade die Tastatur neu, damit die Einstellungen wirksam werden</string>
@@ -63,4 +56,5 @@
     <string name="imported_031">E031: Einige Sticker konnten nicht importiert werden (%1$d importiert). Max. Sticker erreicht</string>
     <string name="imported_033">E033: Einige Sticker konnten nicht importiert werden (%1$d importiert). Nicht unterstützte Formate gefunden</string>
     <string name="version_text" translatable="false">(debug)</string>
+    <string name="app_name" translatable="false"></string>
 </resources>
