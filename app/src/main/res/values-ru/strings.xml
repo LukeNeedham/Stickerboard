@@ -50,9 +50,12 @@
     <string name="fallback_041">E041: Неожиданная ошибка ввода-вывода при преобразовании стикера</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Пакет: %2$s)</string>
-    <string name="options_insensitive_sort">Включить нечувствительный поиск</string>
-    <string name="imported_032">E032: Не удалось импортировать некоторые стикеры (%1$d импортировано). Достигнут максимальный размер пакета</string>
-    <string name="imported_031">E031: Не удалось импортировать некоторые стикеры (%1$d импортировано). Достигнут максимальный предел стикеров</string>
-    <string name="imported_033">E033: Не удалось импортировать некоторые стикеры (%1$d импортировано). Обнаружены не поддерживаемые форматы</string>
+    <string name="options_insensitive_sort">Включить сортировку нечувствительной упаковки</string>
+    <string name="imported_032">E032: Найдено более %1$d наклеек в упаковке (%2$s)</string>
+    <string name="imported_031">E031: Найдено более %1$d наклеек в общей сложности</string>
+    <string name="imported_033">E033: Неподдерживаемый формат найден (%1$s, файл: %2$s/%3$s)</string>
     <string name="version_text" translatable="false">[отладка]</string>
+    <string name="options_png_fallback">Включить падальщик PNG, если формат наклейки не поддерживается</string>
+    <string name="logs_heading">Журналы</string>
+    <string name="logs_button">Получить файл журнала</string>
 </resources>
