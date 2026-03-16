@@ -46,4 +46,5 @@
     <string name="imported_031">E031: Certains autocollants n’ont pas été importés (%1$d importés). Nombre maximal atteint</string>
     <string name="imported_033">E033: Certains autocollants n’ont pas été importés (%1$d importés). Formats non pris en charge trouvés</string>
     <string name="version_text" translatable="false">[debug]</string>
+    <string name="app_name" translatable="false"></string>
 </resources>
