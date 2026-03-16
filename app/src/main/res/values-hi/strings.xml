@@ -50,9 +50,12 @@
     <string name="fallback_041">E041: स्टिकर कन्वर्ट करते समय अप्रत्याशित IOException</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (पैक: %2$s)</string>
-    <string name="options_insensitive_sort">मामले के प्रति संवेदनशील खोज सक्षम करें</string>
-    <string name="imported_032">E032: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। मैक्स पैक आकार तक पहुँच गई है</string>
-    <string name="imported_031">E031: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। मैक्सिमम स्टिकर्स तक पहुँच गई है</string>
-    <string name="imported_033">E033: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। असमर्थित प्रारूप मिला</string>
+    <string name="options_insensitive_sort">सक्षम केस असंवेदनशील पैक छँटाई</string>
+    <string name="imported_032">E032: पैक में %1$d स्टिकर से अधिक पाया (%2$s)</string>
+    <string name="imported_031">E031: कुल में %1$d स्टिकर से अधिक पाया</string>
+    <string name="imported_033">E033: असमर्थित प्रारूप पाया (%1$s, फ़ाइल: %2$s / %3$s)</string>
     <string name="version_text" translatable="false">[debug]</string>
+    <string name="options_png_fallback">यदि स्टीकर प्रारूप समर्थित नहीं है तो PNG स्टिकर गिरबैक सक्षम करें</string>
+    <string name="logs_heading">लॉग</string>
+    <string name="logs_button">लॉग फ़ाइल प्राप्त करें</string>
 </resources>
