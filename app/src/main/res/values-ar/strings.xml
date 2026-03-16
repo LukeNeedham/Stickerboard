@@ -51,9 +51,12 @@
     <string name="fallback_041">E041: حدث استثناء غير متوقع أثناء تحويل الملصق</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (حزمة: %2$s)</string>
-    <string name="options_insensitive_sort">البحث غير المراعي للحالات</string>
-    <string name="imported_032">E032: فشل بعض الملصقات في الاستيراد (%1$d تم استيرادها). تم الوصول إلى الحد الأقصى لحجم الحزمة</string>
-    <string name="imported_031">E031: فشل بعض الملصقات في الاستيراد (%1$d تم استيرادها). تم الوصول إلى الحد الأقصى للملصقات</string>
-    <string name="imported_033">E033: فشل بعض الملصقات في الاستيراد (%1$d تم استيرادها). تم العثور على تنسيقات غير مدعومة</string>
+    <string name="options_insensitive_sort">فرز حزم غير مراعي للحالات</string>
+    <string name="imported_032">E032: found more than %1$d stickers inpack (%2$s)</string>
+    <string name="imported_031">E031: وجدت أكثر من %1$d ملصقات في المجموع</string>
+    <string name="imported_033">E033: Unsupported format found (%1$s, file: %2$s/%3$s)</string>
     <string name="version_text" translatable="false">[ديبس]</string>
+    <string name="options_png_fallback">تعطل الملصقات التمكينية للشرطة الوطنية إذا لم يتم دعم شكل الملصقات</string>
+    <string name="logs_heading">اللوز</string>
+    <string name="logs_button">الحصول على ملف سجل</string>
 </resources>
