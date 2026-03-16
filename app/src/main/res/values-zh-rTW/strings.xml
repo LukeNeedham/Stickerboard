@@ -56,4 +56,5 @@
     <string name="imported_031">E031：部分貼圖匯入失敗（已匯入 %1$d 個）。已達到最大貼圖數</string>
     <string name="imported_033">E033：部分貼圖匯入失敗（已匯入 %1$d 個）。發現不支援的格式</string>
     <string name="version_text" translatable="false">[建议]</string>
+    <string name="app_name" translatable="false"></string>
 </resources>
