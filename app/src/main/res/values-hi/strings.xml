@@ -11,11 +11,11 @@
     <string name="update_sticker_pack_button">स्टिकर स्रोत निर्दिष्ट करें</string>
     <string name="reload_sticker_pack_button">स्टिकर्स को पुनः लोड करें</string>
     <string name="update_sticker_pack_info">मौजूद स्टिकर पैक की जानकारी:</string>
-    <string name="update_sticker_pack_info_path_lbl">- पथ: </string>
+    <string name="update_sticker_pack_info_path_lbl">- पथ:</string>
     <string name="update_sticker_pack_info_path">सेट नहीं हुआ</string>
-    <string name="update_sticker_pack_info_date_lbl">- तारीख: </string>
+    <string name="update_sticker_pack_info_date_lbl">- तारीख:</string>
     <string name="update_sticker_pack_info_date">कभी नहीं</string>
-    <string name="update_sticker_pack_info_total_lbl">- कुल: </string>
+    <string name="update_sticker_pack_info_total_lbl">- कुल:</string>
     <!-- Options -->
 	<string name="options_heading">विकल्प</string>
     <string name="options_show_back_button">नैविगेशन बार में बैक बटन दिखाएं</string>
@@ -40,14 +40,7 @@
     <string name="license_text">कॉपीराइट © फ्रेडहैपीफेस\nकॉपीराइट © रैंडी ज़ो</string>
     <!-- Links -->
 	<string name="links_heading">लिंक्स</string>
-    <string name="links_text">- EweSticker का स्रोत कोड https://github.com/FredHappyface/Android.EweSticker पर उपलब्ध है
-\n
-\n- यदि आप नए हैं, तो यह सॉफ़्टवेयर उपयोग करना शुरू करने के लिए एक सीरीज के स्टेप्स के माध्यम से जाते हैं: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials
-\n
-\n- सहायता गाइड एक शुरुआती पॉइंट प्रदान करता है और आपके पास सामान्य समस्याएँ को आउटलाइन करता है जो आपके पास हो सकती हैं: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help
-\n
-\n- MIT लाइसेंस
-\n(अधिक जानकारी के लिए लाइसेंस देखें https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
+    <string name="links_text">- EweSticker का स्रोत कोड https://github.com/FredHappyface/Android.EweSticker पर उपलब्ध है\n\n- यदि आप नए हैं, तो यह सॉफ़्टवेयर उपयोग करना शुरू करने के लिए एक सीरीज के स्टेप्स के माध्यम से जाते हैं: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- सहायता गाइड एक शुरुआती पॉइंट प्रदान करता है और आपके पास सामान्य समस्याएँ को आउटलाइन करता है जो आपके पास हो सकती हैं: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- MIT लाइसेंस\n(अधिक जानकारी के लिए लाइसेंस देखें https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
     <!-- Interactive Messages -->
     <string name="version_heading">संस्करण जानकारी</string>
     <string name="pref_000">प्राथमिकताएँ बदल गईं। सेटिंग्स को लागू करने के लिए कीबोर्ड को पुनः लोड करें</string>
@@ -61,4 +54,5 @@
     <string name="imported_032">E032: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। मैक्स पैक आकार तक पहुँच गई है</string>
     <string name="imported_031">E031: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। मैक्सिमम स्टिकर्स तक पहुँच गई है</string>
     <string name="imported_033">E033: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। असमर्थित प्रारूप मिला</string>
+    <string name="app_name" translatable="false"></string>
 </resources>
