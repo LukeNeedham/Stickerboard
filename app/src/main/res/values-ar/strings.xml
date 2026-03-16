@@ -43,7 +43,7 @@
 	<string name="links_heading">الروابط</string>
     <string name="links_text">- الشيفرة المصدرية لEweSticker متاحة على https://github.com/FredHappyface/Android.EweSticker\n\n- تأخذ الدروس بيدك خلال سلسلة من الخطوات لبدء استخدام البرنامج. ابدأ من هنا إذا كنت جديدًا: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- دليل المساعدة يوفر نقطة انطلاق ويوضح المشكلات الشائعة التي قد تواجهها: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- رخصة MIT\n(انظر الرخصة لمزيد من المعلومات https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
     <!-- الرسائل التفاعلية -->
-    <string name="version_heading">معلومات الإصدار</string>
+    <string name="version_heading">معلومات موجزة</string>
     <string name="pref_000">تم تغيير التفضيلات. أعد تحميل لوحة المفاتيح لتطبيق الإعدادات</string>
     <string name="imported_010">بدء عملية الاستيراد. قد يستغرق ذلك بعض الوقت!</string>
     <string name="imported_020">تم استيراد %1$d ملصق. أعد تحميل لوحة المفاتيح لعرض الملصقات الجديدة</string>
@@ -51,9 +51,10 @@
     <string name="fallback_041">E041: حدث استثناء غير متوقع أثناء تحويل الملصق</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (حزمة: %2$s)</string>
-    <string name="options_insensitive_sort">تمكين فرز الحزم غير الحسّاس لحالة الأحرف</string>
+    <string name="options_insensitive_sort">البحث غير المراعي للحالات</string>
     <string name="imported_032">E032: فشل بعض الملصقات في الاستيراد (%1$d تم استيرادها). تم الوصول إلى الحد الأقصى لحجم الحزمة</string>
     <string name="imported_031">E031: فشل بعض الملصقات في الاستيراد (%1$d تم استيرادها). تم الوصول إلى الحد الأقصى للملصقات</string>
     <string name="imported_033">E033: فشل بعض الملصقات في الاستيراد (%1$d تم استيرادها). تم العثور على تنسيقات غير مدعومة</string>
     <string name="app_name" translatable="false"></string>
+    <string name="version_text" translatable="false">[ديبس]</string>
 </resources>
