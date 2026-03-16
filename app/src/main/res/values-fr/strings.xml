@@ -41,9 +41,12 @@
     <string name="imported_020">Autocollants importés %1$d. Recharger le clavier pour afficher les nouveaux autocollants</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pack : %2$s)</string>
-    <string name="options_insensitive_sort">Activer la recherche sensible aux cas</string>
-    <string name="imported_032">E032: Certains autocollants n’ont pas été importés (%1$d importés). Taille maximale du paquet atteint</string>
-    <string name="imported_031">E031: Certains autocollants n’ont pas été importés (%1$d importés). Nombre maximal atteint</string>
-    <string name="imported_033">E033: Certains autocollants n’ont pas été importés (%1$d importés). Formats non pris en charge trouvés</string>
+    <string name="options_insensitive_sort">Activer le tri des paquets sensibles</string>
+    <string name="imported_032">E032: Trouvé plus de stickers %1$d en paquet (%2$s)</string>
+    <string name="imported_031">E031: Trouvé plus que %1$d autocollants au total</string>
+    <string name="imported_033">E033: Format non supporté trouvé (%1$s, fichier: %2$s/%3$s)</string>
     <string name="version_text" translatable="false">[debug]</string>
+    <string name="options_png_fallback">Activer PNG sticker fallback si le format d\'autocollant n\'est pas supporté</string>
+    <string name="logs_heading">Logs</string>
+    <string name="logs_button">Get log file</string>
 </resources>
