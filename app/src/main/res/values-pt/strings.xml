@@ -42,7 +42,7 @@
 	<string name="links_heading">Links</string>
     <string name="links_text">- O código-fonte do EweSticker está disponível em https://github.com/FredHappyface/Android.EweSticker\n\n- Os tutoriais o guiarão passo a passo para começar a usar o software. Comece aqui se você for iniciante: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- O guia de ajuda fornece um ponto de partida e destaca problemas comuns que você pode encontrar: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- Licença MIT\n(Consulte a licença para obter mais informações em https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
     <!-- Mensagens Interativas -->
-    <string name="version_heading">Informações da versão</string>
+    <string name="version_heading">InformaÃ§Ã£o da Versão</string>
     <string name="pref_000">Preferências alteradas. Recarregue o teclado para que as configurações se apliquem</string>
     <string name="imported_010">Iniciando a importação. Isso pode levar algum tempo!</string>
     <string name="imported_020">Importados %1$d adesivos. Recarregue o teclado para mostrar os novos adesivos</string>
@@ -50,9 +50,10 @@
     <string name="fallback_041">E041: IOException inesperada ao converter adesivo</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pacote: %2$s)</string>
-    <string name="options_insensitive_sort">Ativar a ordenação de pacotes sem diferenciar maiúsculas de minúsculas</string>
+    <string name="options_insensitive_sort">Habilitar pesquisa sensível a casos</string>
     <string name="app_name" translatable="false"></string>
     <string name="imported_032">E032: Alguns adesivos não puderam ser importados (%1$d importados). Tamanho máximo do pacote atingido</string>
     <string name="imported_031">E031: Alguns adesivos não puderam ser importados (%1$d importados). Limite máximo de adesivos atingido</string>
     <string name="imported_033">E033: Alguns adesivos não puderam ser importados (%1$d importados). Formatos não suportados encontrados</string>
+    <string name="version_text" translatable="false">[debug]</string>
 </resources>
