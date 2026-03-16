@@ -51,7 +51,6 @@
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pacote: %2$s)</string>
     <string name="options_insensitive_sort">Habilitar pesquisa sensível a casos</string>
-    <string name="app_name" translatable="false"></string>
     <string name="imported_032">E032: Alguns adesivos não puderam ser importados (%1$d importados). Tamanho máximo do pacote atingido</string>
     <string name="imported_031">E031: Alguns adesivos não puderam ser importados (%1$d importados). Limite máximo de adesivos atingido</string>
     <string name="imported_033">E033: Alguns adesivos não puderam ser importados (%1$d importados). Formatos não suportados encontrados</string>

@@ -56,5 +56,4 @@
     <string name="imported_031">E031: 일부 스티커 가져오기 실패 (%1$d개 가져옴). 최대 스티커 개수에 도달함</string>
     <string name="imported_033">E033: 일부 스티커 가져오기 실패 (%1$d개 가져옴). 지원하지 않는 형식을 발견함</string>
     <string name="version_text" translatable="false">[디버그]</string>
-    <string name="app_name" translatable="false"></string>
 </resources>

@@ -54,6 +54,5 @@
     <string name="imported_032">E032: Не удалось импортировать некоторые стикеры (%1$d импортировано). Достигнут максимальный размер пакета</string>
     <string name="imported_031">E031: Не удалось импортировать некоторые стикеры (%1$d импортировано). Достигнут максимальный предел стикеров</string>
     <string name="imported_033">E033: Не удалось импортировать некоторые стикеры (%1$d импортировано). Обнаружены не поддерживаемые форматы</string>
-    <string name="app_name" translatable="false"></string>
     <string name="version_text" translatable="false">[отладка]</string>
 </resources>

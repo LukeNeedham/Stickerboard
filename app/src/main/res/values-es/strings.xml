@@ -56,5 +56,4 @@
     <string name="imported_031">E031: Algunos stickers han fallado al importar (%1$d importado). Máx. stickers importados</string>
     <string name="imported_033">E033: Ha fallado la importación de algunos stickers (%1$d importadas). Se han encontrado formatos no compatibles</string>
     <string name="version_text" translatable="false">[debug]</string>
-    <string name="app_name" translatable="false"></string>
 </resources>
