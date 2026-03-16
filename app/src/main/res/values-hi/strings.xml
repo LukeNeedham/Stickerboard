@@ -42,7 +42,7 @@
 	<string name="links_heading">लिंक्स</string>
     <string name="links_text">- EweSticker का स्रोत कोड https://github.com/FredHappyface/Android.EweSticker पर उपलब्ध है\n\n- यदि आप नए हैं, तो यह सॉफ़्टवेयर उपयोग करना शुरू करने के लिए एक सीरीज के स्टेप्स के माध्यम से जाते हैं: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- सहायता गाइड एक शुरुआती पॉइंट प्रदान करता है और आपके पास सामान्य समस्याएँ को आउटलाइन करता है जो आपके पास हो सकती हैं: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- MIT लाइसेंस\n(अधिक जानकारी के लिए लाइसेंस देखें https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
     <!-- Interactive Messages -->
-    <string name="version_heading">संस्करण जानकारी</string>
+    <string name="version_heading">संस्करण की जानकारी</string>
     <string name="pref_000">प्राथमिकताएँ बदल गईं। सेटिंग्स को लागू करने के लिए कीबोर्ड को पुनः लोड करें</string>
     <string name="imported_010">आयात शुरू हुआ। इसमें कुछ समय लग सकता है!</string>
     <string name="imported_020">%1$d स्टिकर्स का आयात हुआ। नए स्टिकर्स दिखाने के लिए कीबोर्ड को पुनः लोड करें</string>
@@ -50,9 +50,10 @@
     <string name="fallback_041">E041: स्टिकर कन्वर्ट करते समय अप्रत्याशित IOException</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (पैक: %2$s)</string>
-    <string name="options_insensitive_sort">केस-इनसेंसिटिव पैक सॉर्टिंग सक्षम करें</string>
+    <string name="options_insensitive_sort">मामले के प्रति संवेदनशील खोज सक्षम करें</string>
     <string name="imported_032">E032: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। मैक्स पैक आकार तक पहुँच गई है</string>
     <string name="imported_031">E031: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। मैक्सिमम स्टिकर्स तक पहुँच गई है</string>
     <string name="imported_033">E033: कुछ स्टिकर्स का आयात असफल रहा (%1$d आयात किए गए)। असमर्थित प्रारूप मिला</string>
     <string name="app_name" translatable="false"></string>
+    <string name="version_text" translatable="false">[debug]</string>
 </resources>
