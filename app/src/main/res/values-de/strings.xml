@@ -1,79 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<!-- App-Informationen -->
+    <!-- App-Informationen -->
 	<string name="pack_icon">Pack-Symbol</string>
-	<string name="sticker_icon">Sticker-Symbol</string>
-	<string name="close_sticker_preview">[Antippen, um Sticker-Vorschau zu schließen]</string>
-	<!-- Tastatur aktivieren -->
+    <string name="sticker_icon">Sticker-Symbol</string>
+    <string name="close_sticker_preview">[Antippen, um Sticker-Vorschau zu schließen]</string>
+    <!-- Tastatur aktivieren -->
 	<string name="enable_keyboard_heading">Tastatur aktivieren</string>
-	<string name="enable_keyboard_button">Einstellungen öffnen</string>
-	<!-- Sticker-Pack aktualisieren -->
+    <string name="enable_keyboard_button">Einstellungen öffnen</string>
+    <!-- Sticker-Pack aktualisieren -->
 	<string name="update_sticker_pack_heading">Sticker-Pack aktualisieren</string>
-	<string name="update_sticker_pack_button">Sticker-Quellverzeichnis auswählen</string>
-	<string name="reload_sticker_pack_button">Sticker neu laden</string>
-	<string name="update_sticker_pack_info">Aktuelle Informationen zu geladenen Sticker-Packs:</string>
-	<string name="update_sticker_pack_info_path_lbl">- Pfad:</string>
-	<string name="update_sticker_pack_info_path">Nicht festgelegt</string>
-	<string name="update_sticker_pack_info_date_lbl">- Datum:</string>
-	<string name="update_sticker_pack_info_date">Nie</string>
-	<string name="update_sticker_pack_info_total_lbl">- Gesamt:</string>
-	<!-- Optionen -->
+    <string name="update_sticker_pack_button">Sticker-Quellverzeichnis auswählen</string>
+    <string name="reload_sticker_pack_button">Sticker neu laden</string>
+    <string name="update_sticker_pack_info">Aktuelle Informationen zu geladenen Sticker-Packs:</string>
+    <string name="update_sticker_pack_info_path_lbl">- Pfad:</string>
+    <string name="update_sticker_pack_info_path">Nicht festgelegt</string>
+    <string name="update_sticker_pack_info_date_lbl">- Datum:</string>
+    <string name="update_sticker_pack_info_date">Nie</string>
+    <string name="update_sticker_pack_info_total_lbl">- Gesamt:</string>
+    <!-- Optionen -->
 	<string name="options_heading">Optionen</string>
-	<string name="options_show_back_button">Zurück-Button in der Navigationsleiste anzeigen</string>
-	<string name="options_show_search_button">Suche aktivieren</string>
-	<string name="options_vibrate">Haptisches Feedback bei Tastendruck</string>
-	<string name="options_vertical">Vertikales Layout verwenden</string>
-	<string name="options_restore_on_close">Vorherige Tastatur wiederherstellen, wenn Tastatur geschlossen wird</string>
-	<string name="options_scroll">Wischen zwischen Packs aktivieren (senkrecht zur Scrollrichtung)</string>
-	<string name="options_icons_per_x_lbl">"Anzahl der Reihen: "</string>
-	<string name="options_icon_size_status_lbl">"Symbolgröße: "</string>
-	<!-- Informationen -->
+    <string name="options_show_back_button">Zurück-Button in der Navigationsleiste anzeigen</string>
+    <string name="options_show_search_button">Suche aktivieren</string>
+    <string name="options_vibrate">Haptisches Feedback bei Tastendruck</string>
+    <string name="options_vertical">Vertikales Layout verwenden</string>
+    <string name="options_restore_on_close">Vorherige Tastatur wiederherstellen, wenn Tastatur geschlossen wird</string>
+    <string name="options_scroll">Wischen zwischen Packs aktivieren (senkrecht zur Scrollrichtung)</string>
+    <string name="options_icons_per_x_lbl">"Anzahl der Reihen: "</string>
+    <string name="options_icon_size_status_lbl">"Symbolgröße: "</string>
+    <!-- Informationen -->
 	<string name="info_heading">Informationen</string>
-	<string name="info_text">EweSticker ist eine Android-Sticker-Tastaturanwendung, die speziell entwickelt wurde, um eine vielfältige Auswahl an individuellen Stickern in unterstützten Messaging-Apps zu teilen. Dieses Projekt wurde von dem uSticker-Projekt inspiriert und ist ein Fork des woosticker-Repositorys.</string>
-	<!-- Eigenschaften -->
+    <string name="info_text">EweSticker ist eine Android-Sticker-Tastaturanwendung, die speziell entwickelt wurde, um eine vielfältige Auswahl an individuellen Stickern in unterstützten Messaging-Apps zu teilen. Dieses Projekt wurde von dem uSticker-Projekt inspiriert und ist ein Fork des woosticker-Repositorys.</string>
+    <!-- Eigenschaften -->
 	<string name="features_heading">Eigenschaften</string>
-	<string name="features_text">"Die EweSticker Android-App bietet folgende Hauptfunktionen, um deine Messaging-Erfahrung zu verbessern:
-
-- **Breite Palette von unterstützten individuellen Stickern**: EweSticker unterstützt eine vielfältige Auswahl von Sticker-Formaten, sodass Nutzer ihre Kreativität auf verschiedene Arten teilen können. Unterstützte Formate umfassen Bild/GIF, Bild/PNG, Bild/WEBP, Bild/JPEG, Bild/HEIF, Video/3GPP, Video/MP4, Video/X-Matroska und Video/WEBM.
-
-- **Nahtloses Teilen von Stickern**: Senden Sie ganz einfach Sticker innerhalb von Messaging-Apps, die benutzerdefiniertes Mediasharing unterstützen, wobei Bild/png als Alternative verwendet wird.
-
-- **Anpassbares Scrollen**: Verwenden Sie entweder vertikales oder horizontales Scrollen, um durch Ihre Stickersammlung zu navigieren.
-
-- **Anzeigeoptionen**: Passen Sie die Anzahl der Zeilen und die Größe der Sticker-Vorschau an, um das Anzeigeerlebnis Ihren Vorlieben und den Bildschirmabmessungen Ihres Geräts anzupassen.
-
-- **Durchsuchen Ihrer Stickersammlung**: Verwenden Sie eine QWERTZ-Tastatur, um Sticker nach Dateinamen zu durchsuchen und die Entdeckung zu erleichtern.
-
-- **Integration mit dem Systemdesign**: EweSticker integriert sich nahtlos in das Designs des Systems, sodass das Erscheinungsbild der App Ihren systemweiten Designentscheidungen entspricht.
-
-- **Sticker-Vorschau bei langem Drücken**: Um die Sticker-Auswahl zu erleichtern, können Sie lange auf einen Sticker drücken, um eine Vorschau anzuzeigen, die Ihnen hilft, schnell zu entscheiden, welchen Sticker Sie teilen möchten, ohne die Stickersammlung separat öffnen zu müssen.
-
-EweSticker bietet eine breite Palette an Anpassungsoptionen, vielfältige Formatunterstützung und Integration mit Messaging-Apps. Ob Nutzer statische Bilder, animierte GIFs oder sogar kurze Videos teilen, die App zielt darauf ab, eine ansprechende und ausdrucksstarke Art der Kommunikation mit individuellen Stickern zu bieten."</string>
-	<!-- Anwendungshinweise -->
+    <string name="features_text">Die EweSticker Android-App bietet folgende Hauptfunktionen, um deine Messaging-Erfahrung zu verbessern:\n\n- **Breite Palette von unterstützten individuellen Stickern**: EweSticker unterstützt eine vielfältige Auswahl von Sticker-Formaten, sodass Nutzer ihre Kreativität auf verschiedene Arten teilen können. Unterstützte Formate umfassen Bild/GIF, Bild/PNG, Bild/WEBP, Bild/JPEG, Bild/HEIF, Video/3GPP, Video/MP4, Video/X-Matroska und Video/WEBM.\n\n- **Nahtloses Teilen von Stickern**: Senden Sie ganz einfach Sticker innerhalb von Messaging-Apps, die benutzerdefiniertes Mediasharing unterstützen, wobei Bild/png als Alternative verwendet wird.\n\n- **Anpassbares Scrollen**: Verwenden Sie entweder vertikales oder horizontales Scrollen, um durch Ihre Stickersammlung zu navigieren.\n\n- **Anzeigeoptionen**: Passen Sie die Anzahl der Zeilen und die Größe der Sticker-Vorschau an, um das Anzeigeerlebnis Ihren Vorlieben und den Bildschirmabmessungen Ihres Geräts anzupassen.\n\n- **Durchsuchen Ihrer Stickersammlung**: Verwenden Sie eine QWERTZ-Tastatur, um Sticker nach Dateinamen zu durchsuchen und die Entdeckung zu erleichtern.\n\n- **Integration mit dem Systemdesign**: EweSticker integriert sich nahtlos in das Designs des Systems, sodass das Erscheinungsbild der App Ihren systemweiten Designentscheidungen entspricht.\n\n- **Sticker-Vorschau bei langem Drücken**: Um die Sticker-Auswahl zu erleichtern, können Sie lange auf einen Sticker drücken, um eine Vorschau anzuzeigen, die Ihnen hilft, schnell zu entscheiden, welchen Sticker Sie teilen möchten, ohne die Stickersammlung separat öffnen zu müssen.\n\nEweSticker bietet eine breite Palette an Anpassungsoptionen, vielfältige Formatunterstützung und Integration mit Messaging-Apps. Ob Nutzer statische Bilder, animierte GIFs oder sogar kurze Videos teilen, die App zielt darauf ab, eine ansprechende und ausdrucksstarke Art der Kommunikation mit individuellen Stickern zu bieten.</string>
+    <!-- Anwendungshinweise -->
 	<string name="how_to_use_heading">Anwendungshinweise</string>
-	<string name="how_to_use_text">Wähle ein Verzeichnis mit Stickern aus und sende sie in deinen Lieblings-Apps!</string>
-	<!-- Lizenz -->
+    <string name="how_to_use_text">Wähle ein Verzeichnis mit Stickern aus und sende sie in deinen Lieblings-Apps!</string>
+    <!-- Lizenz -->
 	<string name="license_heading">MIT Lizenz</string>
-	<string name="license_text">Copyright © FredHappyface
-\nCopyright © Randy Zhou</string>
-	<!-- Links -->
+    <string name="license_text">Copyright © FredHappyface\nCopyright © Randy Zhou</string>
+    <!-- Links -->
 	<string name="links_heading">Links</string>
-	<string name="links_text">"- Der Quellcode für EweSticker ist verfügbar unter https://github.com/FredHappyface/Android.EweSticker
-
-- Die Tutorials führen dich schrittweise durch eine Reihe von Schritten, um die Software zu verwenden. Starte hier, wenn du neu bist: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials
-
-- Der Hilfsleitfaden bietet einen Ausgangspunkt und erläutert häufig auftretende Probleme, die auftreten können: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help
-
-- MIT Lizenz
-(Siehe die Lizenz für weitere Informationen https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
-	<!-- Interaktive Nachrichten -->
-    <string name="version_heading">Versionsinfo</string>
+    <string name="links_text">- Der Quellcode für EweSticker ist verfügbar unter https://github.com/FredHappyface/Android.EweSticker\n\n- Die Tutorials führen dich schrittweise durch eine Reihe von Schritten, um die Software zu verwenden. Starte hier, wenn du neu bist: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- Der Hilfsleitfaden bietet einen Ausgangspunkt und erläutert häufig auftretende Probleme, die auftreten können: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- MIT Lizenz\n(Siehe die Lizenz für weitere Informationen https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
+    <!-- Interaktive Nachrichten -->
+    <string name="version_heading">Details zum Artikel</string>
     <string name="pref_000">Einstellungen geändert. Lade die Tastatur neu, damit die Einstellungen wirksam werden</string>
-	<string name="imported_010">Import wird gestartet. Dies könnte einige Zeit dauern!</string>
-	<string name="imported_020">%1$d Sticker importiert. Lade die Tastatur neu, um neue Sticker anzuzeigen</string>
-	<string name="imported_034">E034: Neuladen der Sticker fehlgeschlagen, versuche ein Sticker-Quellverzeichnis auszuwählen</string>
-	<string name="fallback_041">E041: Unerwarteter IOException beim Konvertieren des Stickers</string>
-	<!-- Keyboard -->
+    <string name="imported_010">Import wird gestartet. Dies könnte einige Zeit dauern!</string>
+    <string name="imported_020">%1$d Sticker importiert. Lade die Tastatur neu, um neue Sticker anzuzeigen</string>
+    <string name="imported_034">E034: Neuladen der Sticker fehlgeschlagen, versuche ein Sticker-Quellverzeichnis auszuwählen</string>
+    <string name="fallback_041">E041: Unerwarteter IOException beim Konvertieren des Stickers</string>
+    <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Paket: %2$s)</string>
-	<string name="options_insensitive_sort">Groß-/Kleinschreibung bei der Packsortierung ignorieren</string>
+    <string name="options_insensitive_sort">Ermöglichen gehäuseunempfindlichen Packungssortierung</string>
+    <string name="imported_032">E032: Mehr als %1$d Aufkleber in Pack gefunden (%2$s)</string>
+    <string name="imported_031">E031: Mehr als %1$d Aufkleber insgesamt gefunden</string>
+    <string name="imported_033">E033: Nicht unterstütztes Format gefunden (%1$s, Datei: %2$s/%3$s)</string>
+    <string name="version_text" translatable="false">(debug)</string>
+    <string name="logs_heading">Logs</string>
+    <string name="logs_button">Log-Datei herunterladen</string>
+    <string name="options_png_fallback">Aktivieren Sie PNG Sticker Fallback, wenn Aufkleberformat nicht unterstützt wird</string>
 </resources>
