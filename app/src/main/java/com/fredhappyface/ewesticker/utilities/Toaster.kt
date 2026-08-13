@@ -3,6 +3,7 @@ package com.fredhappyface.ewesticker.utilities
 import android.content.Context
 import android.widget.Toast
 import com.elvishew.xlog.XLog
+import java.util.Collections
 
 /**
  * The Toaster class provides a simplified interface to android.widget.Toast. Pass in the
@@ -12,7 +13,9 @@ import com.elvishew.xlog.XLog
  * @property context: android.content.Context. e.g. baseContext
  */
 class Toaster(private val context: Context) {
-	var messages: MutableList<String> = mutableListOf()
+	// synchronizedList since setMessage is called concurrently from multiple Dispatchers.IO
+	// threads by StickerImporter while importing stickers
+	var messages: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
 	/**
 	 * Call toaster.toast with some string to always create a toast notification. Context is set when
@@ -41,7 +44,7 @@ class Toaster(private val context: Context) {
 		for (idx in this.messages.take(3).indices) {
 			this.toast(messages[idx])
 		}
-		this.messages = mutableListOf()
+		this.messages = Collections.synchronizedList(mutableListOf())
 	}
 
 	/**
