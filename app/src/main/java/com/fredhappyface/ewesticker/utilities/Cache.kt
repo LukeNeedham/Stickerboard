@@ -19,13 +19,14 @@ class Cache(private val capacity: Int = 30) {
 	 * @return
 	 */
 	fun add(elem: String): String? {
+		var evicted: String? = null
 		if (data.contains(elem)) {
 			data.remove(elem)
 		} else if (data.size >= capacity) {
-			return data.pollFirst()
+			evicted = data.pollFirst()
 		}
 		data.offerLast(elem)
-		return null
+		return evicted
 	}
 
 	/**
