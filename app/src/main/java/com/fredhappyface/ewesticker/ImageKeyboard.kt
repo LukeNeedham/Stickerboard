@@ -101,6 +101,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private lateinit var packContent: ViewGroup
 	private lateinit var pullBar: View
 	private var keyboardHeight = 0
+	private var pendingKeyboardHeight: Int? = null
 	private var fullIconSize = 0
 	private var qwertyWidth = 0
 
@@ -250,13 +251,12 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				MotionEvent.ACTION_MOVE -> {
 					val delta = (startRawY - event.rawY).toInt()
 					val newHeight = (startHeight + delta).coerceIn(minHeight, maxHeight)
-					this.keyboardHeight = newHeight
-					this.packContent.layoutParams?.height = newHeight
-					this.packContent.requestLayout()
+					scheduleKeyboardHeight(newHeight)
 					true
 				}
 
 				MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+					applyPendingKeyboardHeight()
 					this.backupSharedPreferences.edit()
 						.putInt("keyboardHeight", this.keyboardHeight)
 						.apply()
@@ -266,6 +266,30 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				else -> false
 			}
 		}
+	}
+
+	/**
+	 * Coalesce rapid drag updates into at most one layout pass per animation frame. Touch-move
+	 * events can arrive far faster than the display refreshes, and resizing the board on every
+	 * single one queued up more layout/window-resize work than a frame budget allows - that's
+	 * what caused the board to lag behind the finger and flicker while dragging.
+	 */
+	private fun scheduleKeyboardHeight(height: Int) {
+		if (height == this.keyboardHeight || height == this.pendingKeyboardHeight) return
+		val alreadyScheduled = this.pendingKeyboardHeight != null
+		this.pendingKeyboardHeight = height
+		if (alreadyScheduled) return
+		this.packContent.postOnAnimation { applyPendingKeyboardHeight() }
+	}
+
+	/** Apply the most recently scheduled height, if any haven't been applied yet. */
+	private fun applyPendingKeyboardHeight() {
+		val target = this.pendingKeyboardHeight ?: return
+		this.pendingKeyboardHeight = null
+		if (target == this.keyboardHeight) return
+		this.keyboardHeight = target
+		this.packContent.layoutParams?.height = target
+		this.packContent.requestLayout()
 	}
 
 	/**
