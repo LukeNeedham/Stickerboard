@@ -19,6 +19,8 @@ Tap the button below to pick that folder. EweSticker will copy the files in so t
 	<string name="onboarding_next_button">Next</string>
 	<string name="onboarding_back_button">Back</string>
 	<string name="onboarding_finish_button">Get Started</string>
+	<string name="onboarding_keyboard_required">Please enable the EweSticker keyboard to continue</string>
+	<string name="onboarding_folder_required">Please choose a sticker source directory to continue</string>
 	<!-- Enable Keyboard -->
 	<string name="enable_keyboard_heading">Enable Keyboard</string>
 	<string name="enable_keyboard_button">Launch Settings</string>
