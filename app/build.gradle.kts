@@ -54,9 +54,25 @@ android {
 		setProperty("archivesBaseName", "$applicationId-$versionName")
 	}
 
+	signingConfigs {
+		getByName("debug") {
+			// Use a fixed, checked-in debug keystore instead of the machine-local
+			// ~/.android/debug.keystore. CI runners are ephemeral, so without this
+			// every CI build would be signed with a freshly generated key, and
+			// Android refuses to install an APK over an existing install with the
+			// same applicationId but a different signing certificate (the "app
+			// with same ID already exists" error).
+			storeFile = file("debug.keystore")
+			storePassword = "android"
+			keyAlias = "androiddebugkey"
+			keyPassword = "android"
+		}
+	}
+
 	buildTypes {
 		getByName("debug") {
 			versionNameSuffix = "-debug"
+			signingConfig = signingConfigs.getByName("debug")
 		}
 		getByName("release") {
 			proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
