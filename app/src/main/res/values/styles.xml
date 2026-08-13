@@ -100,6 +100,14 @@
 		<item name="android:paddingBottom">@dimen/content_margin_bottom</item>
 	</style>
 
+	<style name="section_empty_message" parent="widthMatchHeightWrap">
+		<item name="android:textColor">@color/fg</item>
+		<item name="android:textSize">@dimen/text_size_body</item>
+		<item name="android:alpha">0.6</item>
+		<item name="android:paddingHorizontal">@dimen/content_margin</item>
+		<item name="android:paddingBottom">@dimen/content_margin</item>
+	</style>
+
 	<style name="button" parent="body_text">
 		<item name="android:layout_height">wrap_content</item>
 		<item name="android:layout_width">match_parent</item>

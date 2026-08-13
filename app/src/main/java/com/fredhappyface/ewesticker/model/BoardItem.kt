@@ -9,4 +9,7 @@ sealed class BoardItem {
 
 	/** A single sticker belonging to [packName]. */
 	data class Sticker(val file: File, val packName: String) : BoardItem()
+
+	/** A full-width placeholder shown in [packName]'s section when it has no stickers. */
+	data class EmptyMessage(val packName: String, val message: String) : BoardItem()
 }

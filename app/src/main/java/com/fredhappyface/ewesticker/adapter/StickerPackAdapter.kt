@@ -24,7 +24,7 @@ class StickerPackAdapter(
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StickerPackViewHolder {
 		val itemView = LayoutInflater.from(parent.context)
-			.inflate(R.layout.sticker_card, parent, false)
+			.inflate(R.layout.sticker_grid_item, parent, false)
 		return StickerPackViewHolder(itemView)
 	}
 

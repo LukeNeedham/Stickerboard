@@ -414,17 +414,20 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	}
 
 	/**
-	 * Compute the flattened list of board items (recent section, if any, followed by every pack),
-	 * populating [headerPositions] as a side effect so nav icons can jump straight to a section.
+	 * Compute the flattened list of board items (recent section, always first, followed by every
+	 * pack), populating [headerPositions] as a side effect so nav icons can jump straight to a
+	 * section.
 	 */
 	private fun computeBoardItems(): List<BoardItem> {
 		val items = mutableListOf<BoardItem>()
 		this.headerPositions = LinkedHashMap()
 
 		val recentStickers = this.recentCache.toFiles().reversedArray()
-		if (recentStickers.isNotEmpty()) {
-			this.headerPositions[RECENT_PACK_NAME] = items.size
-			items.add(BoardItem.Header(RECENT_PACK_NAME, getString(R.string.recent_heading)))
+		this.headerPositions[RECENT_PACK_NAME] = items.size
+		items.add(BoardItem.Header(RECENT_PACK_NAME, getString(R.string.recent_heading)))
+		if (recentStickers.isEmpty()) {
+			items.add(BoardItem.EmptyMessage(RECENT_PACK_NAME, getString(R.string.recent_empty)))
+		} else {
 			for (sticker in recentStickers) {
 				items.add(BoardItem.Sticker(sticker, RECENT_PACK_NAME))
 			}
@@ -455,7 +458,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val adapter = StickerBoardAdapter(iconSize, items, this, gestureDetector, vibrate)
 		layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
 			override fun getSpanSize(position: Int): Int =
-				if (adapter.isHeader(position)) iconsPerX else 1
+				if (adapter.isFullWidth(position)) iconsPerX else 1
 		}
 
 		val recyclerView = RecyclerView(this)
@@ -747,7 +750,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 		buildBoard()
 
-		val fallbackTarget = if (this.headerPositions.containsKey(RECENT_PACK_NAME)) {
+		// The Recent section always exists in the board now (even empty, as a placeholder), so
+		// check for actual recent stickers rather than just section presence, to still land on
+		// the first real pack on a fresh install with no sticker history.
+		val fallbackTarget = if (this.recentCache.toFiles().isNotEmpty()) {
 			RECENT_PACK_NAME
 		} else {
 			sortedPackNames.firstOrNull()
