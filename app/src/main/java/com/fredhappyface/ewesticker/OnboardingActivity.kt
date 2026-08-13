@@ -19,6 +19,7 @@ import com.fredhappyface.ewesticker.adapter.OnboardingPageAdapter
 import com.fredhappyface.ewesticker.utilities.OnboardingPageListener
 import com.fredhappyface.ewesticker.utilities.StickerImporter
 import com.fredhappyface.ewesticker.utilities.Toaster
+import com.fredhappyface.ewesticker.utilities.startLogger
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -57,6 +58,8 @@ class OnboardingActivity : AppCompatActivity(), OnboardingPageListener {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_onboarding)
+
+		startLogger(filesDir)
 
 		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 		this.toaster = Toaster(baseContext)
