@@ -23,12 +23,28 @@ private const val VIEW_TYPE_STICKER = 1
  * GridLayoutManager whose SpanSizeLookup gives header rows the full span count.
  */
 class StickerBoardAdapter(
-	private val iconSize: Int,
-	private val items: List<BoardItem>,
+	private var iconSize: Int,
+	private var items: List<BoardItem>,
 	private val listener: StickerClickListener,
 	private val gestureDetector: GestureDetector,
 	private val vibrate: Boolean,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+	/** Resize every sticker cell in place, e.g. in response to a pinch-to-zoom gesture. */
+	fun updateIconSize(newIconSize: Int) {
+		if (newIconSize == iconSize) return
+		iconSize = newIconSize
+		notifyDataSetChanged()
+	}
+
+	/** Replace the board contents in place (e.g. after the recently-used section changes). */
+	fun updateItems(newItems: List<BoardItem>) {
+		items = newItems
+		notifyDataSetChanged()
+	}
+
+	/** Whether the item at [position] is a section header - used by the grid's span lookup. */
+	fun isHeader(position: Int): Boolean = items.getOrNull(position) is BoardItem.Header
 
 	override fun getItemViewType(position: Int): Int =
 		when (items[position]) {

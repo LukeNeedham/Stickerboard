@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
 		this.toaster = Toaster(baseContext)
 		refreshStickerDirPath()
 		// Update UI with config
-		seekBar(findViewById(R.id.iconsPerXSb), findViewById(R.id.iconsPerXLbl), "iconsPerX", 3)
+		seekBar(findViewById(R.id.iconsPerXSb), findViewById(R.id.iconsPerXLbl), "iconsPerX", 4)
 		seekBar(findViewById(R.id.iconSizeSb), findViewById(R.id.iconSizeLbl), "iconSize", 80, 20)
 		toggle(findViewById(R.id.showBackButton), "showBackButton", true) {}
 		toggle(findViewById(R.id.showSearchButton), "showSearchButton", true) {}
