@@ -30,11 +30,31 @@
 			android:clickable="true"
 			android:focusable="true">
 
+			<ImageButton
+				android:id="@+id/closeButton"
+				android:layout_width="@dimen/pack_dimens"
+				android:layout_height="@dimen/pack_dimens"
+				android:layout_gravity="start|center_vertical"
+				android:layout_marginStart="@dimen/sticker_padding"
+				android:background="@drawable/nav_icon_background"
+				android:contentDescription="@string/pack_icon"
+				android:scaleType="fitCenter" />
+
 			<View
 				android:layout_width="36dp"
 				android:layout_height="4dp"
 				android:layout_gravity="center"
 				android:background="@drawable/pull_handle_bar" />
+
+			<ImageButton
+				android:id="@+id/searchButton"
+				android:layout_width="@dimen/pack_dimens"
+				android:layout_height="@dimen/pack_dimens"
+				android:layout_gravity="end|center_vertical"
+				android:layout_marginEnd="@dimen/sticker_padding"
+				android:background="@drawable/nav_icon_background"
+				android:contentDescription="@string/pack_icon"
+				android:scaleType="fitCenter" />
 		</FrameLayout>
 
 		<HorizontalScrollView

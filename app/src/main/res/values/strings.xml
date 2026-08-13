@@ -103,4 +103,5 @@ Copyright © Randy Zhou</string>
 	<!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pack: %2$s)</string>
 	<string name="recent_heading">Recently used</string>
+	<string name="recent_empty">No stickers used yet</string>
 </resources>

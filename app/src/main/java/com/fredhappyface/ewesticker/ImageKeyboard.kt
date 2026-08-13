@@ -66,8 +66,7 @@ private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
 /** Synthetic pack name used for the "recently used" section/ nav icon. */
 private const val RECENT_PACK_NAME = "__recentSticker__"
 
-/** Synthetic tags for the close/ search nav icons (never appear as board sections). */
-private const val CLOSE_TAG = "__close__"
+/** Synthetic activeSection marker while the search view is showing. */
 private const val SEARCH_TAG = "__search__"
 
 /**
@@ -110,6 +109,8 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private lateinit var packsList: ViewGroup
 	private lateinit var packContent: ViewGroup
 	private lateinit var pullBar: View
+	private lateinit var closeButton: ImageButton
+	private lateinit var searchButton: ImageButton
 	private var keyboardHeight = 0
 	private var pendingKeyboardHeight: Int? = null
 	private var maxKeyboardHeightPx = 0
@@ -225,6 +226,8 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
 		this.pullBar = keyboardLayout.findViewById(R.id.pullBar)
+		this.closeButton = keyboardLayout.findViewById(R.id.closeButton)
+		this.searchButton = keyboardLayout.findViewById(R.id.searchButton)
 
 		// Pin the IME window to its largest possible size up-front. Dragging the pull bar then
 		// only resizes resizableArea (bottom-anchored) *inside* that fixed window - a cheap,
@@ -249,8 +252,33 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				)
 				.toInt()
 		setupPullBar()
+		setupTopBarButtons()
 		createPackIcons()
 		return keyboardLayout
+	}
+
+	/**
+	 * Wire up the close/ search buttons that sit either side of the pull bar, honoring their
+	 * show/ hide preferences.
+	 */
+	private fun setupTopBarButtons() {
+		this.closeButton.visibility =
+			if (this.backupSharedPreferences.getBoolean("showBackButton", true)) {
+				View.VISIBLE
+			} else {
+				View.GONE
+			}
+		this.closeButton.load(getDrawable(R.drawable.ic_close))
+		this.closeButton.setOnClickListener { closeKeyboard() }
+
+		this.searchButton.visibility =
+			if (this.backupSharedPreferences.getBoolean("showSearchButton", true)) {
+				View.VISIBLE
+			} else {
+				View.GONE
+			}
+		this.searchButton.load(getDrawable(R.drawable.ic_search))
+		this.searchButton.setOnClickListener { searchView() }
 	}
 
 	/**
@@ -386,17 +414,20 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	}
 
 	/**
-	 * Compute the flattened list of board items (recent section, if any, followed by every pack),
-	 * populating [headerPositions] as a side effect so nav icons can jump straight to a section.
+	 * Compute the flattened list of board items (recent section, always first, followed by every
+	 * pack), populating [headerPositions] as a side effect so nav icons can jump straight to a
+	 * section.
 	 */
 	private fun computeBoardItems(): List<BoardItem> {
 		val items = mutableListOf<BoardItem>()
 		this.headerPositions = LinkedHashMap()
 
 		val recentStickers = this.recentCache.toFiles().reversedArray()
-		if (recentStickers.isNotEmpty()) {
-			this.headerPositions[RECENT_PACK_NAME] = items.size
-			items.add(BoardItem.Header(RECENT_PACK_NAME, getString(R.string.recent_heading)))
+		this.headerPositions[RECENT_PACK_NAME] = items.size
+		items.add(BoardItem.Header(RECENT_PACK_NAME, getString(R.string.recent_heading)))
+		if (recentStickers.isEmpty()) {
+			items.add(BoardItem.EmptyMessage(RECENT_PACK_NAME, getString(R.string.recent_empty)))
+		} else {
 			for (sticker in recentStickers) {
 				items.add(BoardItem.Sticker(sticker, RECENT_PACK_NAME))
 			}
@@ -427,12 +458,18 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val adapter = StickerBoardAdapter(iconSize, items, this, gestureDetector, vibrate)
 		layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
 			override fun getSpanSize(position: Int): Int =
-				if (adapter.isHeader(position)) iconsPerX else 1
+				if (adapter.isFullWidth(position)) iconsPerX else 1
 		}
 
 		val recyclerView = RecyclerView(this)
 		recyclerView.layoutManager = layoutManager
 		recyclerView.adapter = adapter
+		// Without this, a final section with too few stickers to fill the viewport can never be
+		// scrolled all the way to the top, so it's stuck partway down the screen and can't be
+		// selected/ highlighted like every other section. Padding out the bottom (with clipping
+		// disabled so it isn't drawn as a hard edge) gives it that room to scroll into.
+		recyclerView.clipToPadding = false
+		recyclerView.setPadding(0, 0, 0, this.keyboardHeight)
 		recyclerView.addOnScrollListener(
 			object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -541,6 +578,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private fun updateActiveNavButton(packName: String) {
 		if (this.activeSection == packName) return
 		this.activeSection = packName
+		this.searchButton.isSelected = false
 		for (packCard in this.packsList) {
 			val packButton = packCard.findViewById<ImageButton>(R.id.stickerButton)
 			packButton.isSelected = packButton.tag == packName
@@ -554,8 +592,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		XLog.i("Switching to search")
 		for (packCard in this.packsList) {
 			val packButton = packCard.findViewById<ImageButton>(R.id.stickerButton)
-			packButton.isSelected = packButton.tag == SEARCH_TAG
+			packButton.isSelected = false
 		}
+		this.searchButton.isSelected = true
 		this.activeSection = SEARCH_TAG
 
 		qwertyWidth = (resources.displayMetrics.widthPixels / 10.4).toInt()
@@ -678,7 +717,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 	/**
 	 * Adds a pack button to the packsList/ nav bar. Tapping a pack (or recent) icon jumps the
-	 * board to that section; the close/ search icons override this with their own behaviour.
+	 * board to that section.
 	 *
 	 * @param tag The pack name associated with the pack button.
 	 * @return The ImageButton representing the added pack button.
@@ -698,23 +737,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	 */
 	private fun createPackIcons() {
 		this.packsList.removeAllViewsInLayout()
-		// Close button
-		if (this.backupSharedPreferences.getBoolean("showBackButton", true)) {
-			val closeButton = addPackButton(CLOSE_TAG)
-			closeButton.load(getDrawable(R.drawable.ic_close))
-			closeButton.setOnClickListener {
-				closeKeyboard()
-			}
-		}
-
-		// Search
-		if (this.backupSharedPreferences.getBoolean("showSearchButton", true)) {
-			val searchButton = addPackButton(SEARCH_TAG)
-			searchButton.load(getDrawable(R.drawable.ic_search))
-			searchButton.setOnClickListener {
-				searchView()
-			}
-		}
 		// Recent
 		val recentButton = addPackButton(RECENT_PACK_NAME)
 		recentButton.load(getDrawable(R.drawable.ic_recent))
@@ -728,7 +750,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 		buildBoard()
 
-		val fallbackTarget = if (this.headerPositions.containsKey(RECENT_PACK_NAME)) {
+		// The Recent section always exists in the board now (even empty, as a placeholder), so
+		// check for actual recent stickers rather than just section presence, to still land on
+		// the first real pack on a fresh install with no sticker history.
+		val fallbackTarget = if (this.recentCache.toFiles().isNotEmpty()) {
 			RECENT_PACK_NAME
 		} else {
 			sortedPackNames.firstOrNull()

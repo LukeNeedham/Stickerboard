@@ -16,11 +16,13 @@ import java.io.File
 
 private const val VIEW_TYPE_HEADER = 0
 private const val VIEW_TYPE_STICKER = 1
+private const val VIEW_TYPE_EMPTY_MESSAGE = 2
 
 /**
  * Renders the unified, vertically-scrolling sticker board: every pack's stickers, one after
- * another, each preceded by a full-width [BoardItem.Header] row. Meant to be used with a
- * GridLayoutManager whose SpanSizeLookup gives header rows the full span count.
+ * another, each preceded by a full-width [BoardItem.Header] row (and a full-width
+ * [BoardItem.EmptyMessage] row instead, if the pack has no stickers). Meant to be used with a
+ * GridLayoutManager whose SpanSizeLookup gives full-width rows the full span count.
  */
 class StickerBoardAdapter(
 	private var iconSize: Int,
@@ -43,25 +45,33 @@ class StickerBoardAdapter(
 		notifyDataSetChanged()
 	}
 
-	/** Whether the item at [position] is a section header - used by the grid's span lookup. */
-	fun isHeader(position: Int): Boolean = items.getOrNull(position) is BoardItem.Header
+	/** Whether the item at [position] spans the full width - used by the grid's span lookup. */
+	fun isFullWidth(position: Int): Boolean =
+		when (items.getOrNull(position)) {
+			is BoardItem.Header, is BoardItem.EmptyMessage -> true
+			else -> false
+		}
 
 	override fun getItemViewType(position: Int): Int =
 		when (items[position]) {
 			is BoardItem.Header -> VIEW_TYPE_HEADER
+			is BoardItem.EmptyMessage -> VIEW_TYPE_EMPTY_MESSAGE
 			is BoardItem.Sticker -> VIEW_TYPE_STICKER
 		}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
-		if (viewType == VIEW_TYPE_HEADER) {
-			StickerSectionHeaderViewHolder(
+		when (viewType) {
+			VIEW_TYPE_HEADER -> StickerSectionHeaderViewHolder(
 				LayoutInflater.from(parent.context)
 					.inflate(R.layout.sticker_section_header, parent, false),
 			)
-		} else {
-			StickerPackViewHolder(
+			VIEW_TYPE_EMPTY_MESSAGE -> StickerSectionHeaderViewHolder(
 				LayoutInflater.from(parent.context)
-					.inflate(R.layout.sticker_card, parent, false),
+					.inflate(R.layout.sticker_section_empty, parent, false),
+			)
+			else -> StickerPackViewHolder(
+				LayoutInflater.from(parent.context)
+					.inflate(R.layout.sticker_grid_item, parent, false),
 			)
 		}
 
@@ -70,9 +80,11 @@ class StickerBoardAdapter(
 			is BoardItem.Header -> {
 				(holder as StickerSectionHeaderViewHolder).title.text = item.displayName
 			}
+			is BoardItem.EmptyMessage -> {
+				(holder as StickerSectionHeaderViewHolder).title.text = item.message
+			}
 			is BoardItem.Sticker -> {
 				holder as StickerPackViewHolder
-				holder.stickerThumbnail.isSelected = false
 				holder.stickerThumbnail.load(item.file)
 				holder.stickerThumbnail.layoutParams.height = iconSize
 				holder.stickerThumbnail.layoutParams.width = iconSize
