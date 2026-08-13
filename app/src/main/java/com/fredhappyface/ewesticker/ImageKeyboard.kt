@@ -3,6 +3,7 @@ package com.fredhappyface.ewesticker
 import android.content.Context
 import android.content.SharedPreferences
 import android.inputmethodservice.InputMethodService
+import android.inputmethodservice.InputMethodService.Insets
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.view.GestureDetector
@@ -97,11 +98,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 	// onCreateInputView
 	private lateinit var keyboardRoot: ViewGroup
+	private lateinit var resizableArea: ViewGroup
 	private lateinit var packsList: ViewGroup
 	private lateinit var packContent: ViewGroup
 	private lateinit var pullBar: View
 	private var keyboardHeight = 0
 	private var pendingKeyboardHeight: Int? = null
+	private var maxKeyboardHeightPx = 0
 	private var fullIconSize = 0
 	private var qwertyWidth = 0
 
@@ -208,11 +211,23 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		gestureDetector = GestureDetector(baseContext, GestureListener())
 
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
+		this.resizableArea = keyboardLayout.findViewById(R.id.resizableArea)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
 		this.pullBar = keyboardLayout.findViewById(R.id.pullBar)
+
+		// Pin the IME window to its largest possible size up-front. Dragging the pull bar then
+		// only resizes resizableArea (bottom-anchored) *inside* that fixed window - a cheap,
+		// purely local layout pass - rather than resizing the window itself on every drag frame,
+		// which is what caused the board to lag behind the finger and flicker.
+		this.maxKeyboardHeightPx =
+			(resources.displayMetrics.heightPixels * MAX_KEYBOARD_HEIGHT_FRACTION).toInt()
+		this.keyboardRoot.layoutParams =
+			ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, this.maxKeyboardHeightPx)
+
 		this.keyboardHeight =
 			this.backupSharedPreferences.getInt("keyboardHeight", KEYBOARD_HEIGHT_PX)
+				.coerceIn(MIN_KEYBOARD_HEIGHT_PX, this.maxKeyboardHeightPx)
 		this.packContent.layoutParams?.height = this.keyboardHeight
 		this.fullIconSize =
 			(
@@ -236,9 +251,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private fun setupPullBar() {
 		var startRawY = 0f
 		var startHeight = 0
-		val minHeight = MIN_KEYBOARD_HEIGHT_PX
-		val maxHeight =
-			(resources.displayMetrics.heightPixels * MAX_KEYBOARD_HEIGHT_FRACTION).toInt()
 
 		this.pullBar.setOnTouchListener { _, event ->
 			when (event.actionMasked) {
@@ -250,7 +262,8 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 				MotionEvent.ACTION_MOVE -> {
 					val delta = (startRawY - event.rawY).toInt()
-					val newHeight = (startHeight + delta).coerceIn(minHeight, maxHeight)
+					val newHeight = (startHeight + delta)
+						.coerceIn(MIN_KEYBOARD_HEIGHT_PX, this.maxKeyboardHeightPx)
 					scheduleKeyboardHeight(newHeight)
 					true
 				}
@@ -299,6 +312,22 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	 */
 	override fun onEvaluateFullscreenMode(): Boolean {
 		return false
+	}
+
+	/**
+	 * keyboardRoot is pinned to a fixed, maximum-possible height (see [onCreateInputView]) so
+	 * that dragging the pull bar never has to resize the actual IME window. That leaves a
+	 * transparent, non-interactive gap above [resizableArea] whenever the board is smaller than
+	 * that maximum - report only resizableArea's actual bounds as "content" so touches in that
+	 * gap fall through to the app underneath, and so the system doesn't reserve the full fixed
+	 * height for the keyboard.
+	 */
+	override fun onComputeInsets(outInsets: Insets) {
+		super.onComputeInsets(outInsets)
+		val topInset = (this.keyboardRoot.height - this.resizableArea.height).coerceAtLeast(0)
+		outInsets.contentTopInsets = topInset
+		outInsets.visibleTopInsets = topInset
+		outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT
 	}
 
 	/**
@@ -667,12 +696,15 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			layoutInflater.inflate(R.layout.sticker_preview, this.keyboardRoot, false) as
 				RelativeLayout
 		// Set dimens + load image
-		fullStickerLayout.layoutParams.height =
+		val desiredHeight =
 			this.keyboardHeight +
 				(
 					resources.getDimension(R.dimen.pack_dimens) +
 						resources.getDimension(R.dimen.sticker_padding) * 4
 					).toInt()
+		fullStickerLayout.layoutParams.height = desiredHeight.coerceAtMost(this.maxKeyboardHeightPx)
+		(fullStickerLayout.layoutParams as RelativeLayout.LayoutParams)
+			.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 		val fSticker = fullStickerLayout.findViewById<ImageButton>(R.id.stickerButton)
 		fSticker.layoutParams.height = this.fullIconSize
 		fSticker.layoutParams.width = this.fullIconSize
