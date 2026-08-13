@@ -8,11 +8,13 @@ import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import android.widget.ViewFlipper
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import androidx.viewpager2.widget.ViewPager2
+import com.fredhappyface.ewesticker.adapter.OnboardingPageAdapter
+import com.fredhappyface.ewesticker.utilities.OnboardingPageListener
 import com.fredhappyface.ewesticker.utilities.StickerImporter
 import com.fredhappyface.ewesticker.utilities.Toaster
 import com.google.android.material.progressindicator.LinearProgressIndicator
@@ -29,17 +31,22 @@ private const val LAST_PAGE_INDEX = 2
  * keyboard, and how to choose a sticker source directory, before handing off to MainActivity.
  * Shown once - see MainActivity.isOnboardingComplete for the check that skips it afterwards.
  */
-class OnboardingActivity : AppCompatActivity() {
+class OnboardingActivity : AppCompatActivity(), OnboardingPageListener {
 	private lateinit var sharedPreferences: SharedPreferences
 	private lateinit var toaster: Toaster
-	private lateinit var flipper: ViewFlipper
+	private lateinit var viewPager: ViewPager2
 	private lateinit var stepLabel: TextView
 	private lateinit var backButton: Button
 	private lateinit var nextButton: Button
-	private lateinit var skipButton: Button
+
+	// Bound when the choose-directory button is tapped, and used again once the picker result and
+	// sticker import complete - the folder page stays alive across that gap since the picker is a
+	// foreground activity launched on top of this one.
+	private var chooseDirButton: Button? = null
+	private var progressBar: LinearProgressIndicator? = null
 
 	/**
-	 * Sets up content view, shared prefs, and wires up the onboarding pages
+	 * Sets up content view, shared prefs, and wires up the onboarding pager
 	 *
 	 * @param savedInstanceState saved state
 	 */
@@ -50,13 +57,21 @@ class OnboardingActivity : AppCompatActivity() {
 		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 		this.toaster = Toaster(baseContext)
 
-		this.flipper = findViewById(R.id.onboardingFlipper)
+		this.viewPager = findViewById(R.id.onboardingPager)
 		this.stepLabel = findViewById(R.id.onboardingStepLabel)
 		this.backButton = findViewById(R.id.onboardingBackBtn)
 		this.nextButton = findViewById(R.id.onboardingNextBtn)
-		this.skipButton = findViewById(R.id.onboardingSkipBtn)
 
-		updateControls()
+		this.viewPager.adapter = OnboardingPageAdapter(this)
+		this.viewPager.registerOnPageChangeCallback(
+			object : ViewPager2.OnPageChangeCallback() {
+				override fun onPageSelected(position: Int) {
+					updateControls(position)
+				}
+			},
+		)
+
+		updateControls(this.viewPager.currentItem)
 	}
 
 	/**
@@ -66,12 +81,11 @@ class OnboardingActivity : AppCompatActivity() {
 	 * @param ignoredView: View
 	 */
 	fun onboardingNext(ignoredView: View) {
-		if (this.flipper.displayedChild >= LAST_PAGE_INDEX) {
+		if (this.viewPager.currentItem >= LAST_PAGE_INDEX) {
 			finishOnboarding()
 			return
 		}
-		this.flipper.showNext()
-		updateControls()
+		this.viewPager.currentItem += 1
 	}
 
 	/**
@@ -80,34 +94,19 @@ class OnboardingActivity : AppCompatActivity() {
 	 * @param ignoredView: View
 	 */
 	fun onboardingBack(ignoredView: View) {
-		this.flipper.showPrevious()
-		updateControls()
+		this.viewPager.currentItem -= 1
 	}
 
-	/**
-	 * Called on button press to skip the rest of onboarding and go straight to the home page
-	 *
-	 * @param ignoredView: View
-	 */
-	fun onboardingSkip(ignoredView: View) {
-		finishOnboarding()
-	}
-
-	/**
-	 * Called on button press to launch settings so the user can enable the EweSticker keyboard
-	 *
-	 * @param ignoredView: View
-	 */
-	fun enableKeyboard(ignoredView: View) {
+	/** Called when the user taps the button to launch settings to enable the EweSticker keyboard */
+	override fun onEnableKeyboardClick() {
 		startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
 	}
 
-	/**
-	 * Called on button press to choose a sticker source directory
-	 *
-	 * @param ignoredView: View
-	 */
-	fun chooseDir(ignoredView: View) {
+	/** Called when the user taps the button to choose a sticker source directory */
+	override fun onChooseDirClick(chooseDirButton: Button, progressBar: LinearProgressIndicator) {
+		this.chooseDirButton = chooseDirButton
+		this.progressBar = progressBar
+
 		val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
 		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 		intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
@@ -144,9 +143,10 @@ class OnboardingActivity : AppCompatActivity() {
 
 	/** Import files from storage to internal directory - mirrors MainActivity.importStickers */
 	private fun importStickers(stickerDirPath: String) {
+		val chooseDirButton = this.chooseDirButton ?: return
+		val progressBar = this.progressBar ?: return
+
 		toaster.toast(getString(R.string.imported_010))
-		val chooseDirButton = findViewById<Button>(R.id.onboardingChooseDirBtn)
-		val progressBar = findViewById<LinearProgressIndicator>(R.id.onboardingProgressIndicator)
 		chooseDirButton.isEnabled = false
 
 		lifecycleScope.launch(Dispatchers.IO) {
@@ -168,12 +168,10 @@ class OnboardingActivity : AppCompatActivity() {
 		}
 	}
 
-	/** Updates the step label plus back/next/skip button visibility and text for the current page */
-	private fun updateControls() {
-		val page = this.flipper.displayedChild
+	/** Updates the step label plus back/next button visibility and text for the current page */
+	private fun updateControls(page: Int) {
 		this.stepLabel.text = getString(R.string.onboarding_step_label, page + 1, LAST_PAGE_INDEX + 1)
 		this.backButton.visibility = if (page == FIRST_PAGE_INDEX) View.INVISIBLE else View.VISIBLE
-		this.skipButton.visibility = if (page == LAST_PAGE_INDEX) View.INVISIBLE else View.VISIBLE
 		this.nextButton.text = if (page == LAST_PAGE_INDEX) {
 			getString(R.string.onboarding_finish_button)
 		} else {

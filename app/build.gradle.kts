@@ -82,6 +82,7 @@ dependencies {
 	implementation("io.coil-kt:coil-video:2.7.0")
 	implementation("io.coil-kt:coil-svg:2.7.0")
 	implementation("androidx.gridlayout:gridlayout:1.0.0")
+	implementation("androidx.viewpager2:viewpager2:1.1.0")
 	implementation("io.noties.markwon:core:4.6.2")
 	implementation("com.elvishew:xlog:1.11.1")
 	androidTestImplementation("junit:junit:4.13.2")

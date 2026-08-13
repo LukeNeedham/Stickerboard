@@ -6,9 +6,7 @@
 	<string name="close_sticker_preview">[tap to close sticker preview]</string>
 	<!-- Onboarding -->
 	<string name="onboarding_welcome_heading">Welcome to EweSticker</string>
-	<string name="onboarding_welcome_text">"EweSticker is a keyboard that lets you send your own custom stickers, GIFs and short video clips directly from any app that supports image sharing - no need for a separate sticker app.
-
-To get started, we\'ll walk you through two quick steps: enabling the EweSticker keyboard, then choosing a folder of stickers to use."</string>
+	<string name="onboarding_welcome_text">EweSticker is a keyboard for sending your own stickers, GIFs and short videos in any app. Let\'s get you set up in two quick steps.</string>
 	<string name="onboarding_keyboard_heading">Enable the Keyboard</string>
 	<string name="onboarding_keyboard_text">"EweSticker works as a keyboard, so Android needs your permission before it can be used.
 
@@ -21,7 +19,6 @@ Tap the button below to pick that folder. EweSticker will copy the files in so t
 	<string name="onboarding_next_button">Next</string>
 	<string name="onboarding_back_button">Back</string>
 	<string name="onboarding_finish_button">Get Started</string>
-	<string name="onboarding_skip_button">Skip</string>
 	<!-- Enable Keyboard -->
 	<string name="enable_keyboard_heading">Enable Keyboard</string>
 	<string name="enable_keyboard_button">Launch Settings</string>

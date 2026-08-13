@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<LinearLayout
+		style="@style/widthMatchHeightWrap"
+		android:orientation="vertical"
+		android:padding="@dimen/content_margin">
+
+		<com.google.android.material.card.MaterialCardView style="@style/card">
+			<LinearLayout
+				style="@style/cardchild"
+				android:orientation="vertical">
+
+				<TextView
+					style="@style/heading"
+					android:text="@string/onboarding_folder_heading" />
+
+				<TextView
+					style="@style/body_text"
+					android:text="@string/onboarding_folder_text" />
+
+				<Button
+					android:id="@+id/onboardingChooseDirBtn"
+					style="@style/button"
+					android:text="@string/update_sticker_pack_button"
+					app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+
+				<com.google.android.material.progressindicator.LinearProgressIndicator
+					android:id="@+id/onboardingProgressIndicator"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:visibility="gone" />
+			</LinearLayout>
+		</com.google.android.material.card.MaterialCardView>
+	</LinearLayout>
+</androidx.core.widget.NestedScrollView>
