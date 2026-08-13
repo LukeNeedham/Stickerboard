@@ -279,13 +279,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	}
 
 	/**
-	 * Build the unified, vertically-scrolling board: every pack's stickers concatenated, each
-	 * preceded by a full-width section header. Populates [headerPositions] so nav icons can jump
-	 * straight to a section, and installs a scroll listener that keeps the nav icons in sync with
-	 * whichever section is currently on screen.
+	 * Compute the flattened list of board items (recent section, if any, followed by every pack),
+	 * populating [headerPositions] as a side effect so nav icons can jump straight to a section.
 	 */
-	private fun buildBoard() {
-		XLog.i("Building sticker board")
+	private fun computeBoardItems(): List<BoardItem> {
 		val items = mutableListOf<BoardItem>()
 		this.headerPositions = LinkedHashMap()
 
@@ -307,17 +304,28 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				items.add(BoardItem.Sticker(sticker, packName))
 			}
 		}
+		return items
+	}
+
+	/**
+	 * Build the unified, vertically-scrolling board: every pack's stickers concatenated, each
+	 * preceded by a full-width section header, and install a scroll listener that keeps the nav
+	 * icons in sync with whichever section is currently on screen.
+	 */
+	private fun buildBoard() {
+		XLog.i("Building sticker board")
+		val items = computeBoardItems()
 
 		val layoutManager = GridLayoutManager(this, iconsPerX, RecyclerView.VERTICAL, false)
+		val adapter = StickerBoardAdapter(iconSize, items, this, gestureDetector, vibrate)
 		layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
 			override fun getSpanSize(position: Int): Int =
-				if (items[position] is BoardItem.Header) iconsPerX else 1
+				if (adapter.isHeader(position)) iconsPerX else 1
 		}
 
 		val recyclerView = RecyclerView(this)
 		recyclerView.layoutManager = layoutManager
-		recyclerView.adapter =
-			StickerBoardAdapter(iconSize, items, this, gestureDetector, vibrate)
+		recyclerView.adapter = adapter
 		recyclerView.addOnScrollListener(
 			object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -373,6 +381,19 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		if (!::boardRecyclerView.isInitialized) return
 		(this.boardRecyclerView.layoutManager as? GridLayoutManager)?.spanCount = this.iconsPerX
 		(this.boardRecyclerView.adapter as? StickerBoardAdapter)?.updateIconSize(this.iconSize)
+	}
+
+	/**
+	 * Recompute the board contents (e.g. after the recently-used section changes) and apply them to
+	 * the existing board in place, preserving scroll position instead of rebuilding the view.
+	 */
+	private fun refreshBoard() {
+		if (!this::boardRecyclerView.isInitialized) {
+			buildBoard()
+			return
+		}
+		val items = computeBoardItems()
+		(this.boardRecyclerView.adapter as StickerBoardAdapter).updateItems(items)
 	}
 
 	/** Find the section a given board adapter-position belongs to (e.g. for scroll tracking). */
@@ -630,6 +651,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	 */
 	override fun onStickerClicked(sticker: File) {
 		this.recentCache.add(sticker.path)
+		refreshBoard()
 		this.stickerSender.sendSticker(sticker)
 	}
 

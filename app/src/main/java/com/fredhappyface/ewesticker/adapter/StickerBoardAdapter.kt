@@ -24,7 +24,7 @@ private const val VIEW_TYPE_STICKER = 1
  */
 class StickerBoardAdapter(
 	private var iconSize: Int,
-	private val items: List<BoardItem>,
+	private var items: List<BoardItem>,
 	private val listener: StickerClickListener,
 	private val gestureDetector: GestureDetector,
 	private val vibrate: Boolean,
@@ -36,6 +36,15 @@ class StickerBoardAdapter(
 		iconSize = newIconSize
 		notifyDataSetChanged()
 	}
+
+	/** Replace the board contents in place (e.g. after the recently-used section changes). */
+	fun updateItems(newItems: List<BoardItem>) {
+		items = newItems
+		notifyDataSetChanged()
+	}
+
+	/** Whether the item at [position] is a section header - used by the grid's span lookup. */
+	fun isHeader(position: Int): Boolean = items.getOrNull(position) is BoardItem.Header
 
 	override fun getItemViewType(position: Int): Int =
 		when (items[position]) {
