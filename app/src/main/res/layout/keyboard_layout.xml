@@ -8,11 +8,26 @@
 	android:fitsSystemWindows="true"
 	tools:context="com.fredhappyface.ewesticker.ImageKeyboard">
 
+	<FrameLayout
+		android:id="@+id/pullBar"
+		android:layout_width="match_parent"
+		android:layout_height="@dimen/pull_bar_height"
+		android:layout_alignParentTop="true"
+		android:clickable="true"
+		android:focusable="true">
+
+		<View
+			android:layout_width="36dp"
+			android:layout_height="4dp"
+			android:layout_gravity="center"
+			android:background="@drawable/pull_handle_bar" />
+	</FrameLayout>
+
 	<HorizontalScrollView
 		android:id="@+id/topHScrollView"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:layout_alignParentTop="true"
+		android:layout_below="@id/pullBar"
 		android:padding="@dimen/sticker_padding"
 		android:scrollbars="none">
 

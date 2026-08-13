@@ -45,8 +45,14 @@ import kotlin.math.min
 private const val SWIPE_THRESHOLD = 1
 private const val SWIPE_VELOCITY_THRESHOLD = 1
 
-/** Fixed pixel height of the scrollable board viewport. */
+/** Default pixel height of the scrollable board viewport. */
 private const val KEYBOARD_HEIGHT_PX = 800
+
+/** Smallest height the board can be dragged down to via the pull bar. */
+private const val MIN_KEYBOARD_HEIGHT_PX = 300
+
+/** Largest height the board can be dragged up to, as a fraction of the screen height. */
+private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
 
 /** Synthetic pack name used for the "recently used" section/ nav icon. */
 private const val RECENT_PACK_NAME = "__recentSticker__"
@@ -93,6 +99,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private lateinit var keyboardRoot: ViewGroup
 	private lateinit var packsList: ViewGroup
 	private lateinit var packContent: ViewGroup
+	private lateinit var pullBar: View
 	private var keyboardHeight = 0
 	private var fullIconSize = 0
 	private var qwertyWidth = 0
@@ -202,7 +209,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
-		this.keyboardHeight = KEYBOARD_HEIGHT_PX
+		this.pullBar = keyboardLayout.findViewById(R.id.pullBar)
+		this.keyboardHeight =
+			this.backupSharedPreferences.getInt("keyboardHeight", KEYBOARD_HEIGHT_PX)
 		this.packContent.layoutParams?.height = this.keyboardHeight
 		this.fullIconSize =
 			(
@@ -213,8 +222,50 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				) * 0.95
 				)
 				.toInt()
+		setupPullBar()
 		createPackIcons()
 		return keyboardLayout
+	}
+
+	/**
+	 * Wire up the drag handle at the top of the keyboard so the user can resize the board
+	 * vertically by dragging it up or down. The chosen height is persisted so it's remembered
+	 * next time the keyboard is shown.
+	 */
+	private fun setupPullBar() {
+		var startRawY = 0f
+		var startHeight = 0
+		val minHeight = MIN_KEYBOARD_HEIGHT_PX
+		val maxHeight =
+			(resources.displayMetrics.heightPixels * MAX_KEYBOARD_HEIGHT_FRACTION).toInt()
+
+		this.pullBar.setOnTouchListener { _, event ->
+			when (event.actionMasked) {
+				MotionEvent.ACTION_DOWN -> {
+					startRawY = event.rawY
+					startHeight = this.keyboardHeight
+					true
+				}
+
+				MotionEvent.ACTION_MOVE -> {
+					val delta = (startRawY - event.rawY).toInt()
+					val newHeight = (startHeight + delta).coerceIn(minHeight, maxHeight)
+					this.keyboardHeight = newHeight
+					this.packContent.layoutParams?.height = newHeight
+					this.packContent.requestLayout()
+					true
+				}
+
+				MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+					this.backupSharedPreferences.edit()
+						.putInt("keyboardHeight", this.keyboardHeight)
+						.apply()
+					true
+				}
+
+				else -> false
+			}
+		}
 	}
 
 	/**
