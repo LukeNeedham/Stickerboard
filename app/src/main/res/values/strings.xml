@@ -4,6 +4,23 @@
 	<string name="pack_icon">Pack icon</string>
 	<string name="sticker_icon">Sticker icon</string>
 	<string name="close_sticker_preview">[tap to close sticker preview]</string>
+	<!-- Onboarding -->
+	<string name="onboarding_welcome_heading">Welcome to EweSticker</string>
+	<string name="onboarding_welcome_text">EweSticker is a keyboard for sending your own stickers, GIFs and short videos in any app. Let\'s get you set up in two quick steps.</string>
+	<string name="onboarding_keyboard_heading">Enable the Keyboard</string>
+	<string name="onboarding_keyboard_text">"EweSticker works as a keyboard, so Android needs your permission before it can be used.
+
+Tap the button below to open your keyboard settings, then switch on \"EweSticker\". You can come back here once it\'s enabled."</string>
+	<string name="onboarding_folder_heading">Choose Your Stickers</string>
+	<string name="onboarding_folder_text">"EweSticker loads its stickers, GIFs and videos from a folder you choose on your device, with each sub-folder becoming a sticker pack.
+
+Tap the button below to pick that folder. EweSticker will copy the files in so they\'re ready to use in the keyboard."</string>
+	<string name="onboarding_step_label">Step %1$d of %2$d</string>
+	<string name="onboarding_next_button">Next</string>
+	<string name="onboarding_back_button">Back</string>
+	<string name="onboarding_finish_button">Get Started</string>
+	<string name="onboarding_keyboard_required">Please enable the EweSticker keyboard to continue</string>
+	<string name="onboarding_folder_required">Please choose a sticker source directory to continue</string>
 	<!-- Enable Keyboard -->
 	<string name="enable_keyboard_heading">Enable Keyboard</string>
 	<string name="enable_keyboard_button">Launch Settings</string>

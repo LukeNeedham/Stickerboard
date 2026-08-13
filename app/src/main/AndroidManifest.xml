@@ -20,6 +20,11 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
+		<activity
+			android:name="com.fredhappyface.ewesticker.OnboardingActivity"
+			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+			android:exported="false"
+			android:windowSoftInputMode="adjustResize" />
 		<service
 			android:name="com.fredhappyface.ewesticker.ImageKeyboard"
 			android:exported="false"

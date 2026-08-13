@@ -16,6 +16,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val MAX_FILES = 4096
 private const val MAX_PACK_SIZE = 128
@@ -37,9 +39,12 @@ class StickerImporter(
 	private val progressBar: LinearProgressIndicator,
 ) {
 	private val supportedMimes = Utils.getSupportedMimes()
-	private val packSizes: MutableMap<String, Int> = mutableMapOf()
+
+	// Written concurrently from multiple Dispatchers.IO threads (one per in-flight sticker import
+	// in importStickers), so plain mutable collections/counters aren't safe here
+	private val packSizes: MutableMap<String, Int> = ConcurrentHashMap()
 	private var detectedStickers = 0
-	private var totalStickers = 0
+	private val totalStickers = AtomicInteger(0)
 
 	private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -91,9 +96,9 @@ class StickerImporter(
 			progressBar.visibility = View.GONE
 		}
 
-		XLog.i("Copied $totalStickers / $detectedStickers")
+		XLog.i("Copied ${totalStickers.get()} / $detectedStickers")
 
-		return totalStickers
+		return totalStickers.get()
 	}
 
 	/**
@@ -142,7 +147,7 @@ class StickerImporter(
 				withContext(Dispatchers.IO) {
 					inputStream.close()
 				}
-				totalStickers++
+				totalStickers.incrementAndGet()
 			}
 		} catch (e: IOException) {
 			XLog.e("There was an IOException when copying '${parentDir}/${sticker.name}'!")

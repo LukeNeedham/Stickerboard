@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/bg"
+	android:orientation="vertical">
+
+	<androidx.viewpager2.widget.ViewPager2
+		android:id="@+id/onboardingPager"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1" />
+
+	<TextView
+		android:id="@+id/onboardingStepLabel"
+		style="@style/body_text"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginVertical="@dimen/zero"
+		android:gravity="center" />
+
+	<LinearLayout
+		style="@style/widthMatchHeightWrap"
+		android:orientation="horizontal"
+		android:padding="@dimen/content_margin">
+
+		<Button
+			android:id="@+id/onboardingBackBtn"
+			style="@style/button"
+			android:layout_width="0dp"
+			android:layout_weight="1"
+			android:layout_marginEnd="@dimen/content_margin"
+			android:onClick="onboardingBack"
+			android:text="@string/onboarding_back_button"
+			app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+
+		<Button
+			android:id="@+id/onboardingNextBtn"
+			style="@style/button"
+			android:layout_width="0dp"
+			android:layout_weight="1"
+			android:onClick="onboardingNext"
+			android:text="@string/onboarding_next_button"
+			app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+	</LinearLayout>
+</LinearLayout>
