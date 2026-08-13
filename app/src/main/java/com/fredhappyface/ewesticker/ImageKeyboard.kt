@@ -29,7 +29,9 @@ import coil.decode.VideoFrameDecoder
 import coil.imageLoader
 import coil.load
 import com.elvishew.xlog.XLog
+import com.fredhappyface.ewesticker.adapter.StickerBoardAdapter
 import com.fredhappyface.ewesticker.adapter.StickerPackAdapter
+import com.fredhappyface.ewesticker.model.BoardItem
 import com.fredhappyface.ewesticker.model.StickerPack
 import com.fredhappyface.ewesticker.utilities.Cache
 import com.fredhappyface.ewesticker.utilities.StickerClickListener
@@ -43,6 +45,16 @@ import kotlin.math.min
 private const val SWIPE_THRESHOLD = 1
 private const val SWIPE_VELOCITY_THRESHOLD = 1
 
+/** Fixed pixel height of the scrollable board viewport. */
+private const val KEYBOARD_HEIGHT_PX = 800
+
+/** Synthetic pack name used for the "recently used" section/ nav icon. */
+private const val RECENT_PACK_NAME = "__recentSticker__"
+
+/** Synthetic tags for the close/ search nav icons (never appear as board sections). */
+private const val CLOSE_TAG = "__close__"
+private const val SEARCH_TAG = "__search__"
+
 /**
  * ImageKeyboard class inherits from the InputMethodService class - provides the keyboard
  * functionality
@@ -53,7 +65,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private lateinit var sharedPreferences: SharedPreferences
 	private lateinit var backupSharedPreferences: SharedPreferences
 	private var restoreOnClose = false
-	private var vertical = false
 	private var scroll = false
 	private var vibrate = false
 	private var iconsPerX = 0
@@ -88,6 +99,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 	private lateinit var gestureDetector: GestureDetector
 
+	//  The unified, vertically-scrolling board holding every pack's stickers
+	private lateinit var boardRecyclerView: RecyclerView
+
+	//  Ordered map of section-name -> adapter position of that section's header row
+	private var headerPositions: LinkedHashMap<String, Int> = LinkedHashMap()
+	private var activeSection = ""
+
 	/**
 	 * When the activity is created...
 	 * - ensure coil can decode (and display) animated images
@@ -102,7 +120,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		XLog.i("=".repeat(80))
 		XLog.i("Loaded $packageName:${javaClass.name}")
 
-		val scale = baseContext.resources.displayMetrics.density
 		// Setup coil
 		val imageLoader =
 			ImageLoader.Builder(baseContext)
@@ -126,7 +143,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		XLog.i("Loading backup shared preferences: ${this.backupSharedPreferences.all}")
 
 		this.restoreOnClose = this.backupSharedPreferences.getBoolean("restoreOnClose", false)
-		this.vertical = this.backupSharedPreferences.getBoolean("vertical", false)
 		this.scroll = this.backupSharedPreferences.getBoolean("scroll", false)
 		this.vibrate = this.backupSharedPreferences.getBoolean("vibrate", true)
 		this.insensitiveSort = this.backupSharedPreferences.getBoolean("insensitiveSort", false)
@@ -139,12 +155,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.internalDir = File(filesDir, "stickers")
 		this.iconSize =
 			(
-				if (this.vertical) {
-					(resources.displayMetrics.widthPixels - this.totalIconPadding) / this.iconsPerX.toFloat()
-				} else {
-					(this.backupSharedPreferences.getInt("iconSize", 80) * scale)
-				}
-				).toInt()
+				(resources.displayMetrics.widthPixels - this.totalIconPadding) /
+					this.iconsPerX.toFloat()
+				)
+				.toInt()
 		this.toaster = Toaster(baseContext)
 		//  Load Packs
 		this.loadedPacks = HashMap()
@@ -188,12 +202,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
-		this.keyboardHeight =
-			if (this.vertical) {
-				800
-			} else {
-				this.iconSize * this.iconsPerX + this.totalIconPadding
-			}
+		this.keyboardHeight = KEYBOARD_HEIGHT_PX
 		this.packContent.layoutParams?.height = this.keyboardHeight
 		this.fullIconSize =
 			(
@@ -250,48 +259,111 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		}
 	}
 
+	/** Pack names in nav-bar/ board order, respecting the case-insensitive-sort preference. */
+	private fun sortedPackNames(): List<String> {
+		return if (this.insensitiveSort) {
+			this.loadedPacks.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
+		} else {
+			this.loadedPacks.keys.sorted()
+		}
+	}
+
 	/**
-	 * Swap the pack layout every time a pack is selected. If already cached use that otherwise
-	 * create the pack layout
-	 *
-	 * @param packName String
+	 * Build the unified, vertically-scrolling board: every pack's stickers concatenated, each
+	 * preceded by a full-width section header. Populates [headerPositions] so nav icons can jump
+	 * straight to a section, and installs a scroll listener that keeps the nav icons in sync with
+	 * whichever section is currently on screen.
 	 */
-	private fun switchPackLayout(packName: String) {
-		XLog.i("Switching pack to '$packName'")
-		this.activePack = packName
-		for (packCard in this.packsList) {
-			val packButton = packCard.findViewById<ImageButton>(R.id.stickerButton)
-			if (packButton.tag == packName) {
-				(packButton as ImageButton).setColorFilter(getColor(R.color.accent_a))
-			} else {
-				(packButton as ImageButton).setColorFilter(getColor(R.color.transparent))
+	private fun buildBoard() {
+		XLog.i("Building sticker board")
+		val items = mutableListOf<BoardItem>()
+		this.headerPositions = LinkedHashMap()
+
+		val recentStickers = this.recentCache.toFiles().reversedArray()
+		if (recentStickers.isNotEmpty()) {
+			this.headerPositions[RECENT_PACK_NAME] = items.size
+			items.add(BoardItem.Header(RECENT_PACK_NAME, getString(R.string.recent_heading)))
+			for (sticker in recentStickers) {
+				items.add(BoardItem.Sticker(sticker, RECENT_PACK_NAME))
 			}
 		}
 
-		val stickers: Array<File>
-		if (packName == "__recentSticker__") {
-			stickers = this.recentCache.toFiles().reversedArray()
-		} else {
-			stickers = loadedPacks[packName]?.stickerList ?: return
+		for (packName in sortedPackNames()) {
+			val stickers = this.loadedPacks[packName]?.stickerList ?: continue
+			if (stickers.isEmpty()) continue
+			this.headerPositions[packName] = items.size
+			items.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			for (sticker in stickers) {
+				items.add(BoardItem.Sticker(sticker, packName))
+			}
 		}
+
+		val layoutManager = GridLayoutManager(this, iconsPerX, RecyclerView.VERTICAL, false)
+		layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+			override fun getSpanSize(position: Int): Int =
+				if (items[position] is BoardItem.Header) iconsPerX else 1
+		}
+
 		val recyclerView = RecyclerView(this)
-		val adapter = StickerPackAdapter(
-			iconSize,
-			stickers,
-			this,
-			gestureDetector,
-			this.vibrate
-		)
-		val layoutManager = GridLayoutManager(
-			this,
-			iconsPerX,
-			if (vertical) RecyclerView.VERTICAL else RecyclerView.HORIZONTAL,
-			false,
-		)
 		recyclerView.layoutManager = layoutManager
-		recyclerView.adapter = adapter
+		recyclerView.adapter =
+			StickerBoardAdapter(iconSize, items, this, gestureDetector, vibrate)
+		recyclerView.addOnScrollListener(
+			object : RecyclerView.OnScrollListener() {
+				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+					val firstVisible = layoutManager.findFirstVisibleItemPosition()
+					if (firstVisible == RecyclerView.NO_POSITION) return
+					sectionAt(firstVisible)?.let { updateActiveNavButton(it) }
+				}
+			},
+		)
+
+		this.boardRecyclerView = recyclerView
+		showBoard()
+	}
+
+	/** Find the section a given board adapter-position belongs to (e.g. for scroll tracking). */
+	private fun sectionAt(position: Int): String? {
+		var result: String? = null
+		for ((packName, headerPosition) in this.headerPositions) {
+			if (headerPosition <= position) result = packName else break
+		}
+		return result
+	}
+
+	/** Ensure the board (as opposed to e.g. the search view) is the content on screen. */
+	private fun showBoard() {
+		if (packContent.childCount == 1 && packContent.getChildAt(0) === this.boardRecyclerView) {
+			return
+		}
 		packContent.removeAllViewsInLayout()
-		packContent.addView(recyclerView)
+		packContent.addView(this.boardRecyclerView)
+	}
+
+	/**
+	 * Jump straight to a section of the board - this is what nav icons do when tapped. Unlike the
+	 * old tab-based navigation this doesn't swap out content, it just scrolls the shared board.
+	 *
+	 * @param packName the section (pack name, or [RECENT_PACK_NAME]) to jump to
+	 */
+	private fun jumpToSection(packName: String) {
+		XLog.i("Jumping to section '$packName'")
+		this.activePack = packName
+		showBoard()
+		val position = this.headerPositions[packName] ?: return
+		(this.boardRecyclerView.layoutManager as GridLayoutManager)
+			.scrollToPositionWithOffset(position, 0)
+		updateActiveNavButton(packName)
+	}
+
+	/** Highlight whichever nav icon corresponds to [packName], clearing any other highlight. */
+	private fun updateActiveNavButton(packName: String) {
+		if (this.activeSection == packName) return
+		this.activeSection = packName
+		for (packCard in this.packsList) {
+			val packButton = packCard.findViewById<ImageButton>(R.id.stickerButton)
+			packButton.isSelected = packButton.tag == packName
+		}
 	}
 
 	/**
@@ -301,12 +373,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		XLog.i("Switching to search")
 		for (packCard in this.packsList) {
 			val packButton = packCard.findViewById<ImageButton>(R.id.stickerButton)
-			if (packButton.tag == "__search__") {
-				(packButton as ImageButton).setColorFilter(getColor(R.color.accent_a))
-			} else {
-				(packButton as ImageButton).setColorFilter(getColor(R.color.transparent))
-			}
+			packButton.isSelected = packButton.tag == SEARCH_TAG
 		}
+		this.activeSection = SEARCH_TAG
 
 		qwertyWidth = (resources.displayMetrics.widthPixels / 10.4).toInt()
 
@@ -427,7 +496,8 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	}
 
 	/**
-	 * Adds a pack button to the packsList/ tab bar.
+	 * Adds a pack button to the packsList/ nav bar. Tapping a pack (or recent) icon jumps the
+	 * board to that section; the close/ search icons override this with their own behaviour.
 	 *
 	 * @param tag The pack name associated with the pack button.
 	 * @return The ImageButton representing the added pack button.
@@ -436,55 +506,55 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val packCard = layoutInflater.inflate(R.layout.sticker_card, this.packsList, false)
 		val packButton = packCard.findViewById<ImageButton>(R.id.stickerButton)
 		packButton.tag = tag
-		packButton.setOnClickListener { switchPackLayout(it?.tag as String) }
+		packButton.setOnClickListener { jumpToSection(tag) }
 		this.packsList.addView(packCard)
 		return packButton
 	}
 
-	/** Create the pack icons (image buttons) that when tapped switch the pack (switchPackLayout) */
+	/**
+	 * Create the pack icons (image buttons) that live in the top nav bar, then build the board and
+	 * jump to whichever section was last active.
+	 */
 	private fun createPackIcons() {
 		this.packsList.removeAllViewsInLayout()
-		// Back button
+		// Close button
 		if (this.backupSharedPreferences.getBoolean("showBackButton", true)) {
-			val backButton = addPackButton("__back__")
-			backButton.load(getDrawable(R.drawable.arrow_back_circle))
-			backButton.setOnClickListener {
+			val closeButton = addPackButton(CLOSE_TAG)
+			closeButton.load(getDrawable(R.drawable.ic_close))
+			closeButton.setOnClickListener {
 				closeKeyboard()
 			}
 		}
 
 		// Search
 		if (this.backupSharedPreferences.getBoolean("showSearchButton", true)) {
-			val searchButton = addPackButton("__search__")
-			searchButton.load(getDrawable(R.drawable.search_circle))
+			val searchButton = addPackButton(SEARCH_TAG)
+			searchButton.load(getDrawable(R.drawable.ic_search))
 			searchButton.setOnClickListener {
 				searchView()
 			}
 		}
 		// Recent
-		val recentPackName = "__recentSticker__"
-		val recentButton = addPackButton(recentPackName)
-		recentButton.load(getDrawable(R.drawable.time))
-		recentButton.setOnClickListener { switchPackLayout(recentPackName) }
+		val recentButton = addPackButton(RECENT_PACK_NAME)
+		recentButton.load(getDrawable(R.drawable.ic_recent))
 		// Packs
-		val sortedPackNames = if (this.insensitiveSort) {
-			this.loadedPacks.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
-		} else {
-			this.loadedPacks.keys.sorted()
-		}.toTypedArray()
+		val sortedPackNames = sortedPackNames()
 
 		for (sortedPackName in sortedPackNames) {
 			val packButton = addPackButton(sortedPackName)
 			packButton.load(this.loadedPacks[sortedPackName]?.thumbSticker)
-			packButton.setOnClickListener { switchPackLayout(sortedPackName) }
 		}
 
-		val targetPack =
-			if (activePack in sortedPackNames + recentPackName) activePack else sortedPackNames.firstOrNull()
+		buildBoard()
 
-		if (sortedPackNames.isNotEmpty()) {
-			targetPack?.let { switchPackLayout(it) }
+		val fallbackTarget = if (this.headerPositions.containsKey(RECENT_PACK_NAME)) {
+			RECENT_PACK_NAME
+		} else {
+			sortedPackNames.firstOrNull()
 		}
+		val targetSection =
+			if (this.headerPositions.containsKey(activePack)) activePack else fallbackTarget
+		targetSection?.let { jumpToSection(it) }
 	}
 
 	private fun closeKeyboard() {
@@ -544,22 +614,19 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	}
 
 	internal fun switchToPreviousPack() {
-		// Get a list of sorted pack names
-		val sortedPackNames = loadedPacks.keys.sorted()
-		// Find the index of the current active pack
-		val currentIndex = sortedPackNames.indexOf(activePack)
-		// Calculate the index of the previous pack, considering wrap-around
-		val previousIndex = if (currentIndex > 0) currentIndex - 1 else sortedPackNames.size - 1
-		val previousPack = sortedPackNames[previousIndex]
-		switchPackLayout(previousPack)
+		val sectionNames = this.headerPositions.keys.toList()
+		if (sectionNames.isEmpty()) return
+		val currentIndex = sectionNames.indexOf(this.activeSection).let { if (it == -1) 0 else it }
+		val previousIndex = if (currentIndex > 0) currentIndex - 1 else sectionNames.size - 1
+		jumpToSection(sectionNames[previousIndex])
 	}
 
 	internal fun switchToNextPack() {
-		val sortedPackNames = loadedPacks.keys.sorted()
-		val currentIndex = sortedPackNames.indexOf(activePack)
-		val nextIndex = (currentIndex + 1) % sortedPackNames.size
-		val nextPack = sortedPackNames[nextIndex]
-		switchPackLayout(nextPack)
+		val sectionNames = this.headerPositions.keys.toList()
+		if (sectionNames.isEmpty()) return
+		val currentIndex = sectionNames.indexOf(this.activeSection).let { if (it == -1) 0 else it }
+		val nextIndex = (currentIndex + 1) % sectionNames.size
+		jumpToSection(sectionNames[nextIndex])
 	}
 
 	private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
@@ -573,14 +640,11 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			velocityX: Float,
 			velocityY: Float,
 		): Boolean {
+			// The board always scrolls vertically on its own, so a horizontal swipe is free to use
+			// for jumping between sections.
 			val diffX = e2.x - (e1?.x ?: 0f)
-			val diffY = e2.y - (e1?.y ?: 0f)
 
-			if (
-				scroll &&
-				abs(if (vertical) diffX else diffY) > SWIPE_THRESHOLD &&
-				abs(if (vertical) velocityX else velocityY) > SWIPE_VELOCITY_THRESHOLD
-			) {
+			if (scroll && abs(diffX) > SWIPE_THRESHOLD && abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
 				if (diffX > 0) {
 					// Swipe right
 					switchToPreviousPack()
@@ -612,4 +676,19 @@ fun trimString(str: String?): String {
 		return str.substring(0, 32) + "..."
 	}
 	return str
+}
+
+/**
+ * prettifyPackName
+ *
+ * Turn a sticker pack's directory name into a readable section header, e.g. "cat_memes" ->
+ * "Cat Memes"
+ *
+ *  @param name: String
+ *  @return String
+ */
+fun prettifyPackName(name: String): String {
+	return name.split('_', '-', ' ')
+		.filter { it.isNotEmpty() }
+		.joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
 }
