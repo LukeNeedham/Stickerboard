@@ -85,4 +85,5 @@ Copyright © Randy Zhou</string>
 	<string name="fallback_041">E041: Unexpected IOException when converting sticker</string>
 	<!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pack: %2$s)</string>
+	<string name="recent_heading">Recently used</string>
 </resources>

@@ -10,7 +10,8 @@
 		android:id="@+id/stickerButton"
 		android:layout_width="@dimen/pack_dimens"
 		android:layout_height="@dimen/pack_dimens"
-		android:background="@color/bg"
+		android:background="@drawable/nav_icon_background"
+		android:clipToOutline="true"
 		android:contentDescription="@string/pack_icon"
 		android:cropToPadding="true"
 		android:scaleType="fitCenter" />
