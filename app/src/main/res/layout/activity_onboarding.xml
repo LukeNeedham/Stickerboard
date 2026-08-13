@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/bg"
+	android:orientation="vertical">
+
+	<Button
+		android:id="@+id/onboardingSkipBtn"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="end"
+		android:layout_margin="@dimen/content_margin"
+		android:background="@android:color/transparent"
+		android:onClick="onboardingSkip"
+		android:text="@string/onboarding_skip_button"
+		android:textColor="@color/accent"
+		android:textSize="@dimen/text_size_body" />
+
+	<ViewFlipper
+		android:id="@+id/onboardingFlipper"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1">
+
+		<!-- Page 1: Welcome -->
+		<androidx.core.widget.NestedScrollView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+			<LinearLayout
+				style="@style/widthMatchHeightWrap"
+				android:orientation="vertical"
+				android:padding="@dimen/content_margin">
+
+				<com.google.android.material.card.MaterialCardView style="@style/card">
+					<LinearLayout
+						style="@style/cardchild"
+						android:orientation="vertical">
+
+						<TextView
+							style="@style/heading"
+							android:text="@string/onboarding_welcome_heading" />
+
+						<TextView
+							style="@style/body_text"
+							android:text="@string/onboarding_welcome_text" />
+					</LinearLayout>
+				</com.google.android.material.card.MaterialCardView>
+			</LinearLayout>
+		</androidx.core.widget.NestedScrollView>
+
+		<!-- Page 2: Enable Keyboard -->
+		<androidx.core.widget.NestedScrollView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+			<LinearLayout
+				style="@style/widthMatchHeightWrap"
+				android:orientation="vertical"
+				android:padding="@dimen/content_margin">
+
+				<com.google.android.material.card.MaterialCardView style="@style/card">
+					<LinearLayout
+						style="@style/cardchild"
+						android:orientation="vertical">
+
+						<TextView
+							style="@style/heading"
+							android:text="@string/onboarding_keyboard_heading" />
+
+						<TextView
+							style="@style/body_text"
+							android:text="@string/onboarding_keyboard_text" />
+
+						<Button
+							style="@style/button"
+							android:onClick="enableKeyboard"
+							android:text="@string/enable_keyboard_button"
+							app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+					</LinearLayout>
+				</com.google.android.material.card.MaterialCardView>
+			</LinearLayout>
+		</androidx.core.widget.NestedScrollView>
+
+		<!-- Page 3: Choose Sticker Source -->
+		<androidx.core.widget.NestedScrollView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+			<LinearLayout
+				style="@style/widthMatchHeightWrap"
+				android:orientation="vertical"
+				android:padding="@dimen/content_margin">
+
+				<com.google.android.material.card.MaterialCardView style="@style/card">
+					<LinearLayout
+						style="@style/cardchild"
+						android:orientation="vertical">
+
+						<TextView
+							style="@style/heading"
+							android:text="@string/onboarding_folder_heading" />
+
+						<TextView
+							style="@style/body_text"
+							android:text="@string/onboarding_folder_text" />
+
+						<Button
+							android:id="@+id/onboardingChooseDirBtn"
+							style="@style/button"
+							android:onClick="chooseDir"
+							android:text="@string/update_sticker_pack_button"
+							app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+
+						<com.google.android.material.progressindicator.LinearProgressIndicator
+							android:id="@+id/onboardingProgressIndicator"
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:visibility="gone" />
+					</LinearLayout>
+				</com.google.android.material.card.MaterialCardView>
+			</LinearLayout>
+		</androidx.core.widget.NestedScrollView>
+	</ViewFlipper>
+
+	<TextView
+		android:id="@+id/onboardingStepLabel"
+		style="@style/body_text"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginVertical="@dimen/zero"
+		android:gravity="center" />
+
+	<LinearLayout
+		style="@style/widthMatchHeightWrap"
+		android:orientation="horizontal"
+		android:padding="@dimen/content_margin">
+
+		<Button
+			android:id="@+id/onboardingBackBtn"
+			style="@style/button"
+			android:layout_width="0dp"
+			android:layout_weight="1"
+			android:layout_marginEnd="@dimen/content_margin"
+			android:onClick="onboardingBack"
+			android:text="@string/onboarding_back_button"
+			app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+
+		<Button
+			android:id="@+id/onboardingNextBtn"
+			style="@style/button"
+			android:layout_width="0dp"
+			android:layout_weight="1"
+			android:onClick="onboardingNext"
+			android:text="@string/onboarding_next_button"
+			app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+	</LinearLayout>
+</LinearLayout>

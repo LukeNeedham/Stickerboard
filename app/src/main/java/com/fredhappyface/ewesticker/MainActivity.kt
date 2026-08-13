@@ -48,6 +48,14 @@ class MainActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		// Inflate view
 		super.onCreate(savedInstanceState)
+
+		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+		if (!isOnboardingComplete()) {
+			startActivity(Intent(this, OnboardingActivity::class.java))
+			finish()
+			return
+		}
+
 		setContentView(R.layout.activity_main)
 
 		startLogger(filesDir)
@@ -63,7 +71,6 @@ class MainActivity : AppCompatActivity() {
 		markwon.setMarkdown(linksText, getString(R.string.links_text))
 
 		// Set late-init attrs
-		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 		this.backupSharedPreferences =
 			this.getSharedPreferences("backup_prefs", Context.MODE_PRIVATE)
 
@@ -312,6 +319,24 @@ class MainActivity : AppCompatActivity() {
 			)
 		findViewById<TextView>(R.id.stickerPackInfoTotal).text =
 			this.sharedPreferences.getInt("numStickersImported", 0).toString()
+	}
+
+	/**
+	 * Checks whether the user has completed the onboarding flow. Installs that already had a
+	 * sticker directory configured before onboarding existed are treated as already onboarded, so
+	 * existing users aren't sent through it retroactively.
+	 *
+	 * @return Boolean true if onboarding should be skipped
+	 */
+	private fun isOnboardingComplete(): Boolean {
+		if (this.sharedPreferences.getBoolean("onboardingComplete", false)) {
+			return true
+		}
+		if (this.sharedPreferences.contains("stickerDirPath")) {
+			this.sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
+			return true
+		}
+		return false
 	}
 
 	/** Reusable function to warn about changing preferences */
