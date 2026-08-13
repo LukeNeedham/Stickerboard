@@ -324,6 +324,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	 */
 	override fun onComputeInsets(outInsets: Insets) {
 		super.onComputeInsets(outInsets)
+		// The system can query insets before onCreateInputView() has run (e.g. while the input
+		// view is still being set up), so these views may not exist yet.
+		if (!this::keyboardRoot.isInitialized || !this::resizableArea.isInitialized) return
 		val topInset = (this.keyboardRoot.height - this.resizableArea.height).coerceAtLeast(0)
 		outInsets.contentTopInsets = topInset
 		outInsets.visibleTopInsets = topInset
