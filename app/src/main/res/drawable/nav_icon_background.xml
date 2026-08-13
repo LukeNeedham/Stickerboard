@@ -2,7 +2,8 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 	<item android:state_selected="true">
 		<shape android:shape="rectangle">
-			<solid android:color="@color/accent_a" />
+			<solid android:color="@color/accent" />
+			<stroke android:width="1.5dp" android:color="@color/fg" />
 			<corners android:radius="@dimen/nav_icon_corner" />
 		</shape>
 	</item>
