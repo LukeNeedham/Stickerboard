@@ -8,6 +8,7 @@ import android.os.Build.VERSION.SDK_INT
 import android.view.GestureDetector
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -44,6 +45,13 @@ import kotlin.math.min
 
 private const val SWIPE_THRESHOLD = 1
 private const val SWIPE_VELOCITY_THRESHOLD = 1
+
+/** Bounds for [ImageKeyboard.iconsPerX], matching the settings screen's SeekBar range. */
+private const val MIN_ICONS_PER_X = 2
+private const val MAX_ICONS_PER_X = 6
+
+/** Cumulative pinch scale factor needed to change iconsPerX by one column. */
+private const val PINCH_STEP_THRESHOLD = 1.15f
 
 /** Fixed pixel height of the scrollable board viewport. */
 private const val KEYBOARD_HEIGHT_PX = 800
@@ -98,6 +106,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private var qwertyWidth = 0
 
 	private lateinit var gestureDetector: GestureDetector
+	private lateinit var scaleGestureDetector: ScaleGestureDetector
 
 	//  The unified, vertically-scrolling board holding every pack's stickers
 	private lateinit var boardRecyclerView: RecyclerView
@@ -148,7 +157,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.insensitiveSort = this.backupSharedPreferences.getBoolean("insensitiveSort", false)
 		this.isPngFallback = this.backupSharedPreferences.getBoolean("isPngFallback", true)
 
-		this.iconsPerX = this.backupSharedPreferences.getInt("iconsPerX", 3)
+		this.iconsPerX = this.backupSharedPreferences.getInt("iconsPerX", 4)
 		this.totalIconPadding =
 			(resources.getDimension(R.dimen.sticker_padding) * 2 * (this.iconsPerX + 1)).toInt()
 		//  Constants
@@ -198,6 +207,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	override fun onCreateInputView(): View {
 		val keyboardLayout = View.inflate(baseContext, R.layout.keyboard_layout, null)
 		gestureDetector = GestureDetector(baseContext, GestureListener())
+		scaleGestureDetector = ScaleGestureDetector(baseContext, PinchZoomListener())
 
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
@@ -325,9 +335,52 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				}
 			},
 		)
+		recyclerView.addOnItemTouchListener(
+			object : RecyclerView.OnItemTouchListener {
+				override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+					scaleGestureDetector.onTouchEvent(e)
+					// Once a second finger is down this is a pinch, not a tap/ swipe on a sticker -
+					// intercept so children don't also react to it.
+					return e.pointerCount > 1
+				}
+
+				override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+					scaleGestureDetector.onTouchEvent(e)
+				}
+
+				override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
+			},
+		)
 
 		this.boardRecyclerView = recyclerView
 		showBoard()
+	}
+
+	/**
+	 * Change how many stickers are shown per row, clamped to [MIN_ICONS_PER_X, MAX_ICONS_PER_X].
+	 * Persists the new value and resizes the already-built board in place (no rebuild), so scroll
+	 * position is preserved.
+	 *
+	 * @param requestedIconsPerX the desired iconsPerX, before clamping
+	 */
+	private fun updateIconsPerX(requestedIconsPerX: Int) {
+		val newIconsPerX = requestedIconsPerX.coerceIn(MIN_ICONS_PER_X, MAX_ICONS_PER_X)
+		if (newIconsPerX == this.iconsPerX) return
+		this.iconsPerX = newIconsPerX
+		this.backupSharedPreferences.edit().putInt("iconsPerX", newIconsPerX).apply()
+
+		this.totalIconPadding =
+			(resources.getDimension(R.dimen.sticker_padding) * 2 * (this.iconsPerX + 1)).toInt()
+		this.iconSize =
+			(
+				(resources.displayMetrics.widthPixels - this.totalIconPadding) /
+					this.iconsPerX.toFloat()
+				)
+				.toInt()
+
+		if (!::boardRecyclerView.isInitialized) return
+		(this.boardRecyclerView.layoutManager as? GridLayoutManager)?.spanCount = this.iconsPerX
+		(this.boardRecyclerView.adapter as? StickerBoardAdapter)?.updateIconSize(this.iconSize)
 	}
 
 	/**
@@ -678,6 +731,31 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			}
 
 			return false
+		}
+	}
+
+	/**
+	 * Pinch to zoom: spreading fingers apart shows fewer, bigger stickers per row; pinching them
+	 * together shows more, smaller stickers per row.
+	 */
+	private inner class PinchZoomListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+		private var cumulativeScale = 1f
+
+		override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+			cumulativeScale = 1f
+			return true
+		}
+
+		override fun onScale(detector: ScaleGestureDetector): Boolean {
+			cumulativeScale *= detector.scaleFactor
+			if (cumulativeScale > PINCH_STEP_THRESHOLD) {
+				updateIconsPerX(iconsPerX - 1)
+				cumulativeScale = 1f
+			} else if (cumulativeScale < 1f / PINCH_STEP_THRESHOLD) {
+				updateIconsPerX(iconsPerX + 1)
+				cumulativeScale = 1f
+			}
+			return true
 		}
 	}
 }
