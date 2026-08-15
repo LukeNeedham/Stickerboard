@@ -1,6 +1,5 @@
 /app/debug
 /app/release
-/documentation/reference
 
 # Gradle files
 .gradle/

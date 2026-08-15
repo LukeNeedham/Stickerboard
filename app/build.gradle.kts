@@ -1,34 +1,7 @@
 plugins {
 	id("com.android.application")
 	id("kotlin-android")
-	id("org.jetbrains.dokka")
 	id("org.jlleitschuh.gradle.ktlint")
-}
-
-tasks.dokkaGfm.configure {
-	outputDirectory.set(file(layout.buildDirectory.dir("../../documentation/reference")))
-	dokkaSourceSets {
-		named("main") {
-			skipDeprecated.set(true)
-			skipEmptyPackages.set(true)
-			sourceRoots.from(file("src/main/java"))
-			suppressInheritedMembers.set(true)
-			includeNonPublic.set(true)
-		}
-	}
-}
-
-tasks.register("genDocs") {
-	val ref = layout.buildDirectory.dir("../../documentation/reference")
-	delete(ref)
-	dependsOn("dokkaGfm")
-	doLast {
-		copy {
-			from("${ref.get()}/index.md")
-			into(ref.get())
-			rename { "README.md" }
-		}
-	}
 }
 
 android {
@@ -87,7 +60,6 @@ android {
 }
 
 dependencies {
-	dokkaPlugin("org.jetbrains.dokka:android-documentation-plugin:2.0.0")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
 	implementation("androidx.core:core-ktx:1.15.0")
 	implementation("androidx.appcompat:appcompat:1.7.0")
