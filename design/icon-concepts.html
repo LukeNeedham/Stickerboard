@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StickerBoard Icon Directions</title>
+<style>
+  :root {
+    --bg: #eef2f1;
+    --surface: #ffffff;
+    --surface-2: #e4eae8;
+    --ink: #17211f;
+    --muted: #5b6b67;
+    --line: #d5dedb;
+    --accent: #0fa3a2;
+    --accent-soft: #14c0bd;
+    --accent-ink: #063c3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11181a;
+      --surface: #1b2426;
+      --surface-2: #212b2d;
+      --ink: #e7ede9;
+      --muted: #93a29d;
+      --line: #2c3739;
+      --accent: #2bd9d3;
+      --accent-soft: #3ee6e0;
+      --accent-ink: #d6fbf8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #11181a;
+    --surface: #1b2426;
+    --surface-2: #212b2d;
+    --ink: #e7ede9;
+    --muted: #93a29d;
+    --line: #2c3739;
+    --accent: #2bd9d3;
+    --accent-soft: #3ee6e0;
+    --accent-ink: #d6fbf8;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+    padding: 48px 24px 80px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header { margin-bottom: 44px; }
+  .eyebrow {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    display: inline-block;
+    padding: 5px 11px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 800;
+    margin: 0 0 10px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  header p {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .icon-shell {
+    flex: none;
+    width: 96px;
+    height: 96px;
+    border-radius: 26px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px -8px rgba(0,0,0,0.35);
+  }
+  .icon-shell svg { display: block; width: 100%; height: 100%; }
+
+  .card-name {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+  .card-tag {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .card p.rationale {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .sizes {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .sizes .icon-shell.sm { width: 40px; height: 40px; border-radius: 11px; box-shadow: none; }
+  .sizes .icon-shell.xs { width: 24px; height: 24px; border-radius: 7px; box-shadow: none; }
+  .sizes span {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  footer {
+    margin-top: 48px;
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 13.5px;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">StickerBoard &middot; App Icon</span>
+    <h1>Five directions for the new launcher icon</h1>
+    <p>Current icon is the inherited EweSticker mascot on brand teal (#0fa3a2). Each concept below is built for Android's adaptive-icon system — a full-bleed background layer plus a foreground mark clear of the safe-zone edges — so any of them can be produced as real mipmap assets next.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- 1: Peel -->
+    <div class="card">
+      <div class="card-top">
+        <div class="icon-shell">
+          <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+            <rect width="108" height="108" fill="#0fa3a2"/>
+            <rect width="108" height="108" fill="url(#g1)"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="108" y2="108">
+                <stop offset="0" stop-color="#14c0bd"/>
+                <stop offset="1" stop-color="#0b8685"/>
+              </linearGradient>
+            </defs>
+            <path d="M27 26 h40 a15 15 0 0 1 15 15 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V30 a4 4 0 0 1 4 -4 Z" fill="#0a6f6e" opacity="0.35"/>
+            <path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/>
+            <path d="M65 24 v13 a4 4 0 0 0 4 4 h13 Z" fill="#cfe9e8"/>
+            <path d="M65 24 v13 a4 4 0 0 0 4 4 h13 Z" fill="#0fa3a2" opacity="0.18"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-tag">Direction 1</div>
+          <p class="card-name">Peel</p>
+        </div>
+      </div>
+      <p class="rationale">The universal sticker cue: a die-cut square with the corner curling back. Reads instantly as "sticker" even at 24px, and the curl leaves an empty triangle you could later fill with a tiny brand mark.</p>
+      <div class="sizes">
+        <div class="icon-shell sm"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/><path d="M65 24 v13 a4 4 0 0 0 4 4 h13 Z" fill="#0fa3a2" opacity="0.35"/></svg></div>
+        <div class="icon-shell xs"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/></svg></div>
+        <span>home screen scale</span>
+      </div>
+    </div>
+
+    <!-- 2: Board -->
+    <div class="card">
+      <div class="card-top">
+        <div class="icon-shell">
+          <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+            <rect width="108" height="108" fill="#0b8685"/>
+            <g transform="rotate(-10 40 42)">
+              <rect x="24" y="24" width="34" height="34" rx="7" fill="#ff8a65"/>
+            </g>
+            <g transform="rotate(8 72 40)">
+              <rect x="56" y="22" width="30" height="30" rx="7" fill="#ffe08a"/>
+            </g>
+            <g transform="rotate(-6 56 76)">
+              <rect x="38" y="58" width="36" height="36" rx="8" fill="#ffffff"/>
+              <path d="M62 58 v9 a4 4 0 0 0 4 4 h9 Z" fill="#0b8685" opacity="0.3"/>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <div class="card-tag">Direction 2</div>
+          <p class="card-name">Board</p>
+        </div>
+      </div>
+      <p class="rationale">Takes the app's actual name literally: three stickers of different colors overlapping at slight angles, like a real sticker board. Most distinctive silhouette of the set, and scales well to a monochrome themed-icon shape.</p>
+      <div class="sizes">
+        <div class="icon-shell sm"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0b8685"/><g transform="rotate(-10 40 42)"><rect x="24" y="24" width="34" height="34" rx="7" fill="#ff8a65"/></g><g transform="rotate(8 72 40)"><rect x="56" y="22" width="30" height="30" rx="7" fill="#ffe08a"/></g><g transform="rotate(-6 56 76)"><rect x="38" y="58" width="36" height="36" rx="8" fill="#ffffff"/></g></svg></div>
+        <div class="icon-shell xs"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0b8685"/><g transform="rotate(-10 40 42)"><rect x="24" y="24" width="34" height="34" rx="7" fill="#ff8a65"/></g><g transform="rotate(8 72 40)"><rect x="56" y="22" width="30" height="30" rx="7" fill="#ffe08a"/></g><g transform="rotate(-6 56 76)"><rect x="38" y="58" width="36" height="36" rx="8" fill="#ffffff"/></g></svg></div>
+        <span>home screen scale</span>
+      </div>
+    </div>
+
+    <!-- 3: Stack -->
+    <div class="card">
+      <div class="card-top">
+        <div class="icon-shell">
+          <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+            <rect width="108" height="108" fill="#0fa3a2"/>
+            <g transform="rotate(11 54 54)">
+              <rect x="30" y="30" width="42" height="42" rx="9" fill="#0a6f6e"/>
+            </g>
+            <g transform="rotate(-7 54 54)">
+              <rect x="28" y="28" width="42" height="42" rx="9" fill="#5fd1cf"/>
+            </g>
+            <rect x="30" y="30" width="42" height="42" rx="9" fill="#ffffff"/>
+            <path d="M60 30 v10 a4 4 0 0 0 4 4 h8 Z" fill="#0fa3a2" opacity="0.25"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-tag">Direction 3</div>
+          <p class="card-name">Stack</p>
+        </div>
+      </div>
+      <p class="rationale">A fanned stack of three sticker cards on one brand-teal background &mdash; calmer and more geometric than Board, closer to the app's existing teal identity. Good middle ground between "new" and "familiar."</p>
+      <div class="sizes">
+        <div class="icon-shell sm"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><g transform="rotate(11 54 54)"><rect x="30" y="30" width="42" height="42" rx="9" fill="#0a6f6e"/></g><g transform="rotate(-7 54 54)"><rect x="28" y="28" width="42" height="42" rx="9" fill="#5fd1cf"/></g><rect x="30" y="30" width="42" height="42" rx="9" fill="#ffffff"/></svg></div>
+        <div class="icon-shell xs"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><g transform="rotate(11 54 54)"><rect x="30" y="30" width="42" height="42" rx="9" fill="#0a6f6e"/></g><g transform="rotate(-7 54 54)"><rect x="28" y="28" width="42" height="42" rx="9" fill="#5fd1cf"/></g><rect x="30" y="30" width="42" height="42" rx="9" fill="#ffffff"/></svg></div>
+        <span>home screen scale</span>
+      </div>
+    </div>
+
+    <!-- 4: Ewe Redux -->
+    <div class="card">
+      <div class="card-top">
+        <div class="icon-shell">
+          <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+            <rect width="108" height="108" fill="#0fa3a2"/>
+            <ellipse cx="40" cy="38" rx="10" ry="13" fill="#ffffff"/>
+            <ellipse cx="68" cy="38" rx="10" ry="13" fill="#ffffff"/>
+            <circle cx="54" cy="58" r="30" fill="#ffffff"/>
+            <circle cx="45" cy="55" r="4.5" fill="#17211f"/>
+            <circle cx="63" cy="55" r="4.5" fill="#17211f"/>
+            <path d="M47 68 q7 6 14 0" stroke="#17211f" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-tag">Direction 4</div>
+          <p class="card-name">Ewe Redux</p>
+        </div>
+      </div>
+      <p class="rationale">Keeps the sheep mascot inherited from EweSticker but flattens it to simple geometric shapes instead of the current hand-drawn outline. Preserves brand history and warmth while looking modern at small sizes.</p>
+      <div class="sizes">
+        <div class="icon-shell sm"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><ellipse cx="40" cy="38" rx="10" ry="13" fill="#ffffff"/><ellipse cx="68" cy="38" rx="10" ry="13" fill="#ffffff"/><circle cx="54" cy="58" r="30" fill="#ffffff"/><circle cx="45" cy="55" r="4.5" fill="#17211f"/><circle cx="63" cy="55" r="4.5" fill="#17211f"/></svg></div>
+        <div class="icon-shell xs"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><ellipse cx="40" cy="38" rx="10" ry="13" fill="#ffffff"/><ellipse cx="68" cy="38" rx="10" ry="13" fill="#ffffff"/><circle cx="54" cy="58" r="30" fill="#ffffff"/></svg></div>
+        <span>home screen scale</span>
+      </div>
+    </div>
+
+    <!-- 5: Mark -->
+    <div class="card">
+      <div class="card-top">
+        <div class="icon-shell">
+          <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+            <rect width="108" height="108" fill="#0a6f6e"/>
+            <path d="M70 30 a15 15 0 0 0 -15 -8 a15 15 0 0 0 -13 22 l14 14 a15 15 0 0 1 -13 22 a15 15 0 0 1 -15 -8"
+              stroke="#ffffff" stroke-width="11" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-tag">Direction 5</div>
+          <p class="card-name">Mark</p>
+        </div>
+      </div>
+      <p class="rationale">An abstract "S" built as a single ribbon stroke &mdash; reads as a sticker peel and a wordmark initial at once. The most minimal, brand-forward option; pairs well as a small monochrome mark in notifications and the keyboard switcher.</p>
+      <div class="sizes">
+        <div class="icon-shell sm"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0a6f6e"/><path d="M70 30 a15 15 0 0 0 -15 -8 a15 15 0 0 0 -13 22 l14 14 a15 15 0 0 1 -13 22 a15 15 0 0 1 -15 -8" stroke="#ffffff" stroke-width="11" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="icon-shell xs"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0a6f6e"/><path d="M70 30 a15 15 0 0 0 -15 -8 a15 15 0 0 0 -13 22 l14 14 a15 15 0 0 1 -13 22 a15 15 0 0 1 -15 -8" stroke="#ffffff" stroke-width="11" fill="none" stroke-linecap="round"/></svg></div>
+        <span>home screen scale</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    Backgrounds fill the full 108&times;108dp adaptive-icon canvas; foreground marks stay inside the ~66dp safe zone so they survive circle, squircle, and rounded-square launcher masks. Pick a direction (or mix elements from two) and I'll build the real vector drawables plus <code>ic_launcher_foreground</code>/<code>_mono</code>/background resources for every density bucket.
+  </footer>
+</div>
+</body>
+</html>
