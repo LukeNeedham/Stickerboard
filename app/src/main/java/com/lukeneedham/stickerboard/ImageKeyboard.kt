@@ -108,8 +108,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	// onCreateInputView
 	private lateinit var keyboardRoot: ViewGroup
 	private lateinit var resizableArea: ViewGroup
-	private lateinit var topHScrollView: View
 	private lateinit var packsList: ViewGroup
+	private lateinit var boardArea: ViewGroup
+	private lateinit var topHScrollView: View
 	private lateinit var packContent: ViewGroup
 	private lateinit var pullBar: View
 	private lateinit var closeButton: ImageButton
@@ -119,16 +120,22 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private var maxKeyboardHeightPx = 0
 	private var qwertyWidth = 0
 
-	// Non-null while the sticker long-press preview is showing: the height of the pack icon row
-	// (topHScrollView), which is hidden during preview so packContent can reclaim that space and
-	// fill the full content area below the shared top bar.
-	private var stickerPreviewTabBarHeight: Int? = null
-
 	private lateinit var gestureDetector: GestureDetector
 	private lateinit var scaleGestureDetector: ScaleGestureDetector
 
 	//  The unified, vertically-scrolling board holding every pack's stickers
 	private lateinit var boardRecyclerView: RecyclerView
+
+	// Cached search-mode content (query box + qwerty + results), built the first time search mode
+	// is entered and reused on every later visit - including returning from the sticker preview -
+	// so the query and results survive instead of resetting. Rebuilt from scratch whenever
+	// onCreateInputView() runs again, since it belongs to a now-stale view hierarchy.
+	private var searchContentView: View? = null
+
+	// Resizes the current search results in place (no rebuild) to fit the current keyboard height.
+	// Non-null once search content has been built; called after a resize so results keep filling
+	// the available space instead of staying the size they were when search was opened.
+	private var resizeSearchResults: (() -> Unit)? = null
 
 	//  Ordered map of section-name -> adapter position of that section's header row
 	private var headerPositions: LinkedHashMap<String, Int> = LinkedHashMap()
@@ -228,10 +235,16 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		gestureDetector = GestureDetector(baseContext, GestureListener())
 		scaleGestureDetector = ScaleGestureDetector(baseContext, PinchZoomListener())
 
+		// This view hierarchy is brand new, so any cached search content from a previous one -
+		// this method can run again on the same service instance - is now stale.
+		this.searchContentView = null
+		this.resizeSearchResults = null
+
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.resizableArea = keyboardLayout.findViewById(R.id.resizableArea)
-		this.topHScrollView = keyboardLayout.findViewById(R.id.topHScrollView)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
+		this.boardArea = keyboardLayout.findViewById(R.id.boardArea)
+		this.topHScrollView = keyboardLayout.findViewById(R.id.topHScrollView)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
 		this.pullBar = keyboardLayout.findViewById(R.id.pullBar)
 		this.closeButton = keyboardLayout.findViewById(R.id.closeButton)
@@ -249,7 +262,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardHeight =
 			this.backupSharedPreferences.getInt("keyboardHeight", KEYBOARD_HEIGHT_PX)
 				.coerceIn(MIN_KEYBOARD_HEIGHT_PX, this.maxKeyboardHeightPx)
-		updatePackContentHeight()
+		this.boardArea.layoutParams?.height = this.keyboardHeight
 		setupPullBar()
 		setupTopBarButtons()
 		createPackIcons()
@@ -277,7 +290,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				View.GONE
 			}
 		this.searchButton.load(getDrawable(R.drawable.ic_search))
-		this.searchButton.setOnClickListener { searchView() }
+		this.searchButton.setOnClickListener {
+			if (this.activeSection == SEARCH_TAG) {
+				exitSearchView()
+			} else {
+				searchView()
+			}
+		}
 	}
 
 	/**
@@ -329,7 +348,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val alreadyScheduled = this.pendingKeyboardHeight != null
 		this.pendingKeyboardHeight = height
 		if (alreadyScheduled) return
-		this.packContent.postOnAnimation { applyPendingKeyboardHeight() }
+		this.boardArea.postOnAnimation { applyPendingKeyboardHeight() }
 	}
 
 	/** Apply the most recently scheduled height, if any haven't been applied yet. */
@@ -338,19 +357,14 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.pendingKeyboardHeight = null
 		if (target == this.keyboardHeight) return
 		this.keyboardHeight = target
-		updatePackContentHeight()
-	}
-
-	/**
-	 * Resize packContent to [keyboardHeight], plus the pack icon row's height while it's hidden
-	 * for the sticker preview - so packContent always exactly fills the space below the shared
-	 * top bar, in every mode, and stays in step with the keyboard while the pull bar is dragged.
-	 */
-	private fun updatePackContentHeight() {
-		val previewExtra = this.stickerPreviewTabBarHeight ?: 0
-		this.packContent.layoutParams?.height =
-			(this.keyboardHeight + previewExtra).coerceAtMost(this.maxKeyboardHeightPx)
-		this.packContent.requestLayout()
+		this.boardArea.layoutParams?.height = target
+		this.boardArea.requestLayout()
+		// The results strip's own height tracks boardArea automatically via layout_weight, but the
+		// sticker size within it is computed in code, so it needs an explicit resize to keep
+		// filling the resized space instead of staying the size it was when search was opened.
+		if (this.activeSection == SEARCH_TAG) {
+			this.resizeSearchResults?.invoke()
+		}
 	}
 
 	/**
@@ -564,11 +578,22 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 	/** Ensure the board (as opposed to e.g. the search view) is the content on screen. */
 	private fun showBoard() {
+		this.topHScrollView.visibility = View.VISIBLE
 		if (packContent.childCount == 1 && packContent.getChildAt(0) === this.boardRecyclerView) {
 			return
 		}
 		packContent.removeAllViewsInLayout()
 		packContent.addView(this.boardRecyclerView)
+	}
+
+	/** Leave the search view and return to the board, honoring the pack that was active before. */
+	private fun exitSearchView() {
+		val target = if (this.headerPositions.containsKey(this.activePack)) {
+			this.activePack
+		} else {
+			this.headerPositions.keys.firstOrNull()
+		}
+		target?.let { jumpToSection(it) }
 	}
 
 	/**
@@ -599,7 +624,25 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	}
 
 	/**
-	 * Set the current tab to the search page/ view
+	 * Height available for the results strip below the query box and QWERTY rows, at the current
+	 * keyboard height - used to size result stickers, not to set any layout height directly (the
+	 * results strip fills that space itself via layout_weight).
+	 */
+	private fun currentSearchResultsHeight(): Int {
+		return (
+			this.keyboardHeight -
+				(
+					resources.getDimension(R.dimen.qwerty_row_height) +
+						resources.getDimension(R.dimen.qwerty_row_height) * 4
+					)
+			).toInt()
+	}
+
+	/**
+	 * Switch to search mode: highlight the search nav icon, hide the pack tab bar, and show the
+	 * search content (query box + qwerty + results) - building it the first time and reusing it on
+	 * every later visit, including returning from the sticker preview, so the query and results
+	 * survive instead of resetting.
 	 */
 	private fun searchView() {
 		XLog.i("Switching to search")
@@ -609,21 +652,28 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		}
 		this.searchButton.isSelected = true
 		this.activeSection = SEARCH_TAG
+		// packContent fills boardArea entirely once the tab bar is hidden (it's boardArea's only
+		// weighted child), so its resulting height is exactly keyboardHeight - no manual patching
+		// of packContent's own height needed.
+		this.topHScrollView.visibility = View.GONE
 
+		val content = this.searchContentView ?: buildSearchContent().also { this.searchContentView = it }
+		packContent.removeAllViewsInLayout()
+		packContent.addView(content)
+		// The keyboard may have been resized while search mode was hidden (e.g. dragged from the
+		// board), which the cached results wouldn't have picked up - resize them now to match.
+		this.resizeSearchResults?.invoke()
+	}
+
+	/** Build the search UI once; [searchContentView] caches the result for reuse. */
+	private fun buildSearchContent(): View {
 		qwertyWidth = (resources.displayMetrics.widthPixels / 10.4).toInt()
 
 		val qwertyLayout = layoutInflater.inflate(R.layout.qwerty_layout, packContent, false)
 		val searchText = qwertyLayout.findViewById<TextView>(R.id.search_text)
 		val searchResults = qwertyLayout.findViewById<LinearLayout>(R.id.search_results)
 
-		val searchResultsHeight =
-			packContent.layoutParams.height -
-				(
-					resources.getDimension(R.dimen.qwerty_row_height) +
-						resources.getDimension(R.dimen.qwerty_row_height) * 4
-					)
-
-		searchResults.layoutParams.height = searchResultsHeight.toInt()
+		var searchResultsAdapter: StickerPackAdapter? = null
 
 		fun searchStickers(query: String): List<File> {
 			return this.allStickers.filter { it.name.contains(query, ignoreCase = true) }
@@ -632,12 +682,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		fun updateSearchResults(stickers: List<File>) {
 			val recyclerView = RecyclerView(baseContext)
 			val adapter = StickerPackAdapter(
-				(searchResultsHeight * 0.9).toInt(),
+				(currentSearchResultsHeight() * 0.9).toInt(),
 				stickers.take(128).toTypedArray(),
 				this,
 				gestureDetector,
 				this.vibrate,
 			)
+			searchResultsAdapter = adapter
 			val layoutManager = GridLayoutManager(
 				baseContext,
 				1,
@@ -648,6 +699,11 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			recyclerView.adapter = adapter
 			searchResults.removeAllViewsInLayout()
 			searchResults.addView(recyclerView)
+		}
+		// Called after a resize: resizes the existing results in place (no rebuild, so it stays
+		// cheap even mid-drag) to keep them filling the available space.
+		this.resizeSearchResults = {
+			searchResultsAdapter?.updateIconSize((currentSearchResultsHeight() * 0.9).toInt())
 		}
 
 		fun searchAppend(char: String) {
@@ -667,7 +723,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 		fun searchClear(char: String) {
 			searchText.text = ""
-			searchResults.removeAllViews()
+			updateSearchResults(searchStickers(""))
 		}
 
 		fun addKey(
@@ -724,8 +780,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		spacebar.layoutParams.width = qwertyWidth * 7
 		row4.addView(spacebar)
 
-		packContent.removeAllViewsInLayout()
-		packContent.addView(qwertyLayout)
+		// Show all stickers up front, before any query has been typed.
+		updateSearchResults(searchStickers(""))
+		return qwertyLayout
 	}
 
 	/**
@@ -811,9 +868,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	 *  @param sticker: File
 	 */
 	override fun onStickerLongClicked(sticker: File) {
-		this.stickerPreviewTabBarHeight = this.topHScrollView.height
+		// packContent fills boardArea entirely once the tab bar is hidden (it's boardArea's only
+		// weighted child), so its resulting height is exactly keyboardHeight - no manual patching
+		// of packContent's own height needed.
 		this.topHScrollView.visibility = View.GONE
-		updatePackContentHeight()
 
 		this.searchButton.isSelected = false
 		this.closeButton.load(getDrawable(R.drawable.ic_back))
@@ -843,12 +901,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 	/** Dismiss the sticker preview and restore whatever chrome/ content it replaced. */
 	private fun closeStickerPreview() {
-		this.stickerPreviewTabBarHeight = null
-		this.topHScrollView.visibility = View.VISIBLE
-		updatePackContentHeight()
 		setupTopBarButtons()
-		showBoard()
-		updateActiveNavButton(this.activePack)
+		if (this.activeSection == SEARCH_TAG) {
+			searchView()
+		} else {
+			showBoard()
+			updateActiveNavButton(this.activePack)
+		}
 	}
 
 	private fun sendAndCloseStickerPreview(sticker: File) {
