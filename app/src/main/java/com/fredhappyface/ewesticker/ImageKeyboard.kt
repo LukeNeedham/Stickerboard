@@ -126,6 +126,17 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	//  The unified, vertically-scrolling board holding every pack's stickers
 	private lateinit var boardRecyclerView: RecyclerView
 
+	// Cached search-mode content (query box + qwerty + results), built the first time search mode
+	// is entered and reused on every later visit - including returning from the sticker preview -
+	// so the query and results survive instead of resetting. Rebuilt from scratch whenever
+	// onCreateInputView() runs again, since it belongs to a now-stale view hierarchy.
+	private var searchContentView: View? = null
+
+	// Resizes the current search results in place (no rebuild) to fit the current keyboard height.
+	// Non-null once search content has been built; called after a resize so results keep filling
+	// the available space instead of staying the size they were when search was opened.
+	private var resizeSearchResults: (() -> Unit)? = null
+
 	//  Ordered map of section-name -> adapter position of that section's header row
 	private var headerPositions: LinkedHashMap<String, Int> = LinkedHashMap()
 	private var activeSection = ""
@@ -223,6 +234,11 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val keyboardLayout = View.inflate(baseContext, R.layout.keyboard_layout, null)
 		gestureDetector = GestureDetector(baseContext, GestureListener())
 		scaleGestureDetector = ScaleGestureDetector(baseContext, PinchZoomListener())
+
+		// This view hierarchy is brand new, so any cached search content from a previous one -
+		// this method can run again on the same service instance - is now stale.
+		this.searchContentView = null
+		this.resizeSearchResults = null
 
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.resizableArea = keyboardLayout.findViewById(R.id.resizableArea)
@@ -343,6 +359,12 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardHeight = target
 		this.boardArea.layoutParams?.height = target
 		this.boardArea.requestLayout()
+		// The results strip's own height tracks boardArea automatically via layout_weight, but the
+		// sticker size within it is computed in code, so it needs an explicit resize to keep
+		// filling the resized space instead of staying the size it was when search was opened.
+		if (this.activeSection == SEARCH_TAG) {
+			this.resizeSearchResults?.invoke()
+		}
 	}
 
 	/**
@@ -602,7 +624,25 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	}
 
 	/**
-	 * Set the current tab to the search page/ view
+	 * Height available for the results strip below the query box and QWERTY rows, at the current
+	 * keyboard height - used to size result stickers, not to set any layout height directly (the
+	 * results strip fills that space itself via layout_weight).
+	 */
+	private fun currentSearchResultsHeight(): Int {
+		return (
+			this.keyboardHeight -
+				(
+					resources.getDimension(R.dimen.qwerty_row_height) +
+						resources.getDimension(R.dimen.qwerty_row_height) * 4
+					)
+			).toInt()
+	}
+
+	/**
+	 * Switch to search mode: highlight the search nav icon, hide the pack tab bar, and show the
+	 * search content (query box + qwerty + results) - building it the first time and reusing it on
+	 * every later visit, including returning from the sticker preview, so the query and results
+	 * survive instead of resetting.
 	 */
 	private fun searchView() {
 		XLog.i("Switching to search")
@@ -617,20 +657,20 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		// of packContent's own height needed.
 		this.topHScrollView.visibility = View.GONE
 
+		val content = this.searchContentView ?: buildSearchContent().also { this.searchContentView = it }
+		packContent.removeAllViewsInLayout()
+		packContent.addView(content)
+	}
+
+	/** Build the search UI once; [searchContentView] caches the result for reuse. */
+	private fun buildSearchContent(): View {
 		qwertyWidth = (resources.displayMetrics.widthPixels / 10.4).toInt()
 
 		val qwertyLayout = layoutInflater.inflate(R.layout.qwerty_layout, packContent, false)
 		val searchText = qwertyLayout.findViewById<TextView>(R.id.search_text)
 		val searchResults = qwertyLayout.findViewById<LinearLayout>(R.id.search_results)
 
-		val searchResultsHeight =
-			this.keyboardHeight -
-				(
-					resources.getDimension(R.dimen.qwerty_row_height) +
-						resources.getDimension(R.dimen.qwerty_row_height) * 4
-					)
-
-		searchResults.layoutParams.height = searchResultsHeight.toInt()
+		var searchResultsAdapter: StickerPackAdapter? = null
 
 		fun searchStickers(query: String): List<File> {
 			return this.allStickers.filter { it.name.contains(query, ignoreCase = true) }
@@ -639,12 +679,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		fun updateSearchResults(stickers: List<File>) {
 			val recyclerView = RecyclerView(baseContext)
 			val adapter = StickerPackAdapter(
-				(searchResultsHeight * 0.9).toInt(),
+				(currentSearchResultsHeight() * 0.9).toInt(),
 				stickers.take(128).toTypedArray(),
 				this,
 				gestureDetector,
 				this.vibrate,
 			)
+			searchResultsAdapter = adapter
 			val layoutManager = GridLayoutManager(
 				baseContext,
 				1,
@@ -655,6 +696,11 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			recyclerView.adapter = adapter
 			searchResults.removeAllViewsInLayout()
 			searchResults.addView(recyclerView)
+		}
+		// Called after a resize: resizes the existing results in place (no rebuild, so it stays
+		// cheap even mid-drag) to keep them filling the available space.
+		this.resizeSearchResults = {
+			searchResultsAdapter?.updateIconSize((currentSearchResultsHeight() * 0.9).toInt())
 		}
 
 		fun searchAppend(char: String) {
@@ -674,7 +720,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 		fun searchClear(char: String) {
 			searchText.text = ""
-			searchResults.removeAllViews()
+			updateSearchResults(searchStickers(""))
 		}
 
 		fun addKey(
@@ -731,8 +777,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		spacebar.layoutParams.width = qwertyWidth * 7
 		row4.addView(spacebar)
 
-		packContent.removeAllViewsInLayout()
-		packContent.addView(qwertyLayout)
+		// Show all stickers up front, before any query has been typed.
+		updateSearchResults(searchStickers(""))
+		return qwertyLayout
 	}
 
 	/**
