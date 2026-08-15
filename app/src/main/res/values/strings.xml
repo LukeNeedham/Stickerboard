@@ -3,7 +3,8 @@
 	<string name="app_name" translatable="false">EweSticker</string>
 	<string name="pack_icon">Pack icon</string>
 	<string name="sticker_icon">Sticker icon</string>
-	<string name="close_sticker_preview">[tap to close sticker preview]</string>
+	<string name="close_sticker_preview">Close preview</string>
+	<string name="send_sticker">Send sticker</string>
 	<!-- Onboarding -->
 	<string name="onboarding_welcome_heading">Welcome to EweSticker</string>
 	<string name="onboarding_welcome_text">EweSticker is a keyboard for sending your own stickers, GIFs and short videos in any app. Let\'s get you set up in two quick steps.</string>
@@ -101,7 +102,6 @@ Copyright © Randy Zhou</string>
 	<string name="imported_034">E034: Reloading stickers failed, try choosing a sticker source directory</string>
 	<string name="fallback_041">E041: Unexpected IOException when converting sticker</string>
 	<!-- Keyboard -->
-	<string name="sticker_pack_info">%1$s (Pack: %2$s)</string>
 	<string name="recent_heading">Recently used</string>
 	<string name="recent_empty">No stickers used yet</string>
 </resources>
