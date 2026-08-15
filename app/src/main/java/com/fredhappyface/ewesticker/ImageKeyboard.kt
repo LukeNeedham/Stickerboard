@@ -660,6 +660,9 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val content = this.searchContentView ?: buildSearchContent().also { this.searchContentView = it }
 		packContent.removeAllViewsInLayout()
 		packContent.addView(content)
+		// The keyboard may have been resized while search mode was hidden (e.g. dragged from the
+		// board), which the cached results wouldn't have picked up - resize them now to match.
+		this.resizeSearchResults?.invoke()
 	}
 
 	/** Build the search UI once; [searchContentView] caches the result for reuse. */
