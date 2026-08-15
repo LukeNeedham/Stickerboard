@@ -66,6 +66,9 @@ private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
 /** Synthetic pack name used for the "recently used" section/ nav icon. */
 private const val RECENT_PACK_NAME = "__recentSticker__"
 
+/** Max number of rows the "recently used" section shows, regardless of iconsPerX/ zoom level. */
+private const val RECENT_ROW_LIMIT = 2
+
 /** Synthetic activeSection marker while the search view is showing. */
 private const val SEARCH_TAG = "__search__"
 
@@ -422,7 +425,8 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val items = mutableListOf<BoardItem>()
 		this.headerPositions = LinkedHashMap()
 
-		val recentStickers = this.recentCache.toFiles().reversedArray()
+		val recentStickers =
+			this.recentCache.toFiles().reversedArray().take(this.iconsPerX * RECENT_ROW_LIMIT)
 		this.headerPositions[RECENT_PACK_NAME] = items.size
 		items.add(BoardItem.Header(RECENT_PACK_NAME, getString(R.string.recent_heading)))
 		if (recentStickers.isEmpty()) {
@@ -503,7 +507,8 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	/**
 	 * Change how many stickers are shown per row, clamped to [MIN_ICONS_PER_X, MAX_ICONS_PER_X].
 	 * Persists the new value and resizes the already-built board in place (no rebuild), so scroll
-	 * position is preserved.
+	 * position is preserved. This also changes how many stickers fit in the recent section's
+	 * [RECENT_ROW_LIMIT] rows, so the board contents are recomputed to match.
 	 *
 	 * @param requestedIconsPerX the desired iconsPerX, before clamping
 	 */
@@ -525,6 +530,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		if (!::boardRecyclerView.isInitialized) return
 		(this.boardRecyclerView.layoutManager as? GridLayoutManager)?.spanCount = this.iconsPerX
 		(this.boardRecyclerView.adapter as? StickerBoardAdapter)?.updateIconSize(this.iconSize)
+		refreshBoard()
 	}
 
 	/**
