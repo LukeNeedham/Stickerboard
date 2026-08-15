@@ -110,6 +110,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private lateinit var keyboardRoot: ViewGroup
 	private lateinit var resizableArea: ViewGroup
 	private lateinit var packsList: ViewGroup
+	private lateinit var topHScrollView: View
 	private lateinit var packContent: ViewGroup
 	private lateinit var pullBar: View
 	private lateinit var closeButton: ImageButton
@@ -227,6 +228,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.resizableArea = keyboardLayout.findViewById(R.id.resizableArea)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
+		this.topHScrollView = keyboardLayout.findViewById(R.id.topHScrollView)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
 		this.pullBar = keyboardLayout.findViewById(R.id.pullBar)
 		this.closeButton = keyboardLayout.findViewById(R.id.closeButton)
@@ -281,7 +283,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 				View.GONE
 			}
 		this.searchButton.load(getDrawable(R.drawable.ic_search))
-		this.searchButton.setOnClickListener { searchView() }
+		this.searchButton.setOnClickListener {
+			if (this.activeSection == SEARCH_TAG) {
+				exitSearchView()
+			} else {
+				searchView()
+			}
+		}
 	}
 
 	/**
@@ -557,11 +565,22 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 	/** Ensure the board (as opposed to e.g. the search view) is the content on screen. */
 	private fun showBoard() {
+		this.topHScrollView.visibility = View.VISIBLE
 		if (packContent.childCount == 1 && packContent.getChildAt(0) === this.boardRecyclerView) {
 			return
 		}
 		packContent.removeAllViewsInLayout()
 		packContent.addView(this.boardRecyclerView)
+	}
+
+	/** Leave the search view and return to the board, honoring the pack that was active before. */
+	private fun exitSearchView() {
+		val target = if (this.headerPositions.containsKey(this.activePack)) {
+			this.activePack
+		} else {
+			this.headerPositions.keys.firstOrNull()
+		}
+		target?.let { jumpToSection(it) }
 	}
 
 	/**
@@ -602,6 +621,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		}
 		this.searchButton.isSelected = true
 		this.activeSection = SEARCH_TAG
+		this.topHScrollView.visibility = View.GONE
 
 		qwertyWidth = (resources.displayMetrics.widthPixels / 10.4).toInt()
 
