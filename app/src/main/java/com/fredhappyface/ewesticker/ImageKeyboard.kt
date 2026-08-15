@@ -566,6 +566,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	/** Ensure the board (as opposed to e.g. the search view) is the content on screen. */
 	private fun showBoard() {
 		this.topHScrollView.visibility = View.VISIBLE
+		if (this.packContent.layoutParams?.height != this.keyboardHeight) {
+			this.packContent.layoutParams?.height = this.keyboardHeight
+			this.packContent.requestLayout()
+		}
 		if (packContent.childCount == 1 && packContent.getChildAt(0) === this.boardRecyclerView) {
 			return
 		}
@@ -621,7 +625,13 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		}
 		this.searchButton.isSelected = true
 		this.activeSection = SEARCH_TAG
+
+		// Reclaim the tab bar's space for the board content, so the overall keyboard height
+		// stays the same as in normal mode instead of shrinking by the hidden tab bar's height.
+		val tabBarHeight = this.topHScrollView.height
 		this.topHScrollView.visibility = View.GONE
+		this.packContent.layoutParams?.height = this.keyboardHeight + tabBarHeight
+		this.packContent.requestLayout()
 
 		qwertyWidth = (resources.displayMetrics.widthPixels / 10.4).toInt()
 
