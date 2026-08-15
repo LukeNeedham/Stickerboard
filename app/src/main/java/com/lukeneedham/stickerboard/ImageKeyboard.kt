@@ -498,6 +498,21 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		recyclerView.addOnScrollListener(
 			object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+					// At either scroll extreme, the section math below can be off by one - e.g. a
+					// fling can settle with the topmost/ bottommost item a hair short of the
+					// boundary, still technically belonging to the neighbouring section even
+					// though the whole viewport is showing the first/ last section. Since there's
+					// nothing to scroll to beyond these bounds, the first/ last section is always
+					// the correct one to highlight here, regardless of what the item-position math
+					// below says.
+					if (!recyclerView.canScrollVertically(-1)) {
+						headerPositions.keys.firstOrNull()?.let { updateActiveNavButton(it) }
+						return
+					}
+					if (!recyclerView.canScrollVertically(1)) {
+						headerPositions.keys.lastOrNull()?.let { updateActiveNavButton(it) }
+						return
+					}
 					val firstVisible = layoutManager.findFirstVisibleItemPosition()
 					if (firstVisible == RecyclerView.NO_POSITION) return
 					sectionAt(firstVisible)?.let { updateActiveNavButton(it) }
