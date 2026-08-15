@@ -13,7 +13,7 @@ import com.fredhappyface.ewesticker.view.StickerPackViewHolder
 import java.io.File
 
 class StickerPackAdapter(
-	private val iconSize: Int,
+	private var iconSize: Int,
 	private val stickers: Array<File>,
 	private val listener: StickerClickListener,
 	private val gestureDetector: GestureDetector,
@@ -21,6 +21,13 @@ class StickerPackAdapter(
 ) :
 
 	RecyclerView.Adapter<StickerPackViewHolder>() {
+
+	/** Resize every sticker cell in place, e.g. in response to the keyboard being resized. */
+	fun updateIconSize(newIconSize: Int) {
+		if (newIconSize == iconSize) return
+		iconSize = newIconSize
+		notifyDataSetChanged()
+	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StickerPackViewHolder {
 		val itemView = LayoutInflater.from(parent.context)
