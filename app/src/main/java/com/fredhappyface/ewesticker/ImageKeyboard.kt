@@ -110,6 +110,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private lateinit var keyboardRoot: ViewGroup
 	private lateinit var resizableArea: ViewGroup
 	private lateinit var packsList: ViewGroup
+	private lateinit var boardArea: ViewGroup
 	private lateinit var topHScrollView: View
 	private lateinit var packContent: ViewGroup
 	private lateinit var pullBar: View
@@ -228,6 +229,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.resizableArea = keyboardLayout.findViewById(R.id.resizableArea)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
+		this.boardArea = keyboardLayout.findViewById(R.id.boardArea)
 		this.topHScrollView = keyboardLayout.findViewById(R.id.topHScrollView)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
 		this.pullBar = keyboardLayout.findViewById(R.id.pullBar)
@@ -246,7 +248,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardHeight =
 			this.backupSharedPreferences.getInt("keyboardHeight", KEYBOARD_HEIGHT_PX)
 				.coerceIn(MIN_KEYBOARD_HEIGHT_PX, this.maxKeyboardHeightPx)
-		this.packContent.layoutParams?.height = this.keyboardHeight
+		this.boardArea.layoutParams?.height = this.keyboardHeight
 		this.fullIconSize =
 			(
 				min(
@@ -341,7 +343,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val alreadyScheduled = this.pendingKeyboardHeight != null
 		this.pendingKeyboardHeight = height
 		if (alreadyScheduled) return
-		this.packContent.postOnAnimation { applyPendingKeyboardHeight() }
+		this.boardArea.postOnAnimation { applyPendingKeyboardHeight() }
 	}
 
 	/** Apply the most recently scheduled height, if any haven't been applied yet. */
@@ -350,8 +352,8 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.pendingKeyboardHeight = null
 		if (target == this.keyboardHeight) return
 		this.keyboardHeight = target
-		this.packContent.layoutParams?.height = target
-		this.packContent.requestLayout()
+		this.boardArea.layoutParams?.height = target
+		this.boardArea.requestLayout()
 	}
 
 	/**
@@ -566,10 +568,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	/** Ensure the board (as opposed to e.g. the search view) is the content on screen. */
 	private fun showBoard() {
 		this.topHScrollView.visibility = View.VISIBLE
-		if (this.packContent.layoutParams?.height != this.keyboardHeight) {
-			this.packContent.layoutParams?.height = this.keyboardHeight
-			this.packContent.requestLayout()
-		}
 		if (packContent.childCount == 1 && packContent.getChildAt(0) === this.boardRecyclerView) {
 			return
 		}
@@ -625,13 +623,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		}
 		this.searchButton.isSelected = true
 		this.activeSection = SEARCH_TAG
-
-		// Reclaim the tab bar's space for the board content, so the overall keyboard height
-		// stays the same as in normal mode instead of shrinking by the hidden tab bar's height.
-		val tabBarHeight = this.topHScrollView.height
+		// packContent fills boardArea entirely once the tab bar is hidden (it's boardArea's only
+		// weighted child), so its resulting height is exactly keyboardHeight - no manual patching
+		// of packContent's own height needed.
 		this.topHScrollView.visibility = View.GONE
-		this.packContent.layoutParams?.height = this.keyboardHeight + tabBarHeight
-		this.packContent.requestLayout()
 
 		qwertyWidth = (resources.displayMetrics.widthPixels / 10.4).toInt()
 
@@ -640,7 +635,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val searchResults = qwertyLayout.findViewById<LinearLayout>(R.id.search_results)
 
 		val searchResultsHeight =
-			packContent.layoutParams.height -
+			this.keyboardHeight -
 				(
 					resources.getDimension(R.dimen.qwerty_row_height) +
 						resources.getDimension(R.dimen.qwerty_row_height) * 4

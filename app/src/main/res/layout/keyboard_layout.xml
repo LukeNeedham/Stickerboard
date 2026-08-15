@@ -59,25 +59,40 @@
 				android:scaleType="fitCenter" />
 		</FrameLayout>
 
-		<HorizontalScrollView
-			android:id="@+id/topHScrollView"
+		<!--
+			boardArea is the single source of truth for the keyboard's content height (set in
+			code from keyboardHeight) - both normal and search mode share it as-is. topHScrollView
+			takes whatever height its content needs (and can be hidden entirely in search mode),
+			while packContent - which hosts either the sticker board or the search view - always
+			fills whatever space is left, via layout_weight, so neither mode needs to calculate or
+			patch heights by hand.
+		-->
+		<LinearLayout
+			android:id="@+id/boardArea"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_below="@id/pullBar"
-			android:padding="@dimen/sticker_padding"
-			android:scrollbars="none">
+			android:orientation="vertical">
 
-			<LinearLayout
-				android:id="@+id/packsList"
-				android:layout_width="wrap_content"
+			<HorizontalScrollView
+				android:id="@+id/topHScrollView"
+				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:orientation="horizontal" />
-		</HorizontalScrollView>
+				android:padding="@dimen/sticker_padding"
+				android:scrollbars="none">
 
-		<RelativeLayout
-			android:id="@+id/packContent"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:layout_below="@id/topHScrollView" />
+				<LinearLayout
+					android:id="@+id/packsList"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal" />
+			</HorizontalScrollView>
+
+			<RelativeLayout
+				android:id="@+id/packContent"
+				android:layout_width="match_parent"
+				android:layout_height="0dp"
+				android:layout_weight="1" />
+		</LinearLayout>
 	</RelativeLayout>
 </RelativeLayout>
