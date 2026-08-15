@@ -9,17 +9,29 @@
 	android:paddingHorizontal="@dimen/content_margin"
 	android:paddingBottom="@dimen/content_margin">
 
-	<!-- Header: pack + sticker name, and the clear/back affordance. Always wrap_content so the
+	<!-- Header: back/clear at the left edge, send at the right edge (mirroring the pull bar's
+		 close/search row), pack + sticker name centered between them. Always wrap_content so the
 		 image below is guaranteed whatever height is left over. -->
-	<RelativeLayout
+	<FrameLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="@dimen/content_margin_top">
 
+		<ImageButton
+			android:id="@+id/stickerPreviewClearButton"
+			android:layout_width="@dimen/pack_dimens"
+			android:layout_height="@dimen/pack_dimens"
+			android:layout_gravity="start|center_vertical"
+			android:background="@drawable/nav_button_background"
+			android:contentDescription="@string/close_sticker_preview"
+			android:padding="@dimen/nav_button_icon_padding"
+			android:scaleType="fitCenter"
+			android:src="@drawable/ic_back" />
+
 		<LinearLayout
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_centerInParent="true"
+			android:layout_gravity="center"
 			android:gravity="center_horizontal"
 			android:orientation="vertical">
 
@@ -31,7 +43,7 @@
 				android:gravity="center"
 				android:maxLines="1"
 				android:textColor="@color/accent"
-				android:textSize="@dimen/text_size_heading"
+				android:textSize="@dimen/text_size_subheading"
 				android:textStyle="bold"
 				tools:text="Cat Memes" />
 
@@ -50,42 +62,10 @@
 		</LinearLayout>
 
 		<ImageButton
-			android:id="@+id/stickerPreviewClearButton"
-			android:layout_width="@dimen/pack_dimens"
-			android:layout_height="@dimen/pack_dimens"
-			android:layout_alignParentEnd="true"
-			android:layout_centerVertical="true"
-			android:background="@drawable/nav_button_background"
-			android:contentDescription="@string/close_sticker_preview"
-			android:padding="@dimen/nav_button_icon_padding"
-			android:scaleType="fitCenter"
-			android:src="@drawable/ic_close" />
-
-	</RelativeLayout>
-
-	<!-- Fills whatever height remains below the header, and the sticker inside scales up to
-		 fill that space while keeping its aspect ratio. -->
-	<FrameLayout
-		android:layout_width="match_parent"
-		android:layout_height="0dp"
-		android:layout_marginTop="@dimen/content_margin_top"
-		android:layout_weight="1">
-
-		<ImageButton
-			android:id="@+id/stickerPreviewImage"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:background="@drawable/sticker_preview_image_background"
-			android:contentDescription="@string/send_sticker"
-			android:padding="@dimen/card_margin"
-			android:scaleType="fitCenter" />
-
-		<ImageButton
 			android:id="@+id/stickerPreviewSendButton"
 			android:layout_width="@dimen/pack_dimens"
 			android:layout_height="@dimen/pack_dimens"
-			android:layout_gravity="bottom|end"
-			android:layout_margin="@dimen/card_margin"
+			android:layout_gravity="end|center_vertical"
 			android:background="@drawable/nav_button_accent_background"
 			android:contentDescription="@string/send_sticker"
 			android:padding="@dimen/nav_button_icon_padding"
@@ -93,5 +73,18 @@
 			android:src="@drawable/ic_send" />
 
 	</FrameLayout>
+
+	<!-- Fills whatever height remains below the header, and the sticker inside scales up to
+		 fill that space while keeping its aspect ratio. -->
+	<ImageButton
+		android:id="@+id/stickerPreviewImage"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_marginTop="@dimen/content_margin_top"
+		android:layout_weight="1"
+		android:background="@drawable/sticker_preview_image_background"
+		android:contentDescription="@string/send_sticker"
+		android:padding="@dimen/card_margin"
+		android:scaleType="fitCenter" />
 
 </LinearLayout>

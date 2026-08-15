@@ -118,6 +118,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private var maxKeyboardHeightPx = 0
 	private var qwertyWidth = 0
 
+	// The currently showing sticker long-press preview panel, if any - tracked so it can be
+	// resized in step with the keyboard while the pull bar is dragged.
+	private var stickerPreviewView: View? = null
+
 	private lateinit var gestureDetector: GestureDetector
 	private lateinit var scaleGestureDetector: ScaleGestureDetector
 
@@ -333,6 +337,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardHeight = target
 		this.packContent.layoutParams?.height = target
 		this.packContent.requestLayout()
+		this.stickerPreviewView?.let {
+			it.layoutParams.height = stickerPreviewHeight()
+			it.requestLayout()
+		}
 	}
 
 	/**
@@ -795,16 +803,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val previewLayout =
 			layoutInflater.inflate(R.layout.sticker_preview, this.keyboardRoot, false) as
 				LinearLayout
-		// The panel gets a bit more room than the regular board, capped to the max keyboard
-		// height. The header is wrap_content and the image fills whatever remains via
-		// layout_weight, so everything always fits regardless of how much room that leaves.
-		val desiredHeight =
-			this.keyboardHeight +
-				(
-					resources.getDimension(R.dimen.pack_dimens) +
-						resources.getDimension(R.dimen.sticker_padding) * 4
-					).toInt()
-		previewLayout.layoutParams.height = desiredHeight.coerceAtMost(this.maxKeyboardHeightPx)
+		previewLayout.layoutParams.height = stickerPreviewHeight()
 		(previewLayout.layoutParams as RelativeLayout.LayoutParams)
 			.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 
@@ -816,17 +815,39 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		val previewImage = previewLayout.findViewById<ImageButton>(R.id.stickerPreviewImage)
 		previewImage.load(sticker)
 
-		fun sendAndClose() {
+		fun closePreview() {
 			this.keyboardRoot.removeView(previewLayout)
+			this.stickerPreviewView = null
+		}
+		fun sendAndClose() {
+			closePreview()
 			onStickerClicked(sticker)
 		}
 		previewImage.setOnClickListener { sendAndClose() }
 		previewLayout.findViewById<ImageButton>(R.id.stickerPreviewSendButton)
 			.setOnClickListener { sendAndClose() }
 		previewLayout.findViewById<ImageButton>(R.id.stickerPreviewClearButton)
-			.setOnClickListener { this.keyboardRoot.removeView(previewLayout) }
+			.setOnClickListener { closePreview() }
 
+		this.stickerPreviewView = previewLayout
 		this.keyboardRoot.addView(previewLayout)
+	}
+
+	/**
+	 * The sticker preview panel's height: a bit more room than the regular board, capped to the
+	 * max keyboard height. The header is wrap_content and the image fills whatever remains via
+	 * layout_weight, so everything always fits regardless of how much room this leaves - and it's
+	 * recomputed whenever [keyboardHeight] changes, so a preview showing mid-drag stays in step
+	 * with the board being resized underneath it.
+	 */
+	private fun stickerPreviewHeight(): Int {
+		val desiredHeight =
+			this.keyboardHeight +
+				(
+					resources.getDimension(R.dimen.pack_dimens) +
+						resources.getDimension(R.dimen.sticker_padding) * 4
+					).toInt()
+		return desiredHeight.coerceAtMost(this.maxKeyboardHeightPx)
 	}
 
 	internal fun switchToPreviousPack() {
