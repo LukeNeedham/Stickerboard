@@ -1,32 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/packContent"
-	android:background="@color/bg"
+<!-- Content for sticker long-press preview mode: swapped into packContent in place of the
+	 board/ search content, filling it exactly like they do. The back/ send affordances live in
+	 the shared top bar (see onStickerLongClicked), not here. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:id="@+id/stickerPreviewRoot"
 	android:layout_width="match_parent"
-	android:layout_height="wrap_content">
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	android:paddingHorizontal="@dimen/content_margin"
+	android:paddingBottom="@dimen/content_margin">
 
-	<TextView
-		android:id="@+id/stickerInfo"
-		style="@style/body_text"
-		android:layout_centerHorizontal="true"
-		android:text="" />
-
-	<ImageButton
-		android:id="@+id/stickerButton"
+	<LinearLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_below="@id/stickerInfo"
-		android:layout_centerHorizontal="true"
-		android:layout_gravity="center|center_horizontal|center_vertical"
-		android:background="@color/bg"
-		android:contentDescription="@string/sticker_icon"
-		android:cropToPadding="true"
+		android:layout_gravity="center_horizontal"
+		android:layout_marginTop="@dimen/content_margin_top"
+		android:gravity="center_horizontal"
+		android:orientation="vertical">
+
+		<TextView
+			android:id="@+id/stickerPreviewPackName"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:ellipsize="end"
+			android:gravity="center"
+			android:maxLines="1"
+			android:textColor="@color/accent"
+			android:textSize="@dimen/text_size_subheading"
+			android:textStyle="bold"
+			tools:text="Cat Memes" />
+
+		<TextView
+			android:id="@+id/stickerPreviewStickerName"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:alpha="0.6"
+			android:ellipsize="end"
+			android:gravity="center"
+			android:maxLines="1"
+			android:textColor="@color/fg"
+			android:textSize="@dimen/text_size_tiny"
+			tools:text="cool_cat.webp" />
+
+	</LinearLayout>
+
+	<!-- Fills whatever height remains below the title, and the sticker inside scales up to fill
+		 that space while keeping its aspect ratio. -->
+	<ImageButton
+		android:id="@+id/stickerPreviewImage"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_marginTop="@dimen/content_margin_top"
+		android:layout_weight="1"
+		android:background="@drawable/sticker_preview_image_background"
+		android:contentDescription="@string/send_sticker"
+		android:padding="@dimen/card_margin"
 		android:scaleType="fitCenter" />
 
-	<TextView
-		style="@style/body_text"
-		android:layout_below="@id/stickerButton"
-		android:layout_centerHorizontal="true"
-		android:text="@string/close_sticker_preview" />
-
-</RelativeLayout>
+</LinearLayout>

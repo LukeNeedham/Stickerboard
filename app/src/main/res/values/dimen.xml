@@ -4,6 +4,7 @@
 	<dimen name="status_bar_padding">32dp</dimen>
 	<dimen name="text_size_title">36sp</dimen>
 	<dimen name="text_size_heading">24sp</dimen>
+	<dimen name="text_size_subheading">20sp</dimen>
 	<dimen name="text_size_body">16sp</dimen>
 	<dimen name="text_size_tiny">10sp</dimen>
 	<dimen name="qwerty_row_height">40sp</dimen>
