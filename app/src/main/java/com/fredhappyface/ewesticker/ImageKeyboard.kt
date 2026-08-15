@@ -108,6 +108,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	// onCreateInputView
 	private lateinit var keyboardRoot: ViewGroup
 	private lateinit var resizableArea: ViewGroup
+	private lateinit var topHScrollView: View
 	private lateinit var packsList: ViewGroup
 	private lateinit var packContent: ViewGroup
 	private lateinit var pullBar: View
@@ -118,9 +119,10 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private var maxKeyboardHeightPx = 0
 	private var qwertyWidth = 0
 
-	// The currently showing sticker long-press preview panel, if any - tracked so it can be
-	// resized in step with the keyboard while the pull bar is dragged.
-	private var stickerPreviewView: View? = null
+	// Non-null while the sticker long-press preview is showing: the height of the pack icon row
+	// (topHScrollView), which is hidden during preview so packContent can reclaim that space and
+	// fill the full content area below the shared top bar.
+	private var stickerPreviewTabBarHeight: Int? = null
 
 	private lateinit var gestureDetector: GestureDetector
 	private lateinit var scaleGestureDetector: ScaleGestureDetector
@@ -228,6 +230,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 
 		this.keyboardRoot = keyboardLayout.findViewById(R.id.keyboardRoot)
 		this.resizableArea = keyboardLayout.findViewById(R.id.resizableArea)
+		this.topHScrollView = keyboardLayout.findViewById(R.id.topHScrollView)
 		this.packsList = keyboardLayout.findViewById(R.id.packsList)
 		this.packContent = keyboardLayout.findViewById(R.id.packContent)
 		this.pullBar = keyboardLayout.findViewById(R.id.pullBar)
@@ -246,7 +249,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.keyboardHeight =
 			this.backupSharedPreferences.getInt("keyboardHeight", KEYBOARD_HEIGHT_PX)
 				.coerceIn(MIN_KEYBOARD_HEIGHT_PX, this.maxKeyboardHeightPx)
-		this.packContent.layoutParams?.height = this.keyboardHeight
+		updatePackContentHeight()
 		setupPullBar()
 		setupTopBarButtons()
 		createPackIcons()
@@ -335,12 +338,19 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		this.pendingKeyboardHeight = null
 		if (target == this.keyboardHeight) return
 		this.keyboardHeight = target
-		this.packContent.layoutParams?.height = target
+		updatePackContentHeight()
+	}
+
+	/**
+	 * Resize packContent to [keyboardHeight], plus the pack icon row's height while it's hidden
+	 * for the sticker preview - so packContent always exactly fills the space below the shared
+	 * top bar, in every mode, and stays in step with the keyboard while the pull bar is dragged.
+	 */
+	private fun updatePackContentHeight() {
+		val previewExtra = this.stickerPreviewTabBarHeight ?: 0
+		this.packContent.layoutParams?.height =
+			(this.keyboardHeight + previewExtra).coerceAtMost(this.maxKeyboardHeightPx)
 		this.packContent.requestLayout()
-		this.stickerPreviewView?.let {
-			it.layoutParams.height = stickerPreviewHeight()
-			it.requestLayout()
-		}
 	}
 
 	/**
@@ -793,61 +803,57 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	/**
 	 * onStickerLongClicked
 	 *
-	 * When a sticker is long tapped/ clicked. Attach a preview panel showing an enlarged version
-	 * of the sticker, which can be tapped (or its send button) to send it, or dismissed via the
-	 * clear button.
+	 * When a sticker is long tapped/ clicked. Take over packContent - the same content area the
+	 * board/ search/ qwerty modes already share below the top bar - with an enlarged preview of
+	 * the sticker, hiding the pack icon row so the preview gets the full content area to itself.
+	 * The pull bar's close/ search buttons temporarily become back/ send for the duration.
 	 *
 	 *  @param sticker: File
 	 */
 	override fun onStickerLongClicked(sticker: File) {
-		val previewLayout =
-			layoutInflater.inflate(R.layout.sticker_preview, this.keyboardRoot, false) as
-				LinearLayout
-		previewLayout.layoutParams.height = stickerPreviewHeight()
-		(previewLayout.layoutParams as RelativeLayout.LayoutParams)
-			.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+		this.stickerPreviewTabBarHeight = this.topHScrollView.height
+		this.topHScrollView.visibility = View.GONE
+		updatePackContentHeight()
 
-		previewLayout.findViewById<TextView>(R.id.stickerPreviewPackName).text =
+		this.searchButton.isSelected = false
+		this.closeButton.load(getDrawable(R.drawable.ic_back))
+		this.closeButton.contentDescription = getString(R.string.close_sticker_preview)
+		this.closeButton.visibility = View.VISIBLE
+		this.closeButton.setOnClickListener { closeStickerPreview() }
+
+		this.searchButton.load(getDrawable(R.drawable.ic_send))
+		this.searchButton.contentDescription = getString(R.string.send_sticker)
+		this.searchButton.visibility = View.VISIBLE
+		this.searchButton.setOnClickListener { sendAndCloseStickerPreview(sticker) }
+
+		val previewContent =
+			layoutInflater.inflate(R.layout.sticker_preview, this.packContent, false)
+		previewContent.findViewById<TextView>(R.id.stickerPreviewPackName).text =
 			prettifyPackName(sticker.parent?.split('/')?.last() ?: "")
-		previewLayout.findViewById<TextView>(R.id.stickerPreviewStickerName).text =
+		previewContent.findViewById<TextView>(R.id.stickerPreviewStickerName).text =
 			trimString(sticker.name)
-
-		val previewImage = previewLayout.findViewById<ImageButton>(R.id.stickerPreviewImage)
-		previewImage.load(sticker)
-
-		fun closePreview() {
-			this.keyboardRoot.removeView(previewLayout)
-			this.stickerPreviewView = null
+		previewContent.findViewById<ImageButton>(R.id.stickerPreviewImage).apply {
+			load(sticker)
+			setOnClickListener { sendAndCloseStickerPreview(sticker) }
 		}
-		fun sendAndClose() {
-			closePreview()
-			onStickerClicked(sticker)
-		}
-		previewImage.setOnClickListener { sendAndClose() }
-		previewLayout.findViewById<ImageButton>(R.id.stickerPreviewSendButton)
-			.setOnClickListener { sendAndClose() }
-		previewLayout.findViewById<ImageButton>(R.id.stickerPreviewClearButton)
-			.setOnClickListener { closePreview() }
 
-		this.stickerPreviewView = previewLayout
-		this.keyboardRoot.addView(previewLayout)
+		this.packContent.removeAllViewsInLayout()
+		this.packContent.addView(previewContent)
 	}
 
-	/**
-	 * The sticker preview panel's height: a bit more room than the regular board, capped to the
-	 * max keyboard height. The header is wrap_content and the image fills whatever remains via
-	 * layout_weight, so everything always fits regardless of how much room this leaves - and it's
-	 * recomputed whenever [keyboardHeight] changes, so a preview showing mid-drag stays in step
-	 * with the board being resized underneath it.
-	 */
-	private fun stickerPreviewHeight(): Int {
-		val desiredHeight =
-			this.keyboardHeight +
-				(
-					resources.getDimension(R.dimen.pack_dimens) +
-						resources.getDimension(R.dimen.sticker_padding) * 4
-					).toInt()
-		return desiredHeight.coerceAtMost(this.maxKeyboardHeightPx)
+	/** Dismiss the sticker preview and restore whatever chrome/ content it replaced. */
+	private fun closeStickerPreview() {
+		this.stickerPreviewTabBarHeight = null
+		this.topHScrollView.visibility = View.VISIBLE
+		updatePackContentHeight()
+		setupTopBarButtons()
+		showBoard()
+		updateActiveNavButton(this.activePack)
+	}
+
+	private fun sendAndCloseStickerPreview(sticker: File) {
+		closeStickerPreview()
+		onStickerClicked(sticker)
 	}
 
 	internal fun switchToPreviousPack() {
