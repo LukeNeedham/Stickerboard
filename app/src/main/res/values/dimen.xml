@@ -17,6 +17,7 @@
 	<dimen name="nav_icon_corner">14dp</dimen>
 	<dimen name="pack_dimens">40dp</dimen>
 	<dimen name="nav_icon_padding">6dp</dimen>
+	<dimen name="nav_button_icon_padding">8dp</dimen>
 	<dimen name="sticker_padding">4dp</dimen>
 	<dimen name="section_header_top_margin">14dp</dimen>
 	<dimen name="pull_bar_height">44dp</dimen>

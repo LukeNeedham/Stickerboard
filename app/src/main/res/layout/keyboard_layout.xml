@@ -36,8 +36,9 @@
 				android:layout_height="@dimen/pack_dimens"
 				android:layout_gravity="start|center_vertical"
 				android:layout_marginStart="@dimen/sticker_padding"
-				android:background="@drawable/nav_icon_background"
+				android:background="@drawable/nav_button_background"
 				android:contentDescription="@string/pack_icon"
+				android:padding="@dimen/nav_button_icon_padding"
 				android:scaleType="fitCenter" />
 
 			<View
@@ -52,8 +53,9 @@
 				android:layout_height="@dimen/pack_dimens"
 				android:layout_gravity="end|center_vertical"
 				android:layout_marginEnd="@dimen/sticker_padding"
-				android:background="@drawable/nav_icon_background"
+				android:background="@drawable/nav_button_background"
 				android:contentDescription="@string/pack_icon"
+				android:padding="@dimen/nav_button_icon_padding"
 				android:scaleType="fitCenter" />
 		</FrameLayout>
 
