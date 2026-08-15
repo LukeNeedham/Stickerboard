@@ -1,26 +1,26 @@
 <resources>
 	<!-- App info -->
-	<string name="app_name" translatable="false">EweSticker</string>
+	<string name="app_name" translatable="false">StickerBoard</string>
 	<string name="pack_icon">Pack icon</string>
 	<string name="sticker_icon">Sticker icon</string>
 	<string name="close_sticker_preview">Close preview</string>
 	<string name="send_sticker">Send sticker</string>
 	<!-- Onboarding -->
-	<string name="onboarding_welcome_heading">Welcome to EweSticker</string>
-	<string name="onboarding_welcome_text">EweSticker is a keyboard for sending your own stickers, GIFs and short videos in any app. Let\'s get you set up in two quick steps.</string>
+	<string name="onboarding_welcome_heading">Welcome to StickerBoard</string>
+	<string name="onboarding_welcome_text">StickerBoard is a keyboard for sending your own stickers, GIFs and short videos in any app. Let\'s get you set up in two quick steps.</string>
 	<string name="onboarding_keyboard_heading">Enable the Keyboard</string>
-	<string name="onboarding_keyboard_text">"EweSticker works as a keyboard, so Android needs your permission before it can be used.
+	<string name="onboarding_keyboard_text">"StickerBoard works as a keyboard, so Android needs your permission before it can be used.
 
-Tap the button below to open your keyboard settings, then switch on \"EweSticker\". You can come back here once it\'s enabled."</string>
+Tap the button below to open your keyboard settings, then switch on \"StickerBoard\". You can come back here once it\'s enabled."</string>
 	<string name="onboarding_folder_heading">Choose Your Stickers</string>
-	<string name="onboarding_folder_text">"EweSticker loads its stickers, GIFs and videos from a folder you choose on your device, with each sub-folder becoming a sticker pack.
+	<string name="onboarding_folder_text">"StickerBoard loads its stickers, GIFs and videos from a folder you choose on your device, with each sub-folder becoming a sticker pack.
 
-Tap the button below to pick that folder. EweSticker will copy the files in so they\'re ready to use in the keyboard."</string>
+Tap the button below to pick that folder. StickerBoard will copy the files in so they\'re ready to use in the keyboard."</string>
 	<string name="onboarding_step_label">Step %1$d of %2$d</string>
 	<string name="onboarding_next_button">Next</string>
 	<string name="onboarding_back_button">Back</string>
 	<string name="onboarding_finish_button">Get Started</string>
-	<string name="onboarding_keyboard_required">Please enable the EweSticker keyboard to continue</string>
+	<string name="onboarding_keyboard_required">Please enable the StickerBoard keyboard to continue</string>
 	<string name="onboarding_folder_required">Please choose a sticker source directory to continue</string>
 	<!-- Enable Keyboard -->
 	<string name="enable_keyboard_heading">Enable Keyboard</string>
@@ -49,12 +49,12 @@ Tap the button below to pick that folder. EweSticker will copy the files in so t
 	<string name="options_icon_size_status_lbl">"Icon size: "</string>
 	<!-- Info -->
 	<string name="info_heading">Info</string>
-	<string name="info_text">EweSticker is an Android sticker keyboard application, specifically designed for sharing a wide variety of custom stickers in supported messaging apps. This project draws inspiration from the uSticker project and is a fork of the woosticker repository.</string>
+	<string name="info_text">StickerBoard is an Android sticker keyboard application, specifically designed for sharing a wide variety of custom stickers in supported messaging apps. This project draws inspiration from the uSticker project and is a fork of the woosticker repository.</string>
 	<!-- Features -->
 	<string name="features_heading">Features</string>
-	<string name="features_text">"The EweSticker Android app offers the following key features to enhance your messaging experience:
+	<string name="features_text">"The StickerBoard Android app offers the following key features to enhance your messaging experience:
 
-- **Wide Range of Custom Stickers Supported**: EweSticker supports a diverse set of sticker formats, ensuring that users can share their creativity in various ways. Supported formats include image/gif, image/png, image/webp, image/jpeg, image/heif, video/3gpp, video/mp4, video/x-matroska, and video/webm.
+- **Wide Range of Custom Stickers Supported**: StickerBoard supports a diverse set of sticker formats, ensuring that users can share their creativity in various ways. Supported formats include image/gif, image/png, image/webp, image/jpeg, image/heif, video/3gpp, video/mp4, video/x-matroska, and video/webm.
 
 - **Seamless Sticker Sharing**: Easily send stickers within messaging apps that support custom media sharing using image/png as a fallback.
 
@@ -64,11 +64,11 @@ Tap the button below to pick that folder. EweSticker will copy the files in so t
 
 - **Search your Sticker library**: Use a qwerty keyboard to search stickers by file name to ease discovery
 
-- **Integration with System Theme**: EweSticker seamlessly integrates with the system's theme, ensuring that the app's appearance aligns with your device-wide design choices.
+- **Integration with System Theme**: StickerBoard seamlessly integrates with the system's theme, ensuring that the app's appearance aligns with your device-wide design choices.
 
 - **Sticker Preview on Long Press**: To facilitate sticker selection, you can long-press on a sticker to reveal a preview to help you quickly decide which sticker to share without the need to open the sticker collection separately.
 
-EweSticker brings a wide range of customization options, diverse format support, and integration with messaging apps. Whether users are sharing static images, animated GIFs, or even short videos, the app aims to provide an engaging and expressive way to communicate using custom stickers.</string>
+StickerBoard brings a wide range of customization options, diverse format support, and integration with messaging apps. Whether users are sharing static images, animated GIFs, or even short videos, the app aims to provide an engaging and expressive way to communicate using custom stickers.</string>
 
 	<!-- How to use -->
 	<string name="how_to_use_heading">How to Use</string>
@@ -79,14 +79,14 @@ EweSticker brings a wide range of customization options, diverse format support,
 Copyright © Randy Zhou</string>
 	<!-- Links -->
 	<string name="links_heading">Links</string>
-	<string name="links_text">"- The source code for EweSticker is available at https://github.com/FredHappyface/Android.EweSticker
+	<string name="links_text">"- The source code for StickerBoard is available at https://github.com/LukeNeedham/Stickerboard
 
-- The tutorials take you by the hand through a series of steps to get started using the software. Start here if you’re new: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials
+- The tutorials take you by the hand through a series of steps to get started using the software. Start here if you’re new: https://github.com/LukeNeedham/Stickerboard/blob/main/documentation/tutorials
 
-- The help guide provides a starting point and outlines common issues that you may have: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help
+- The help guide provides a starting point and outlines common issues that you may have: https://github.com/LukeNeedham/Stickerboard/blob/main/documentation/help
 
 - MIT License
-(See the license for more information https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
+(See the license for more information https://github.com/LukeNeedham/Stickerboard/blob/main/LICENSE.md )</string>
 	<string name="version_heading">Version Info</string>
 	<string name="version_text" translatable="false">[debug]</string>
 	<!-- Logs -->

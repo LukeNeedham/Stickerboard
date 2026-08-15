@@ -11,7 +11,7 @@
 		android:fullBackupContent="@xml/full_backup_content"
 		tools:targetApi="s">
 		<activity
-			android:name="com.fredhappyface.ewesticker.MainActivity"
+			android:name="com.lukeneedham.stickerboard.MainActivity"
 			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
 			android:exported="true"
 			android:windowSoftInputMode="adjustResize">
@@ -21,14 +21,14 @@
 			</intent-filter>
 		</activity>
 		<activity
-			android:name="com.fredhappyface.ewesticker.OnboardingActivity"
+			android:name="com.lukeneedham.stickerboard.OnboardingActivity"
 			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize" />
 		<service
-			android:name="com.fredhappyface.ewesticker.ImageKeyboard"
+			android:name="com.lukeneedham.stickerboard.ImageKeyboard"
 			android:exported="false"
-			android:label="EweSticker"
+			android:label="StickerBoard"
 			android:permission="android.permission.BIND_INPUT_METHOD">
 			<meta-data
 				android:name="android.view.im"
@@ -39,7 +39,7 @@
 		</service>
 		<provider
 			android:name="androidx.core.content.FileProvider"
-			android:authorities="com.fredhappyface.ewesticker.inputcontent"
+			android:authorities="com.lukeneedham.stickerboard.inputcontent"
 			android:exported="false"
 			android:grantUriPermissions="true">
 			<meta-data

@@ -1,0 +1,62 @@
+package com.lukeneedham.stickerboard.adapter
+
+import android.os.Build
+import android.view.GestureDetector
+import android.view.HapticFeedbackConstants
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.utilities.StickerClickListener
+import com.lukeneedham.stickerboard.view.StickerPackViewHolder
+import java.io.File
+
+class StickerPackAdapter(
+	private var iconSize: Int,
+	private val stickers: Array<File>,
+	private val listener: StickerClickListener,
+	private val gestureDetector: GestureDetector,
+	private val vibrate: Boolean,
+) :
+
+	RecyclerView.Adapter<StickerPackViewHolder>() {
+
+	/** Resize every sticker cell in place, e.g. in response to the keyboard being resized. */
+	fun updateIconSize(newIconSize: Int) {
+		if (newIconSize == iconSize) return
+		iconSize = newIconSize
+		notifyDataSetChanged()
+	}
+
+	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StickerPackViewHolder {
+		val itemView = LayoutInflater.from(parent.context)
+			.inflate(R.layout.sticker_grid_item, parent, false)
+		return StickerPackViewHolder(itemView)
+	}
+
+	override fun onBindViewHolder(holder: StickerPackViewHolder, position: Int) {
+		val stickerFile = stickers[position]
+		holder.stickerThumbnail.load(stickerFile)
+		holder.stickerThumbnail.layoutParams.height = iconSize
+		holder.stickerThumbnail.layoutParams.width = iconSize
+		holder.stickerThumbnail.tag = stickerFile
+		holder.stickerThumbnail.setOnClickListener {
+			val file = it.tag as File
+			if (vibrate && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+				it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS)
+			}
+			listener.onStickerClicked(file)
+		}
+		holder.stickerThumbnail.setOnLongClickListener {
+			val file = it.tag as File
+			listener.onStickerLongClicked(file)
+			return@setOnLongClickListener true
+		}
+		holder.stickerThumbnail.setOnTouchListener { _, event ->
+			return@setOnTouchListener gestureDetector.onTouchEvent(event)
+		}
+	}
+
+	override fun getItemCount(): Int = stickers.size
+}

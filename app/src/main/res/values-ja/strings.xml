@@ -28,10 +28,10 @@
     <string name="options_icon_size_status_lbl">"アイコンサイズ: "</string>
     <!-- 情報 -->
 	<string name="info_heading">情報</string>
-    <string name="info_text">EweStickerは、サポートされているメッセージングアプリでさまざまなカスタムステッカーを共有するために特別に設計されたAndroidステッカーキーボードアプリです。このプロジェクトはuStickerプロジェクトからインスパイアを受け、woostickerリポジトリのフォークです。</string>
+    <string name="info_text">StickerBoardは、サポートされているメッセージングアプリでさまざまなカスタムステッカーを共有するために特別に設計されたAndroidステッカーキーボードアプリです。このプロジェクトはuStickerプロジェクトからインスパイアを受け、woostickerリポジトリのフォークです。</string>
     <!-- 特徴 -->
 	<string name="features_heading">特徴</string>
-    <string name="features_text">EweSticker Androidアプリは、メッセージング体験を向上させるために以下の主要な機能を提供します:\n\n- **多様なカスタムステッカー対応**: EweStickerは多様なステッカーフォーマットをサポートし、ユーザーがさまざまな方法でクリエイティビティを共有できるようにします。サポートされるフォーマットにはimage/gif、image/png、image/webp、image/jpeg、image/heif、video/3gpp、video/mp4、video/x-matroska、およびvideo/webmが含まれます。\n\n- **シームレスなステッカーの共有**: image/pngをフォールバックとして使用して、カスタムメディア共有をサポートするメッセージングアプリ内で簡単にステッカーを送信できます。\n\n- **カスタマイズ可能なスクロール**: ステッカーコレクションをナビゲートするために垂直または水平スクロールを使用できます。\n\n- **表示オプション**: 行数とステッカープレビューサイズを調整して、表示体験を好みやデバイスの画面サイズに合わせることができます。\n\n- **ステッカーライブラリの検索**: ファイル名でステッカーを検索するためにQWERTYキーボードを使用して、発見を容易にします。\n\n- **システムテーマとの統合**: EweStickerはシステムのテーマとシームレスに統合され、アプリの外観がデバイス全体のデザイン選択に合致するようにします。\n\n- **ロングプレスでのステッカープレビュー**: ステッカーの選択を容易にするために、ステッカーをロングプレスしてプレビューを表示し、ステッカーコレクションを別個に開く必要なしに素早く共有するステッカーを迅速に決定できます。\n\nEweStickerは幅広いカスタマイズオプション、多様なフォーマットのサポート、メッセージングアプリとの統合を提供します。ユーザーが静止画、アニメーションGIF、または短いビデオを共有している場合でも、このアプリはカスタムステッカーを使用したコミュニケーションの魅力的で表現豊かな方法を提供することを目指しています。</string>
+    <string name="features_text">StickerBoard Androidアプリは、メッセージング体験を向上させるために以下の主要な機能を提供します:\n\n- **多様なカスタムステッカー対応**: StickerBoardは多様なステッカーフォーマットをサポートし、ユーザーがさまざまな方法でクリエイティビティを共有できるようにします。サポートされるフォーマットにはimage/gif、image/png、image/webp、image/jpeg、image/heif、video/3gpp、video/mp4、video/x-matroska、およびvideo/webmが含まれます。\n\n- **シームレスなステッカーの共有**: image/pngをフォールバックとして使用して、カスタムメディア共有をサポートするメッセージングアプリ内で簡単にステッカーを送信できます。\n\n- **カスタマイズ可能なスクロール**: ステッカーコレクションをナビゲートするために垂直または水平スクロールを使用できます。\n\n- **表示オプション**: 行数とステッカープレビューサイズを調整して、表示体験を好みやデバイスの画面サイズに合わせることができます。\n\n- **ステッカーライブラリの検索**: ファイル名でステッカーを検索するためにQWERTYキーボードを使用して、発見を容易にします。\n\n- **システムテーマとの統合**: StickerBoardはシステムのテーマとシームレスに統合され、アプリの外観がデバイス全体のデザイン選択に合致するようにします。\n\n- **ロングプレスでのステッカープレビュー**: ステッカーの選択を容易にするために、ステッカーをロングプレスしてプレビューを表示し、ステッカーコレクションを別個に開く必要なしに素早く共有するステッカーを迅速に決定できます。\n\nStickerBoardは幅広いカスタマイズオプション、多様なフォーマットのサポート、メッセージングアプリとの統合を提供します。ユーザーが静止画、アニメーションGIF、または短いビデオを共有している場合でも、このアプリはカスタムステッカーを使用したコミュニケーションの魅力的で表現豊かな方法を提供することを目指しています。</string>
     <!-- 使い方 -->
 	<string name="how_to_use_heading">使い方</string>
     <string name="how_to_use_text">ステッカーを含むディレクトリを選択し、お気に入りのアプリで送信してください！</string>
@@ -40,7 +40,7 @@
     <string name="license_text">Copyright © FredHappyface\nCopyright © Randy Zhou</string>
     <!-- リンク -->
 	<string name="links_heading">リンク</string>
-    <string name="links_text">- EweStickerのソースコードは https://github.com/FredHappyface/Android.EweSticker で利用可能です。\n\n- チュートリアルでは、ソフトウェアの使用を開始する一連の手順を紹介しています。新規の場合はこちらから始めてください: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- ヘルプガイドはスタート地点を提供し、一般的な問題について概説しています: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- MITライセンス\n(詳細についてはライセンスを参照 https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md )</string>
+    <string name="links_text">- StickerBoardのソースコードは https://github.com/LukeNeedham/Stickerboard で利用可能です。\n\n- チュートリアルでは、ソフトウェアの使用を開始する一連の手順を紹介しています。新規の場合はこちらから始めてください: https://github.com/LukeNeedham/Stickerboard/blob/main/documentation/tutorials\n\n- ヘルプガイドはスタート地点を提供し、一般的な問題について概説しています: https://github.com/LukeNeedham/Stickerboard/blob/main/documentation/help\n\n- MITライセンス\n(詳細についてはライセンスを参照 https://github.com/LukeNeedham/Stickerboard/blob/main/LICENSE.md )</string>
     <!-- インタラクティブメッセージ -->
     <string name="version_heading">バージョン情報</string>
     <string name="pref_000">設定が変更されました。設定が適用されるようにキーボードを再読み込みしてください</string>
