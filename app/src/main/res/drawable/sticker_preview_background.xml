@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom-sheet-style backing for the sticker preview panel: rounded top corners so it reads
+	 as a card floating above the board rather than a plain full-width strip. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	<solid android:color="@color/bg2" />
+	<corners
+		android:topLeftRadius="@dimen/corner"
+		android:topRightRadius="@dimen/corner" />
+</shape>

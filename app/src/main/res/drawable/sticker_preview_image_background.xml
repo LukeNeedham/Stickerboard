@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Invisible at rest; shows a rounded-rect ripple when the previewed sticker is tapped to
+	 send it, matching the tap-to-send affordance used across the rest of the board. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+	android:color="@color/nav_button_ripple">
+
+	<item android:id="@android:id/mask">
+		<shape android:shape="rectangle">
+			<solid android:color="@android:color/white" />
+			<corners android:radius="@dimen/corner" />
+		</shape>
+	</item>
+
+</ripple>

@@ -42,7 +42,6 @@ import com.fredhappyface.ewesticker.utilities.Toaster
 import com.fredhappyface.ewesticker.utilities.startLogger
 import java.io.File
 import kotlin.math.abs
-import kotlin.math.min
 
 private const val SWIPE_THRESHOLD = 1
 private const val SWIPE_VELOCITY_THRESHOLD = 1
@@ -117,7 +116,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	private var keyboardHeight = 0
 	private var pendingKeyboardHeight: Int? = null
 	private var maxKeyboardHeightPx = 0
-	private var fullIconSize = 0
 	private var qwertyWidth = 0
 
 	private lateinit var gestureDetector: GestureDetector
@@ -245,15 +243,6 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			this.backupSharedPreferences.getInt("keyboardHeight", KEYBOARD_HEIGHT_PX)
 				.coerceIn(MIN_KEYBOARD_HEIGHT_PX, this.maxKeyboardHeightPx)
 		this.packContent.layoutParams?.height = this.keyboardHeight
-		this.fullIconSize =
-			(
-				min(
-					resources.displayMetrics.widthPixels,
-					this.keyboardHeight -
-						resources.getDimensionPixelOffset(R.dimen.text_size_body) * 2,
-				) * 0.95
-				)
-				.toInt()
 		setupPullBar()
 		setupTopBarButtons()
 		createPackIcons()
@@ -796,37 +785,48 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 	/**
 	 * onStickerLongClicked
 	 *
-	 * When a sticker is long tapped/ clicked. Attach a new view to see an enlarged version of the sticker
+	 * When a sticker is long tapped/ clicked. Attach a preview panel showing an enlarged version
+	 * of the sticker, which can be tapped (or its send button) to send it, or dismissed via the
+	 * clear button.
 	 *
 	 *  @param sticker: File
 	 */
 	override fun onStickerLongClicked(sticker: File) {
-		val fullStickerLayout =
+		val previewLayout =
 			layoutInflater.inflate(R.layout.sticker_preview, this.keyboardRoot, false) as
-				RelativeLayout
-		// Set dimens + load image
+				LinearLayout
+		// The panel gets a bit more room than the regular board, capped to the max keyboard
+		// height. The header is wrap_content and the image fills whatever remains via
+		// layout_weight, so everything always fits regardless of how much room that leaves.
 		val desiredHeight =
 			this.keyboardHeight +
 				(
 					resources.getDimension(R.dimen.pack_dimens) +
 						resources.getDimension(R.dimen.sticker_padding) * 4
 					).toInt()
-		fullStickerLayout.layoutParams.height = desiredHeight.coerceAtMost(this.maxKeyboardHeightPx)
-		(fullStickerLayout.layoutParams as RelativeLayout.LayoutParams)
+		previewLayout.layoutParams.height = desiredHeight.coerceAtMost(this.maxKeyboardHeightPx)
+		(previewLayout.layoutParams as RelativeLayout.LayoutParams)
 			.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-		val fSticker = fullStickerLayout.findViewById<ImageButton>(R.id.stickerButton)
-		fSticker.layoutParams.height = this.fullIconSize
-		fSticker.layoutParams.width = this.fullIconSize
-		fSticker.load(sticker)
-		val fText = fullStickerLayout.findViewById<TextView>(R.id.stickerInfo)
-		val stickerName = trimString(sticker.name)
-		val packName = trimString(sticker.parent?.split('/')?.last())
-		fText.text = getString(R.string.sticker_pack_info, stickerName, packName)
 
-		// Tap to exit popup
-		fullStickerLayout.setOnClickListener { this.keyboardRoot.removeView(it) }
-		fSticker.setOnClickListener { this.keyboardRoot.removeView(fullStickerLayout) }
-		this.keyboardRoot.addView(fullStickerLayout)
+		previewLayout.findViewById<TextView>(R.id.stickerPreviewPackName).text =
+			prettifyPackName(sticker.parent?.split('/')?.last() ?: "")
+		previewLayout.findViewById<TextView>(R.id.stickerPreviewStickerName).text =
+			trimString(sticker.name)
+
+		val previewImage = previewLayout.findViewById<ImageButton>(R.id.stickerPreviewImage)
+		previewImage.load(sticker)
+
+		fun sendAndClose() {
+			this.keyboardRoot.removeView(previewLayout)
+			onStickerClicked(sticker)
+		}
+		previewImage.setOnClickListener { sendAndClose() }
+		previewLayout.findViewById<ImageButton>(R.id.stickerPreviewSendButton)
+			.setOnClickListener { sendAndClose() }
+		previewLayout.findViewById<ImageButton>(R.id.stickerPreviewClearButton)
+			.setOnClickListener { this.keyboardRoot.removeView(previewLayout) }
+
+		this.keyboardRoot.addView(previewLayout)
 	}
 
 	internal fun switchToPreviousPack() {
