@@ -125,6 +125,23 @@
     text-transform: uppercase;
     color: var(--muted);
   }
+  .card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .badge-selected {
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--accent-ink);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
 
   .card p.rationale {
     font-family: -apple-system, system-ui, sans-serif;
@@ -165,39 +182,41 @@
   <header>
     <span class="eyebrow">StickerBoard &middot; App Icon</span>
     <h1>Five directions for the new launcher icon</h1>
-    <p>Current icon is the inherited EweSticker mascot on brand teal (#0fa3a2). Each concept below is built for Android's adaptive-icon system — a full-bleed background layer plus a foreground mark clear of the safe-zone edges — so any of them can be produced as real mipmap assets next.</p>
+    <p>Current icon is the inherited EweSticker mascot on brand teal (#0fa3a2). Each concept below is built for Android's adaptive-icon system — a full-bleed background layer plus a foreground mark clear of the safe-zone edges. <strong>Peel</strong> was selected, refined with a small keyboard glyph on the sticker face, and is now implemented as the real adaptive-icon resources in <code>app/src/main/res</code>.</p>
   </header>
 
   <div class="grid">
 
-    <!-- 1: Peel -->
-    <div class="card">
+    <!-- 1: Peel (selected) -->
+    <div class="card selected">
       <div class="card-top">
         <div class="icon-shell">
           <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
-            <rect width="108" height="108" fill="#0fa3a2"/>
-            <rect width="108" height="108" fill="url(#g1)"/>
-            <defs>
-              <linearGradient id="g1" x1="0" y1="0" x2="108" y2="108">
-                <stop offset="0" stop-color="#14c0bd"/>
-                <stop offset="1" stop-color="#0b8685"/>
-              </linearGradient>
-            </defs>
+            <rect width="108" height="108" fill="#0fa9a8"/>
             <path d="M27 26 h40 a15 15 0 0 1 15 15 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V30 a4 4 0 0 1 4 -4 Z" fill="#0a6f6e" opacity="0.35"/>
             <path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/>
             <path d="M65 24 v13 a4 4 0 0 0 4 4 h13 Z" fill="#cfe9e8"/>
-            <path d="M65 24 v13 a4 4 0 0 0 4 4 h13 Z" fill="#0fa3a2" opacity="0.18"/>
+            <path d="M37 42 H65 A6 6 0 0 1 71 48 V64 A6 6 0 0 1 65 70 H37 A6 6 0 0 1 31 64 V48 A6 6 0 0 1 37 42 Z" fill="#0fa3a2"/>
+            <path d="M36.5 47 H39.5 A1.5 1.5 0 0 1 41 48.5 V51.5 A1.5 1.5 0 0 1 39.5 53 H36.5 A1.5 1.5 0 0 1 35 51.5 V48.5 A1.5 1.5 0 0 1 36.5 47 Z" fill="#ffffff"/>
+            <path d="M44.5 47 H47.5 A1.5 1.5 0 0 1 49 48.5 V51.5 A1.5 1.5 0 0 1 47.5 53 H44.5 A1.5 1.5 0 0 1 43 51.5 V48.5 A1.5 1.5 0 0 1 44.5 47 Z" fill="#ffffff"/>
+            <path d="M52.5 47 H55.5 A1.5 1.5 0 0 1 57 48.5 V51.5 A1.5 1.5 0 0 1 55.5 53 H52.5 A1.5 1.5 0 0 1 51 51.5 V48.5 A1.5 1.5 0 0 1 52.5 47 Z" fill="#ffffff"/>
+            <path d="M60.5 47 H63.5 A1.5 1.5 0 0 1 65 48.5 V51.5 A1.5 1.5 0 0 1 63.5 53 H60.5 A1.5 1.5 0 0 1 59 51.5 V48.5 A1.5 1.5 0 0 1 60.5 47 Z" fill="#ffffff"/>
+            <path d="M36.5 55 H39.5 A1.5 1.5 0 0 1 41 56.5 V59.5 A1.5 1.5 0 0 1 39.5 61 H36.5 A1.5 1.5 0 0 1 35 59.5 V56.5 A1.5 1.5 0 0 1 36.5 55 Z" fill="#ffffff"/>
+            <path d="M44.5 55 H47.5 A1.5 1.5 0 0 1 49 56.5 V59.5 A1.5 1.5 0 0 1 47.5 61 H44.5 A1.5 1.5 0 0 1 43 59.5 V56.5 A1.5 1.5 0 0 1 44.5 55 Z" fill="#ffffff"/>
+            <path d="M52.5 55 H55.5 A1.5 1.5 0 0 1 57 56.5 V59.5 A1.5 1.5 0 0 1 55.5 61 H52.5 A1.5 1.5 0 0 1 51 59.5 V56.5 A1.5 1.5 0 0 1 52.5 55 Z" fill="#ffffff"/>
+            <path d="M60.5 55 H63.5 A1.5 1.5 0 0 1 65 56.5 V59.5 A1.5 1.5 0 0 1 63.5 61 H60.5 A1.5 1.5 0 0 1 59 59.5 V56.5 A1.5 1.5 0 0 1 60.5 55 Z" fill="#ffffff"/>
+            <path d="M40.25 63 H61.75 A2.25 2.25 0 0 1 64 65.25 A2.25 2.25 0 0 1 61.75 67.5 H40.25 A2.25 2.25 0 0 1 38 65.25 A2.25 2.25 0 0 1 40.25 63 Z" fill="#ffffff"/>
           </svg>
         </div>
         <div>
-          <div class="card-tag">Direction 1</div>
+          <div class="card-tag">Direction 1<span class="badge-selected">Selected</span></div>
           <p class="card-name">Peel</p>
         </div>
       </div>
-      <p class="rationale">The universal sticker cue: a die-cut square with the corner curling back. Reads instantly as "sticker" even at 24px, and the curl leaves an empty triangle you could later fill with a tiny brand mark.</p>
+      <p class="rationale">The universal sticker cue: a die-cut square with the corner curling back, now with a small keyboard glyph on the face to tie it to the app's actual function. Reads as "sticker keyboard" even at 24px. This is the direction going into the real Android adaptive-icon resources.</p>
       <div class="sizes">
-        <div class="icon-shell sm"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/><path d="M65 24 v13 a4 4 0 0 0 4 4 h13 Z" fill="#0fa3a2" opacity="0.35"/></svg></div>
-        <div class="icon-shell xs"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa3a2"/><path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/></svg></div>
+        <div class="icon-shell sm"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa9a8"/><path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/><path d="M65 24 v13 a4 4 0 0 0 4 4 h13 Z" fill="#0fa3a2" opacity="0.35"/><path d="M37 42 H65 A6 6 0 0 1 71 48 V64 A6 6 0 0 1 65 70 H37 A6 6 0 0 1 31 64 V48 A6 6 0 0 1 37 42 Z" fill="#0fa3a2"/><path d="M36.5 47 H39.5 A1.5 1.5 0 0 1 41 48.5 V51.5 A1.5 1.5 0 0 1 39.5 53 H36.5 A1.5 1.5 0 0 1 35 51.5 V48.5 A1.5 1.5 0 0 1 36.5 47 Z" fill="#ffffff"/><path d="M44.5 47 H47.5 A1.5 1.5 0 0 1 49 48.5 V51.5 A1.5 1.5 0 0 1 47.5 53 H44.5 A1.5 1.5 0 0 1 43 51.5 V48.5 A1.5 1.5 0 0 1 44.5 47 Z" fill="#ffffff"/><path d="M52.5 47 H55.5 A1.5 1.5 0 0 1 57 48.5 V51.5 A1.5 1.5 0 0 1 55.5 53 H52.5 A1.5 1.5 0 0 1 51 51.5 V48.5 A1.5 1.5 0 0 1 52.5 47 Z" fill="#ffffff"/><path d="M60.5 47 H63.5 A1.5 1.5 0 0 1 65 48.5 V51.5 A1.5 1.5 0 0 1 63.5 53 H60.5 A1.5 1.5 0 0 1 59 51.5 V48.5 A1.5 1.5 0 0 1 60.5 47 Z" fill="#ffffff"/><path d="M36.5 55 H39.5 A1.5 1.5 0 0 1 41 56.5 V59.5 A1.5 1.5 0 0 1 39.5 61 H36.5 A1.5 1.5 0 0 1 35 59.5 V56.5 A1.5 1.5 0 0 1 36.5 55 Z" fill="#ffffff"/><path d="M44.5 55 H47.5 A1.5 1.5 0 0 1 49 56.5 V59.5 A1.5 1.5 0 0 1 47.5 61 H44.5 A1.5 1.5 0 0 1 43 59.5 V56.5 A1.5 1.5 0 0 1 44.5 55 Z" fill="#ffffff"/><path d="M52.5 55 H55.5 A1.5 1.5 0 0 1 57 56.5 V59.5 A1.5 1.5 0 0 1 55.5 61 H52.5 A1.5 1.5 0 0 1 51 59.5 V56.5 A1.5 1.5 0 0 1 52.5 55 Z" fill="#ffffff"/><path d="M60.5 55 H63.5 A1.5 1.5 0 0 1 65 56.5 V59.5 A1.5 1.5 0 0 1 63.5 61 H60.5 A1.5 1.5 0 0 1 59 59.5 V56.5 A1.5 1.5 0 0 1 60.5 55 Z" fill="#ffffff"/><path d="M40.25 63 H61.75 A2.25 2.25 0 0 1 64 65.25 A2.25 2.25 0 0 1 61.75 67.5 H40.25 A2.25 2.25 0 0 1 38 65.25 A2.25 2.25 0 0 1 40.25 63 Z" fill="#ffffff"/></svg></div>
+        <div class="icon-shell xs"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="#0fa9a8"/><path d="M27 24 h38 l17 17 v37 a4 4 0 0 1 -4 4 H27 a4 4 0 0 1 -4 -4 V28 a4 4 0 0 1 4 -4 Z" fill="#ffffff"/><path d="M37 42 H65 A6 6 0 0 1 71 48 V64 A6 6 0 0 1 65 70 H37 A6 6 0 0 1 31 64 V48 A6 6 0 0 1 37 42 Z" fill="#0fa3a2"/></svg></div>
         <span>home screen scale</span>
       </div>
     </div>
@@ -315,7 +334,7 @@
   </div>
 
   <footer>
-    Backgrounds fill the full 108&times;108dp adaptive-icon canvas; foreground marks stay inside the ~66dp safe zone so they survive circle, squircle, and rounded-square launcher masks. Pick a direction (or mix elements from two) and I'll build the real vector drawables plus <code>ic_launcher_foreground</code>/<code>_mono</code>/background resources for every density bucket.
+    Backgrounds fill the full 108&times;108dp adaptive-icon canvas; foreground marks stay inside the ~66dp safe zone so they survive circle, squircle, and rounded-square launcher masks. Peel + keyboard is now live as <code>drawable/ic_launcher_foreground.xml</code>, <code>drawable/ic_launcher_mono.xml</code>, and the updated <code>mipmap-anydpi-v26/ic_launcher.xml</code>, replacing the old per-density raster foreground and the Play Store listing icon.
   </footer>
 </div>
 </body>
