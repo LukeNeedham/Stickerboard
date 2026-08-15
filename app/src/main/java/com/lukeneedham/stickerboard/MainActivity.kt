@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker
+package com.lukeneedham.stickerboard
 
 import android.app.Activity
 import android.content.Context
@@ -18,9 +18,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.elvishew.xlog.XLog
-import com.fredhappyface.ewesticker.utilities.StickerImporter
-import com.fredhappyface.ewesticker.utilities.Toaster
-import com.fredhappyface.ewesticker.utilities.startLogger
+import com.lukeneedham.stickerboard.utilities.StickerImporter
+import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.startLogger
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
 		val saveIntent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
 			addCategory(Intent.CATEGORY_OPENABLE)
 			type = "text/plain"
-			putExtra(Intent.EXTRA_TITLE, "ewesticker.log")
+			putExtra(Intent.EXTRA_TITLE, "stickerboard.log")
 		}
 		saveFileLauncher.launch(saveIntent)
 	}

@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker
+package com.lukeneedham.stickerboard
 
 import android.app.UiModeManager
 import android.content.ContentValues

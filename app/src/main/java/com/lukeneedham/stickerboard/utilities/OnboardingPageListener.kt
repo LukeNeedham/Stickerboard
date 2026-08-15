@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.utilities
+package com.lukeneedham.stickerboard.utilities
 
 import android.widget.Button
 import com.google.android.material.progressindicator.LinearProgressIndicator

@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker
+package com.lukeneedham.stickerboard
 
 import android.app.Activity
 import android.content.Context
@@ -15,11 +15,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
-import com.fredhappyface.ewesticker.adapter.OnboardingPageAdapter
-import com.fredhappyface.ewesticker.utilities.OnboardingPageListener
-import com.fredhappyface.ewesticker.utilities.StickerImporter
-import com.fredhappyface.ewesticker.utilities.Toaster
-import com.fredhappyface.ewesticker.utilities.startLogger
+import com.lukeneedham.stickerboard.adapter.OnboardingPageAdapter
+import com.lukeneedham.stickerboard.utilities.OnboardingPageListener
+import com.lukeneedham.stickerboard.utilities.StickerImporter
+import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.startLogger
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,7 +32,7 @@ private const val PAGE_FOLDER = 2
 private const val LAST_PAGE_INDEX = PAGE_FOLDER
 
 /**
- * OnboardingActivity walks first-time users through what EweSticker is, how to enable it as a
+ * OnboardingActivity walks first-time users through what StickerBoard is, how to enable it as a
  * keyboard, and how to choose a sticker source directory, before handing off to MainActivity.
  * Shown once - see MainActivity.isOnboardingComplete for the check that skips it afterwards.
  */
@@ -121,7 +121,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingPageListener {
 		this.viewPager.currentItem -= 1
 	}
 
-	/** Called when the user taps the button to launch settings to enable the EweSticker keyboard */
+	/** Called when the user taps the button to launch settings to enable the StickerBoard keyboard */
 	override fun onEnableKeyboardClick() {
 		startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
 	}
@@ -234,7 +234,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingPageListener {
 	}
 
 	/**
-	 * Checks whether the EweSticker keyboard is enabled in the system's input method settings
+	 * Checks whether the StickerBoard keyboard is enabled in the system's input method settings
 	 *
 	 * @return Boolean true if enabled
 	 */

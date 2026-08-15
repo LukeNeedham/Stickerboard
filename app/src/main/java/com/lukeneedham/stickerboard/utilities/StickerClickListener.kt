@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.utilities
+package com.lukeneedham.stickerboard.utilities
 
 import java.io.File
 

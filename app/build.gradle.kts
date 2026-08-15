@@ -34,7 +34,7 @@ tasks.register("genDocs") {
 android {
 	compileSdk = 35
 	buildToolsVersion = "35.0.0"
-	namespace = "com.fredhappyface.ewesticker"
+	namespace = "com.lukeneedham.stickerboard"
 
 	kotlinOptions {
 		jvmTarget = "17"
@@ -45,7 +45,7 @@ android {
 	}
 
 	defaultConfig {
-		applicationId = "com.fredhappyface.ewesticker"
+		applicationId = "com.lukeneedham.stickerboard"
 		minSdk = 26
 		targetSdk = 35
 		versionCode = 20250217

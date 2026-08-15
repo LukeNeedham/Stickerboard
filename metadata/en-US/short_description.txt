@@ -1,1 +1,1 @@
-EweSticker: Sticker Keyboard for using custom stickers in messaging
+StickerBoard: Sticker Keyboard for using custom stickers in messaging

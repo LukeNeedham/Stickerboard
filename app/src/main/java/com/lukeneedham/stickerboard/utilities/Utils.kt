@@ -1,9 +1,9 @@
-package com.fredhappyface.ewesticker.utilities
+package com.lukeneedham.stickerboard.utilities
 
 import android.webkit.MimeTypeMap
 import java.io.File
 
-/** Class to provide utils that are shared across ewesticker. */
+/** Class to provide utils that are shared across stickerboard. */
 object Utils {
 	/**
 	 * Get the mimetype of a File
@@ -16,9 +16,9 @@ object Utils {
 	}
 
 	/**
-	 * Return a MutableList of EweSticker Supported mimetypes
+	 * Return a MutableList of StickerBoard Supported mimetypes
 	 *
-	 * @return MutableList of EweSticker Supported mimetypes
+	 * @return MutableList of StickerBoard Supported mimetypes
 	 */
 	fun getSupportedMimes(): MutableList<String> {
 		return mutableListOf(

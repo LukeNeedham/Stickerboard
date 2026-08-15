@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.model
+package com.lukeneedham.stickerboard.model
 
 import java.io.File
 

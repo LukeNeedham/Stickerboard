@@ -6,7 +6,7 @@
 	android:layout_height="wrap_content"
 	android:background="@color/transparent"
 	android:fitsSystemWindows="true"
-	tools:context="com.fredhappyface.ewesticker.ImageKeyboard">
+	tools:context="com.lukeneedham.stickerboard.ImageKeyboard">
 
 	<!--
 		keyboardRoot is pinned in code to a fixed, maximum-possible height so the IME window

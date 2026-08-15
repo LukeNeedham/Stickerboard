@@ -1,12 +1,12 @@
-package com.fredhappyface.ewesticker.adapter
+package com.lukeneedham.stickerboard.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.recyclerview.widget.RecyclerView
-import com.fredhappyface.ewesticker.R
-import com.fredhappyface.ewesticker.utilities.OnboardingPageListener
+import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.utilities.OnboardingPageListener
 import com.google.android.material.progressindicator.LinearProgressIndicator
 
 private const val PAGE_WELCOME = 0

@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.utilities
+package com.lukeneedham.stickerboard.utilities
 
 import android.content.Context
 import android.net.Uri
@@ -7,7 +7,7 @@ import android.os.Looper
 import android.view.View
 import androidx.documentfile.provider.DocumentFile
 import com.elvishew.xlog.XLog
-import com.fredhappyface.ewesticker.R
+import com.lukeneedham.stickerboard.R
 
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +58,7 @@ class StickerImporter(
 	 * stickerDirPath to the application internal storage for access later on by the
 	 * keyboard
 	 *
-	 * @param stickerDirPath a URI to the stickers directory to import into EweSticker
+	 * @param stickerDirPath a URI to the stickers directory to import into StickerBoard
 	 */
 	suspend fun importStickers(stickerDirPath: String): Int {
 		XLog.i("Removing old stickers...")

@@ -29,10 +29,10 @@
     <string name="options_icon_size_status_lbl">"图标大小: "</string>
     <!-- 信息 -->
 	<string name="info_heading">信息</string>
-    <string name="info_text">EweSticker 是一款专为在支持的消息应用程序中分享各种自定义贴纸而设计的 Android 贴纸键盘应用程序。该项目从 uSticker 项目中汲取灵感，是 woosticker 存储库的分支。</string>
+    <string name="info_text">StickerBoard 是一款专为在支持的消息应用程序中分享各种自定义贴纸而设计的 Android 贴纸键盘应用程序。该项目从 uSticker 项目中汲取灵感，是 woosticker 存储库的分支。</string>
     <!-- 特性 -->
 	<string name="features_heading">特性</string>
-    <string name="features_text">EweSticker Android 应用程序提供以下关键特性，以增强您的消息体验:\n\n- **支持广泛的自定义贴纸**: EweSticker 支持多种贴纸格式，确保用户可以以各种方式分享他们的创意。支持的格式包括image/gif、image/png、image/webp、image/jpeg、image/heif、video/3gpp、video/mp4、video/x-matroska video/webm。\n\n- **无缝贴纸分享**: 在支持自定义媒体分享的消息应用程序中轻松发送贴纸，使用 image/png 作为备用选项。\n\n- **可定制的滚动**: 使用垂直或水平滚动浏览您的贴纸收藏。\n\n- **显示选项**: 调整行数和贴纸预览大小，根据您的喜好和设备屏幕尺寸定制查看体验。\n\n- **搜索您的贴纸库**: 使用 QWERTY 键盘按文件名搜索贴纸，以便轻松发现。\n\n- **与系统主题集成**: EweSticker 与系统主题无缝集成，确保应用程序的外观与您的设备范围设计选择一致。\n\n- **长按预览贴纸**: 为了方便选择贴纸，您可以长按贴纸以显示预览，帮助您快速决定要分享哪个贴纸，无需单独打开贴纸收藏。\n\nEweSticker 提供了广泛的定制选项、多种格式支持以及与消息应用程序的集成。无论用户是分享静态图像、动画 GIF 还是短视频，该应用程序旨在提供一种 engaging 和富有表现力的方式来使用自定义贴纸进行通信。</string>
+    <string name="features_text">StickerBoard Android 应用程序提供以下关键特性，以增强您的消息体验:\n\n- **支持广泛的自定义贴纸**: StickerBoard 支持多种贴纸格式，确保用户可以以各种方式分享他们的创意。支持的格式包括image/gif、image/png、image/webp、image/jpeg、image/heif、video/3gpp、video/mp4、video/x-matroska video/webm。\n\n- **无缝贴纸分享**: 在支持自定义媒体分享的消息应用程序中轻松发送贴纸，使用 image/png 作为备用选项。\n\n- **可定制的滚动**: 使用垂直或水平滚动浏览您的贴纸收藏。\n\n- **显示选项**: 调整行数和贴纸预览大小，根据您的喜好和设备屏幕尺寸定制查看体验。\n\n- **搜索您的贴纸库**: 使用 QWERTY 键盘按文件名搜索贴纸，以便轻松发现。\n\n- **与系统主题集成**: StickerBoard 与系统主题无缝集成，确保应用程序的外观与您的设备范围设计选择一致。\n\n- **长按预览贴纸**: 为了方便选择贴纸，您可以长按贴纸以显示预览，帮助您快速决定要分享哪个贴纸，无需单独打开贴纸收藏。\n\nStickerBoard 提供了广泛的定制选项、多种格式支持以及与消息应用程序的集成。无论用户是分享静态图像、动画 GIF 还是短视频，该应用程序旨在提供一种 engaging 和富有表现力的方式来使用自定义贴纸进行通信。</string>
     <!-- 如何使用 -->
 	<string name="how_to_use_heading">如何使用</string>
     <string name="how_to_use_text">选择包含贴纸的目录，然后将它们发送到您喜爱的应用程序中！</string>
@@ -41,7 +41,7 @@
     <string name="license_text">版权 © FredHappyface\n版权 © Randy Zhou</string>
     <!-- 链接 -->
 	<string name="links_heading">链接</string>
-    <string name="links_text">- EweSticker 的源代码可在 https://github.com/FredHappyface/Android.EweSticker 上获得\n\n- 教程将逐步引导您开始使用该软件。如果您是新手，请从这里开始: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/tutorials\n\n- 帮助指南提供了一个起点，并概述了您可能遇到的常见问题: https://github.com/FredHappyface/Android.EweSticker/blob/main/documentation/help\n\n- MIT 许可证\n（有关更多信息，请参阅许可证 https://github.com/FredHappyface/Android.EweSticker/blob/main/LICENSE.md）</string>
+    <string name="links_text">- StickerBoard 的源代码可在 https://github.com/LukeNeedham/Stickerboard 上获得\n\n- 教程将逐步引导您开始使用该软件。如果您是新手，请从这里开始: https://github.com/LukeNeedham/Stickerboard/blob/main/documentation/tutorials\n\n- 帮助指南提供了一个起点，并概述了您可能遇到的常见问题: https://github.com/LukeNeedham/Stickerboard/blob/main/documentation/help\n\n- MIT 许可证\n（有关更多信息，请参阅许可证 https://github.com/LukeNeedham/Stickerboard/blob/main/LICENSE.md）</string>
     <!-- 交互消息 -->
     <string name="version_heading">信息</string>
     <string name="pref_000">首选项已更改。重新加载键盘以应用设置</string>

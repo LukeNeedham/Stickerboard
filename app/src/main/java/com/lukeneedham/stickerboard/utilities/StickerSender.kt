@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.utilities
+package com.lukeneedham.stickerboard.utilities
 
 import android.content.ClipDescription
 import android.content.Context
@@ -13,7 +13,7 @@ import androidx.core.view.inputmethod.InputContentInfoCompat
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.elvishew.xlog.XLog
-import com.fredhappyface.ewesticker.R
+import com.lukeneedham.stickerboard.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -148,7 +148,7 @@ class StickerSender(
 		val inputContentInfoCompat = InputContentInfoCompat(
 			FileProvider.getUriForFile(
 				context,
-				"com.fredhappyface.ewesticker.inputcontent",
+				"com.lukeneedham.stickerboard.inputcontent",
 				file,
 			),
 			ClipDescription(file.name, arrayOf(mimeType)),
@@ -200,7 +200,7 @@ class StickerSender(
 		XLog.i("$packageName reports that is doesn't support png over its InputConnectionCompat, so open a share sheet")
 		val uri = FileProvider.getUriForFile(
 			context,
-			"com.fredhappyface.ewesticker.inputcontent",
+			"com.lukeneedham.stickerboard.inputcontent",
 			file,
 		)
 

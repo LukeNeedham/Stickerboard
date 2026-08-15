@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker
+package com.lukeneedham.stickerboard
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -31,15 +31,15 @@ import coil.decode.VideoFrameDecoder
 import coil.imageLoader
 import coil.load
 import com.elvishew.xlog.XLog
-import com.fredhappyface.ewesticker.adapter.StickerBoardAdapter
-import com.fredhappyface.ewesticker.adapter.StickerPackAdapter
-import com.fredhappyface.ewesticker.model.BoardItem
-import com.fredhappyface.ewesticker.model.StickerPack
-import com.fredhappyface.ewesticker.utilities.Cache
-import com.fredhappyface.ewesticker.utilities.StickerClickListener
-import com.fredhappyface.ewesticker.utilities.StickerSender
-import com.fredhappyface.ewesticker.utilities.Toaster
-import com.fredhappyface.ewesticker.utilities.startLogger
+import com.lukeneedham.stickerboard.adapter.StickerBoardAdapter
+import com.lukeneedham.stickerboard.adapter.StickerPackAdapter
+import com.lukeneedham.stickerboard.model.BoardItem
+import com.lukeneedham.stickerboard.model.StickerPack
+import com.lukeneedham.stickerboard.utilities.Cache
+import com.lukeneedham.stickerboard.utilities.StickerClickListener
+import com.lukeneedham.stickerboard.utilities.StickerSender
+import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.startLogger
 import java.io.File
 import kotlin.math.abs
 

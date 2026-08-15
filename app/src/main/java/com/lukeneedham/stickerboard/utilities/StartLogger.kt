@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.utilities
+package com.lukeneedham.stickerboard.utilities
 
 import com.elvishew.xlog.LogConfiguration
 import com.elvishew.xlog.LogLevel
@@ -15,7 +15,7 @@ fun startLogger(filesDir: File) {
 		XLog.i("startLogger if not already started")
 	} catch (e: IllegalStateException) {
 
-		val logConfig = LogConfiguration.Builder().logLevel(LogLevel.ALL).tag("EweSticker").build()
+		val logConfig = LogConfiguration.Builder().logLevel(LogLevel.ALL).tag("StickerBoard").build()
 		val androidPrinter =
 			AndroidPrinter(true)         // Printer that print the log using android.util.Log
 		val filePrinter = FilePrinter.Builder(

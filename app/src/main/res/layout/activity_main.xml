@@ -21,7 +21,7 @@
 			app:expandedTitleTextAppearance="@style/ToolbarTitleTextAppearance"
 			app:collapsedTitleTextColor="@color/onAccent"
 			app:expandedTitleTextColor="@color/onAccent"
-			app:title="  EweSticker">
+			app:title="  StickerBoard">
 
 			<com.google.android.material.appbar.MaterialToolbar
 				android:layout_width="match_parent"

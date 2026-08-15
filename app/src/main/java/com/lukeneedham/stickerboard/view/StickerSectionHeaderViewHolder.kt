@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.view
+package com.lukeneedham.stickerboard.view
 
 import android.view.View
 import android.widget.TextView

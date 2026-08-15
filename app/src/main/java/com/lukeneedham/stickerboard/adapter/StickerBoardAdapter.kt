@@ -1,4 +1,4 @@
-package com.fredhappyface.ewesticker.adapter
+package com.lukeneedham.stickerboard.adapter
 
 import android.os.Build
 import android.view.GestureDetector
@@ -7,11 +7,11 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import com.fredhappyface.ewesticker.R
-import com.fredhappyface.ewesticker.model.BoardItem
-import com.fredhappyface.ewesticker.utilities.StickerClickListener
-import com.fredhappyface.ewesticker.view.StickerPackViewHolder
-import com.fredhappyface.ewesticker.view.StickerSectionHeaderViewHolder
+import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.model.BoardItem
+import com.lukeneedham.stickerboard.utilities.StickerClickListener
+import com.lukeneedham.stickerboard.view.StickerPackViewHolder
+import com.lukeneedham.stickerboard.view.StickerSectionHeaderViewHolder
 import java.io.File
 
 private const val VIEW_TYPE_HEADER = 0
