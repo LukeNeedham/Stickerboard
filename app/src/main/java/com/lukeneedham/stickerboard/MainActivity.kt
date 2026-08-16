@@ -5,32 +5,43 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.webkit.MimeTypeMap
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CompoundButton
+import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.Spinner
 import android.widget.TextView
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.elvishew.xlog.XLog
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
 import com.lukeneedham.stickerboard.utilities.startLogger
-import com.google.android.material.progressindicator.LinearProgressIndicator
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+/** Maximum number of stickers allowed in a single pack, mirrors StickerImporter's limit */
+private const val MAX_PACK_SIZE = 128
 
 /** MainActivity class inherits from the AppCompatActivity class - provides the settings view */
 class MainActivity : AppCompatActivity() {
@@ -39,6 +50,8 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var backupSharedPreferences: SharedPreferences
 	private lateinit var contextView: View
 	private lateinit var toaster: Toaster
+	private lateinit var packSpinner: Spinner
+	private var pendingPackName: String? = null
 
 	/**
 	 * Sets up content view, shared prefs, etc.
@@ -78,6 +91,7 @@ class MainActivity : AppCompatActivity() {
 		XLog.i("Loading backup shared preferences: ${this.backupSharedPreferences.all}")
 		this.contextView = findViewById(R.id.activityMainRoot)
 		this.toaster = Toaster(baseContext)
+		this.packSpinner = findViewById(R.id.addPhotoPackSpinner)
 		refreshStickerDirPath()
 		// Update UI with config
 		seekBar(findViewById(R.id.iconsPerXSb), findViewById(R.id.iconsPerXLbl), "iconsPerX", 4)
@@ -103,7 +117,6 @@ class MainActivity : AppCompatActivity() {
 
 		versionText.text = version
 		XLog.i("Version: $version")
-
 	}
 
 	/**
@@ -131,6 +144,16 @@ class MainActivity : AppCompatActivity() {
 				editor.apply()
 				refreshStickerDirPath()
 				importStickers(stickerDirPath)
+			}
+		}
+
+	/** Handles the result of the gallery photo picker and copies the chosen photos into pendingPackName */
+	private val pickPhotosLauncher =
+		registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
+			val packName = pendingPackName
+			pendingPackName = null
+			if (packName != null && uris.isNotEmpty()) {
+				addPhotosToPack(packName, uris)
 			}
 		}
 
@@ -208,6 +231,148 @@ class MainActivity : AppCompatActivity() {
 				getString(R.string.imported_034),
 			)
 		}
+	}
+
+	/**
+	 * Called on button press to add photo(s) from the device's photo gallery to a sticker pack.
+	 * Uses the pack currently selected in addPhotoPackSpinner, prompting for a new pack name first
+	 * if the "+ Create new pack" option is selected.
+	 *
+	 * @param ignoredView: View
+	 */
+	fun addPhotoFromGallery(ignoredView: View) {
+		val selected = packSpinner.selectedItem as? String
+		val newPackOption = getString(R.string.add_photo_new_pack_option)
+		when (selected) {
+			null -> toaster.toast(getString(R.string.add_photo_052))
+			newPackOption -> showCreatePackDialog { packName ->
+				pendingPackName = packName
+				pickPhotosLauncher.launch(
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+				)
+			}
+			else -> {
+				pendingPackName = selected
+				pickPhotosLauncher.launch(
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+				)
+			}
+		}
+	}
+
+	/** Prompts the user for a new pack name, invoking onCreated once a valid, unused name is entered */
+	private fun showCreatePackDialog(onCreated: (String) -> Unit) {
+		val input = EditText(this)
+		input.hint = getString(R.string.add_photo_new_pack_dialog_hint)
+		val padding = resources.getDimensionPixelSize(R.dimen.card_margin)
+		input.setPadding(padding, padding, padding, padding)
+
+		AlertDialog.Builder(this)
+			.setTitle(R.string.add_photo_new_pack_dialog_title)
+			.setView(input)
+			.setPositiveButton(R.string.add_photo_new_pack_dialog_positive) { _, _ ->
+				val packName = input.text.toString().trim()
+				when {
+					packName.isEmpty() ||
+						packName.contains('/') ||
+						packName.contains('\\') ||
+						packName == "." ||
+						packName == ".." ->
+						toaster.toast(getString(R.string.add_photo_053))
+
+					File(filesDir, "stickers/$packName").exists() ->
+						toaster.toast(getString(R.string.add_photo_054, packName))
+
+					else -> onCreated(packName)
+				}
+			}
+			.setNegativeButton(android.R.string.cancel, null)
+			.show()
+	}
+
+	/** Copies the given gallery photo URIs into the given pack, up to MAX_PACK_SIZE stickers total */
+	private fun addPhotosToPack(packName: String, uris: List<Uri>) {
+		val packDir = File(filesDir, "stickers/$packName")
+		lifecycleScope.launch(Dispatchers.IO) {
+			packDir.mkdirs()
+			var packSize = packDir.listFiles { file -> file.isFile }?.size ?: 0
+			var addedCount = 0
+			var skippedLimit = false
+			for (uri in uris) {
+				if (packSize >= MAX_PACK_SIZE) {
+					skippedLimit = true
+					break
+				}
+				if (copyPhotoToPack(uri, packDir)) {
+					addedCount++
+					packSize++
+				}
+			}
+
+			withContext(Dispatchers.Main) {
+				if (addedCount > 0) {
+					toaster.toast(getString(R.string.add_photo_050, addedCount, packName))
+					val editor = sharedPreferences.edit()
+					editor.putInt(
+						"numStickersImported",
+						sharedPreferences.getInt("numStickersImported", 0) + addedCount,
+					)
+					editor.apply()
+					refreshStickerDirPath()
+					refreshPackSpinner(packName)
+				} else if (!skippedLimit) {
+					toaster.toast(getString(R.string.add_photo_051, packName))
+				}
+				if (skippedLimit) {
+					toaster.toast(getString(R.string.imported_032, MAX_PACK_SIZE, packName))
+				}
+			}
+		}
+	}
+
+	/** Copies a single gallery photo into packDir, returning true on success */
+	private fun copyPhotoToPack(uri: Uri, packDir: File): Boolean {
+		return try {
+			val mimeType = contentResolver.getType(uri)
+			val extension =
+				mimeType?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) } ?: "jpg"
+			val destPhoto =
+				File(packDir, "gallery_${System.currentTimeMillis()}_${System.nanoTime()}.$extension")
+			val copied = contentResolver.openInputStream(uri)?.use { input ->
+				destPhoto.outputStream().use { output ->
+					input.copyTo(output)
+				}
+				true
+			} ?: false
+			copied
+		} catch (e: IOException) {
+			XLog.e("There was an IOException when copying a gallery photo into a pack!")
+			XLog.e(e)
+			false
+		}
+	}
+
+	/**
+	 * Refreshes addPhotoPackSpinner with the current list of sticker packs (sub-directories of the
+	 * internal stickers directory), plus an option to create a new pack.
+	 *
+	 * @param selectPack pack name to select afterwards, if present in the refreshed list
+	 */
+	private fun refreshPackSpinner(selectPack: String? = null) {
+		val stickersDir = File(filesDir, "stickers")
+		val packNames =
+			stickersDir.listFiles { file -> file.isDirectory && !file.name.contains("__compatSticker__") }
+				?.map { it.name }
+				?.sorted()
+				?: emptyList()
+		val options = packNames + getString(R.string.add_photo_new_pack_option)
+
+		val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, options)
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+		packSpinner.adapter = adapter
+
+		val targetIndex = selectPack?.let { packNames.indexOf(it) }?.takeIf { it >= 0 } ?: 0
+		packSpinner.setSelection(targetIndex)
 	}
 
 	/** Import files from storage to internal directory */
@@ -319,6 +484,7 @@ class MainActivity : AppCompatActivity() {
 			)
 		findViewById<TextView>(R.id.stickerPackInfoTotal).text =
 			this.sharedPreferences.getInt("numStickersImported", 0).toString()
+		refreshPackSpinner()
 	}
 
 	/**

@@ -145,6 +145,39 @@
 
 				</LinearLayout>
 			</com.google.android.material.card.MaterialCardView>
+			<!-- Add Photo to Pack -->
+			<com.google.android.material.card.MaterialCardView style="@style/card">
+
+				<LinearLayout
+					style="@style/cardchild"
+					android:orientation="vertical">
+
+					<TextView
+						style="@style/heading"
+						android:text="@string/add_photo_heading" />
+
+					<TextView
+						style="@style/body_text"
+						android:text="@string/add_photo_info" />
+
+					<TextView
+						style="@style/body_text"
+						android:layout_marginVertical="@dimen/zero"
+						android:text="@string/add_photo_pack_lbl" />
+
+					<Spinner
+						android:id="@+id/addPhotoPackSpinner"
+						style="@style/widget" />
+
+					<Button
+						android:id="@+id/addPhotoBtn"
+						style="@style/button"
+						android:onClick="addPhotoFromGallery"
+						android:text="@string/add_photo_button"
+						app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+
+				</LinearLayout>
+			</com.google.android.material.card.MaterialCardView>
 			<!-- Options -->
 			<com.google.android.material.card.MaterialCardView style="@style/card">
 
