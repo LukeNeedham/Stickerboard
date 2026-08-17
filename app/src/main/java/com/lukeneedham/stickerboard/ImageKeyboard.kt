@@ -498,9 +498,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		recyclerView.addOnScrollListener(
 			object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-					val firstVisible = layoutManager.findFirstVisibleItemPosition()
-					if (firstVisible == RecyclerView.NO_POSITION) return
-					sectionAt(firstVisible)?.let { updateActiveNavButton(it) }
+					updateActiveNavButtonFromScroll()
 				}
 			},
 		)
@@ -574,6 +572,20 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			if (headerPosition <= position) result = packName else break
 		}
 		return result
+	}
+
+	/**
+	 * Highlights whichever nav icon corresponds to the section currently rendered at the top of
+	 * the board (i.e. whatever's at pixel y=0), rather than whichever pack was last explicitly
+	 * jumped to via [activePack] - the two can differ once the user scrolls the board manually
+	 * without tapping a nav icon.
+	 */
+	private fun updateActiveNavButtonFromScroll() {
+		if (!this::boardRecyclerView.isInitialized) return
+		val layoutManager = this.boardRecyclerView.layoutManager as? GridLayoutManager ?: return
+		val firstVisible = layoutManager.findFirstVisibleItemPosition()
+		if (firstVisible == RecyclerView.NO_POSITION) return
+		sectionAt(firstVisible)?.let { updateActiveNavButton(it) }
 	}
 
 	/** Ensure the board (as opposed to e.g. the search view) is the content on screen. */
@@ -906,7 +918,7 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 			searchView()
 		} else {
 			showBoard()
-			updateActiveNavButton(this.activePack)
+			updateActiveNavButtonFromScroll()
 		}
 	}
 
