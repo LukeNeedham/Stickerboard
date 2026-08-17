@@ -18,7 +18,23 @@
 			android:layout_height="?attr/actionBarSize"
 			android:background="@color/accent"
 			app:title="@string/view_stickers_heading"
-			app:titleTextColor="@color/onAccent" />
+			app:titleTextColor="@color/onAccent">
+
+			<ImageButton
+				android:id="@+id/openFolderButton"
+				android:layout_width="@dimen/pack_dimens"
+				android:layout_height="@dimen/pack_dimens"
+				android:layout_gravity="end|center_vertical"
+				android:layout_marginEnd="@dimen/sticker_padding"
+				android:background="@drawable/nav_button_background"
+				android:contentDescription="@string/open_folder_button"
+				android:onClick="openStickerFolder"
+				android:padding="@dimen/nav_button_icon_padding"
+				android:scaleType="fitCenter"
+				android:src="@drawable/ic_folder"
+				android:tint="@color/onAccent" />
+
+		</com.google.android.material.appbar.MaterialToolbar>
 
 	</com.google.android.material.appbar.AppBarLayout>
 

@@ -1,10 +1,13 @@
 package com.lukeneedham.stickerboard
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.view.GestureDetector
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
 import android.widget.TextView
@@ -284,5 +287,42 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 			setOnClickListener { dialog.dismiss() }
 		}
 		dialog.show()
+		// sticker_preview.xml relies on a definite parent height to size the weighted image (it's
+		// normally hosted in the keyboard's fixed-height packContent) - a default AlertDialog window
+		// wraps its content instead, which leaves that weighted view at zero height. Resizing the
+		// window to fill the screen after showing gives it a definite height to fill, matching how
+		// it renders in the keyboard.
+		dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+		dialog.window?.setBackgroundDrawableResource(R.color.bg)
+	}
+
+	/**
+	 * Opens the user's chosen external sticker source directory in their device's file browser app,
+	 * if one is configured and something can handle it.
+	 */
+	fun openStickerFolder(ignoredView: View) {
+		val stickerDirPath = sharedPreferences.getString("stickerDirPath", null)
+		if (stickerDirPath == null) {
+			toaster.toast(getString(R.string.open_folder_missing_dir))
+			return
+		}
+		try {
+			val treeUri = Uri.parse(stickerDirPath)
+			val docUri =
+				DocumentsContract.buildDocumentUriUsingTree(
+					treeUri,
+					DocumentsContract.getTreeDocumentId(treeUri),
+				)
+			val intent =
+				Intent(Intent.ACTION_VIEW).apply {
+					setDataAndType(docUri, DocumentsContract.Document.MIME_TYPE_DIR)
+					addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				}
+			startActivity(intent)
+		} catch (e: Exception) {
+			XLog.e("Failed to open the sticker source directory in a file browser app")
+			XLog.e(e)
+			toaster.toast(getString(R.string.open_folder_052))
+		}
 	}
 }
