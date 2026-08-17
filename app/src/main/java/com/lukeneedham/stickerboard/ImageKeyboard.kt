@@ -495,39 +495,12 @@ class ImageKeyboard : InputMethodService(), StickerClickListener {
 		// disabled so it isn't drawn as a hard edge) gives it that room to scroll into.
 		recyclerView.clipToPadding = false
 		recyclerView.setPadding(0, 0, 0, this.keyboardHeight)
-		// Figures out which section the board is currently scrolled to and highlights its nav
-		// icon. Uses exact adapter-position checks rather than RecyclerView's canScrollVertically()
-		// - that relies on an *estimated* scroll range (extrapolated from average child height),
-		// which this board's mix of full-width header rows and multi-column sticker rows throws
-		// off badly enough to misfire throughout the whole list, not just at the true top/ bottom.
-		fun updateSectionForScrollPosition() {
-			val firstVisible = layoutManager.findFirstVisibleItemPosition()
-			if (firstVisible == RecyclerView.NO_POSITION) return
-			val lastVisible = layoutManager.findLastVisibleItemPosition()
-			val itemCount = layoutManager.itemCount
-			val section = when {
-				// The very first item of the whole board is on screen - definitely the first section.
-				firstVisible == 0 -> headerPositions.keys.firstOrNull()
-				// The very last item of the whole board is on screen - definitely the last section,
-				// even if the general math below would still credit it to an earlier section (e.g. a
-				// fling settling with the last section's header a hair short of the viewport top).
-				lastVisible != RecyclerView.NO_POSITION && lastVisible == itemCount - 1 ->
-					headerPositions.keys.lastOrNull()
-				else -> sectionAt(firstVisible)
-			}
-			section?.let { updateActiveNavButton(it) }
-		}
 		recyclerView.addOnScrollListener(
 			object : RecyclerView.OnScrollListener() {
 				override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-					updateSectionForScrollPosition()
-				}
-
-				override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-					// Safety net: makes sure the highlighted tab matches the final rest position
-					// even on the rare frame where the settling scroll doesn't trigger a last
-					// onScrolled() call that reflects it.
-					if (newState == RecyclerView.SCROLL_STATE_IDLE) updateSectionForScrollPosition()
+					val firstVisible = layoutManager.findFirstVisibleItemPosition()
+					if (firstVisible == RecyclerView.NO_POSITION) return
+					sectionAt(firstVisible)?.let { updateActiveNavButton(it) }
 				}
 			},
 		)
