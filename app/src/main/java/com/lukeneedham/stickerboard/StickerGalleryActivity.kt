@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard
 
+import android.app.Dialog
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
@@ -8,12 +9,12 @@ import android.provider.DocumentsContract
 import android.view.GestureDetector
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
@@ -280,20 +281,24 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 			prettifyPackName(sticker.parentFile?.name ?: "")
 		view.findViewById<TextView>(R.id.stickerPreviewStickerName).text = trimString(sticker.name)
 
-		val dialog = AlertDialog.Builder(this).setView(view).create()
+		// sticker_preview.xml relies on a definite parent height to size the weighted image (it's
+		// normally hosted in the keyboard's fixed-height packContent). AlertDialog wraps any custom
+		// view in its own wrap-content container regardless of the window's size, which collapses
+		// that weighted view to zero height - a plain Dialog uses the view as its content directly,
+		// so resizing its window to fill the screen actually gives the weighted view something to
+		// fill.
+		val dialog = Dialog(this)
+		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+		dialog.setContentView(view)
+		dialog.window?.setBackgroundDrawableResource(R.color.bg)
+
 		view.findViewById<ImageButton>(R.id.stickerPreviewImage).apply {
 			load(sticker)
 			contentDescription = trimString(sticker.name)
 			setOnClickListener { dialog.dismiss() }
 		}
 		dialog.show()
-		// sticker_preview.xml relies on a definite parent height to size the weighted image (it's
-		// normally hosted in the keyboard's fixed-height packContent) - a default AlertDialog window
-		// wraps its content instead, which leaves that weighted view at zero height. Resizing the
-		// window to fill the screen after showing gives it a definite height to fill, matching how
-		// it renders in the keyboard.
 		dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-		dialog.window?.setBackgroundDrawableResource(R.color.bg)
 	}
 
 	/**
