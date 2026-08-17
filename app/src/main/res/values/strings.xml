@@ -35,15 +35,12 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="update_sticker_pack_info_date_lbl">- Date: </string>
 	<string name="update_sticker_pack_info_date">Never</string>
 	<string name="update_sticker_pack_info_total_lbl">- Total: </string>
-	<!-- Add Photo to Pack -->
-	<string name="add_photo_heading">Add Photo to Pack</string>
-	<string name="add_photo_info">Add a photo from your device\'s photo gallery straight into one of your sticker packs.</string>
-	<string name="add_photo_pack_lbl">Add to pack:</string>
-	<string name="add_photo_new_pack_option">+ Create new pack</string>
-	<string name="add_photo_button">Choose photo(s) from gallery</string>
-	<string name="add_photo_new_pack_dialog_title">New pack name</string>
-	<string name="add_photo_new_pack_dialog_hint">Pack name</string>
-	<string name="add_photo_new_pack_dialog_positive">Create</string>
+	<!-- View Stickers -->
+	<string name="view_stickers_heading">Stickers</string>
+	<string name="view_stickers_info">Browse your sticker packs, and add photos from your device\'s photo gallery to any of them.</string>
+	<string name="view_stickers_button">View Stickers</string>
+	<string name="view_stickers_empty">No sticker packs yet. Choose a sticker source directory above to get started.</string>
+	<string name="add_photo_content_description">Add photo</string>
 	<!-- Options -->
 	<string name="options_heading">Options</string>
 	<string name="options_show_back_button">Show back button in navbar</string>
@@ -112,9 +109,6 @@ Copyright © Randy Zhou</string>
 	<string name="fallback_041">E041: Unexpected IOException when converting sticker</string>
 	<string name="add_photo_050">Added %1$d photo(s) to \'%2$s\'. Reload the keyboard for new stickers to show</string>
 	<string name="add_photo_051">E051: Failed to add photo(s) to \'%1$s\'</string>
-	<string name="add_photo_052">Please choose or create a pack first</string>
-	<string name="add_photo_053">Please enter a valid pack name</string>
-	<string name="add_photo_054">A pack named \'%1$s\' already exists</string>
 	<!-- Keyboard -->
 	<string name="recent_heading">Recently used</string>
 	<string name="recent_empty">No stickers used yet</string>

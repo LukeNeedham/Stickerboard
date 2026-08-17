@@ -145,7 +145,7 @@
 
 				</LinearLayout>
 			</com.google.android.material.card.MaterialCardView>
-			<!-- Add Photo to Pack -->
+			<!-- View Stickers -->
 			<com.google.android.material.card.MaterialCardView style="@style/card">
 
 				<LinearLayout
@@ -154,26 +154,16 @@
 
 					<TextView
 						style="@style/heading"
-						android:text="@string/add_photo_heading" />
+						android:text="@string/view_stickers_heading" />
 
 					<TextView
 						style="@style/body_text"
-						android:text="@string/add_photo_info" />
-
-					<TextView
-						style="@style/body_text"
-						android:layout_marginVertical="@dimen/zero"
-						android:text="@string/add_photo_pack_lbl" />
-
-					<Spinner
-						android:id="@+id/addPhotoPackSpinner"
-						style="@style/widget" />
+						android:text="@string/view_stickers_info" />
 
 					<Button
-						android:id="@+id/addPhotoBtn"
 						style="@style/button"
-						android:onClick="addPhotoFromGallery"
-						android:text="@string/add_photo_button"
+						android:onClick="viewStickers"
+						android:text="@string/view_stickers_button"
 						app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
 
 				</LinearLayout>
