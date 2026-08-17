@@ -12,6 +12,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
@@ -194,7 +195,7 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 					skippedLimit = true
 					break
 				}
-				if (copyPhotoToPack(uri, packDir)) {
+				if (copyPhotoToPack(uri, packDir, packName)) {
 					addedCount++
 					packSize++
 				}
@@ -221,22 +222,47 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 		}
 	}
 
-	/** Copies a single gallery photo into packDir, returning true on success */
-	private fun copyPhotoToPack(uri: Uri, packDir: File): Boolean {
+	/**
+	 * Copies a single gallery photo into packDir - and, best-effort, into the matching pack folder
+	 * of the external sticker source directory too - returning true if the internal copy (the one
+	 * the keyboard actually reads) succeeded.
+	 */
+	private fun copyPhotoToPack(uri: Uri, packDir: File, packName: String): Boolean {
 		return try {
 			val mimeType = contentResolver.getType(uri)
 			val extension =
 				mimeType?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) } ?: "jpg"
-			val destPhoto =
-				File(packDir, "gallery_${System.currentTimeMillis()}_${System.nanoTime()}.$extension")
-			contentResolver.openInputStream(uri)?.use { input ->
-				destPhoto.outputStream().use { output -> input.copyTo(output) }
-				true
-			} ?: false
+			val fileName = "gallery_${System.currentTimeMillis()}_${System.nanoTime()}.$extension"
+
+			val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return false
+			File(packDir, fileName).outputStream().use { it.write(bytes) }
+
+			copyToExternalSourceDir(packName, fileName, bytes)
+			true
 		} catch (e: IOException) {
 			XLog.e("There was an IOException when copying a gallery photo into a pack!")
 			XLog.e(e)
 			false
+		}
+	}
+
+	/**
+	 * Best-effort copy of a just-added photo into the user's external sticker source directory, so
+	 * that a future "Reload stickers" - which wipes and re-imports the internal copy from scratch -
+	 * doesn't lose it. Silently does nothing if no source directory is configured; silently fails if
+	 * the write doesn't succeed for any other reason, since the sticker is already usable from the
+	 * internal copy regardless.
+	 */
+	private fun copyToExternalSourceDir(packName: String, fileName: String, bytes: ByteArray) {
+		val stickerDirPath = sharedPreferences.getString("stickerDirPath", null) ?: return
+		try {
+			val rootDir = DocumentFile.fromTreeUri(this, Uri.parse(stickerDirPath)) ?: return
+			val packDocDir = rootDir.findFile(packName) ?: rootDir.createDirectory(packName) ?: return
+			val newFile = packDocDir.createFile("application/octet-stream", fileName) ?: return
+			contentResolver.openOutputStream(newFile.uri)?.use { it.write(bytes) }
+		} catch (e: Exception) {
+			XLog.e("There was an error copying a gallery photo into the external sticker source directory!")
+			XLog.e(e)
 		}
 	}
 
