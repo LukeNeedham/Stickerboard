@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:padding="@dimen/sticker_padding">
+
+	<ImageButton
+		android:id="@+id/stickerButton"
+		android:layout_width="@dimen/pack_dimens"
+		android:layout_height="@dimen/pack_dimens"
+		android:background="@drawable/nav_button_background"
+		android:contentDescription="@string/add_photo_content_description"
+		android:padding="@dimen/card_margin"
+		android:scaleType="fitCenter" />
+</FrameLayout>

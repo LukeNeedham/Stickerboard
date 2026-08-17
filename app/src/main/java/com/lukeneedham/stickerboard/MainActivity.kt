@@ -18,10 +18,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.elvishew.xlog.XLog
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
 import com.lukeneedham.stickerboard.utilities.startLogger
-import com.google.android.material.progressindicator.LinearProgressIndicator
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -103,7 +103,6 @@ class MainActivity : AppCompatActivity() {
 
 		versionText.text = version
 		XLog.i("Version: $version")
-
 	}
 
 	/**
@@ -208,6 +207,16 @@ class MainActivity : AppCompatActivity() {
 				getString(R.string.imported_034),
 			)
 		}
+	}
+
+	/**
+	 * Called on button press to open the sticker gallery, where the user can browse their packs and
+	 * add photos from the device's photo gallery to any of them.
+	 *
+	 * @param ignoredView: View
+	 */
+	fun viewStickers(ignoredView: View) {
+		startActivity(Intent(this, StickerGalleryActivity::class.java))
 	}
 
 	/** Import files from storage to internal directory */

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/stickerGalleryRoot"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/bg">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="@color/accent"
+		android:paddingTop="@dimen/status_bar_padding">
+
+		<com.google.android.material.appbar.MaterialToolbar
+			android:id="@+id/stickerGalleryToolbar"
+			android:layout_width="match_parent"
+			android:layout_height="?attr/actionBarSize"
+			android:background="@color/accent"
+			app:title="@string/view_stickers_heading"
+			app:titleTextColor="@color/onAccent">
+
+			<ImageButton
+				android:id="@+id/openFolderButton"
+				android:layout_width="@dimen/pack_dimens"
+				android:layout_height="@dimen/pack_dimens"
+				android:layout_gravity="end|center_vertical"
+				android:layout_marginEnd="@dimen/sticker_padding"
+				android:background="@drawable/nav_button_background"
+				android:contentDescription="@string/open_folder_button"
+				android:onClick="openStickerFolder"
+				android:padding="@dimen/nav_button_icon_padding"
+				android:scaleType="fitCenter"
+				android:src="@drawable/ic_folder"
+				android:tint="@color/onAccent" />
+
+		</com.google.android.material.appbar.MaterialToolbar>
+
+	</com.google.android.material.appbar.AppBarLayout>
+
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/stickerGalleryRecyclerView"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:clipToPadding="false"
+		android:paddingBottom="@dimen/content_margin"
+		app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+	<TextView
+		android:id="@+id/stickerGalleryEmptyText"
+		style="@style/section_empty_message"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center"
+		android:gravity="center"
+		android:text="@string/view_stickers_empty"
+		android:visibility="gone" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
