@@ -145,6 +145,29 @@
 
 				</LinearLayout>
 			</com.google.android.material.card.MaterialCardView>
+			<!-- View Stickers -->
+			<com.google.android.material.card.MaterialCardView style="@style/card">
+
+				<LinearLayout
+					style="@style/cardchild"
+					android:orientation="vertical">
+
+					<TextView
+						style="@style/heading"
+						android:text="@string/view_stickers_heading" />
+
+					<TextView
+						style="@style/body_text"
+						android:text="@string/view_stickers_info" />
+
+					<Button
+						style="@style/button"
+						android:onClick="viewStickers"
+						android:text="@string/view_stickers_button"
+						app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+
+				</LinearLayout>
+			</com.google.android.material.card.MaterialCardView>
 			<!-- Options -->
 			<com.google.android.material.card.MaterialCardView style="@style/card">
 

@@ -12,4 +12,7 @@ sealed class BoardItem {
 
 	/** A full-width placeholder shown in [packName]'s section when it has no stickers. */
 	data class EmptyMessage(val packName: String, val message: String) : BoardItem()
+
+	/** A grid cell, shown last in [packName]'s section, that lets the user add more stickers to it. */
+	data class AddPhoto(val packName: String) : BoardItem()
 }

@@ -25,6 +25,10 @@
 			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
 			android:exported="false"
 			android:windowSoftInputMode="adjustResize" />
+		<activity
+			android:name="com.lukeneedham.stickerboard.StickerGalleryActivity"
+			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+			android:exported="false" />
 		<service
 			android:name="com.lukeneedham.stickerboard.ImageKeyboard"
 			android:exported="false"
