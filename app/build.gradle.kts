@@ -1,6 +1,7 @@
 plugins {
 	id("com.android.application")
 	id("kotlin-android")
+	id("org.jetbrains.kotlin.plugin.compose")
 	id("org.jlleitschuh.gradle.ktlint")
 }
 
@@ -15,6 +16,10 @@ android {
 
 	androidResources {
 		generateLocaleConfig = true
+	}
+
+	buildFeatures {
+		compose = true
 	}
 
 	defaultConfig {
@@ -69,6 +74,11 @@ dependencies {
 	implementation("io.coil-kt:coil-gif:2.7.0")
 	implementation("io.coil-kt:coil-video:2.7.0")
 	implementation("io.coil-kt:coil-svg:2.7.0")
+	implementation("io.coil-kt:coil-compose:2.7.0")
+	implementation(platform("androidx.compose:compose-bom:2024.12.01"))
+	implementation("androidx.compose.ui:ui")
+	implementation("androidx.compose.foundation:foundation")
+	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 	implementation("androidx.gridlayout:gridlayout:1.0.0")
 	implementation("androidx.viewpager2:viewpager2:1.1.0")
 	implementation("io.noties.markwon:core:4.6.2")
