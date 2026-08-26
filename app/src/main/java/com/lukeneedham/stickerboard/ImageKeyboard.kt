@@ -14,6 +14,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.preference.PreferenceManager
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import coil.Coil
 import coil.ImageLoader
 import coil.decode.GifDecoder
@@ -61,9 +65,20 @@ private const val SEARCH_RESULT_LIMIT = 128
  * this class owns the data (packs, caches, prefs) and side effects (sending a sticker, closing
  * the keyboard) that the Compose UI reads and calls back into via [KeyboardDataSource].
  */
-class ImageKeyboard : InputMethodService(), LifecycleOwner, KeyboardDataSource {
+class ImageKeyboard :
+	InputMethodService(),
+	LifecycleOwner,
+	SavedStateRegistryOwner,
+	KeyboardDataSource {
 	private val lifecycleRegistry = LifecycleRegistry(this)
 	override val lifecycle: Lifecycle get() = lifecycleRegistry
+
+	// ComposeView requires both a ViewTreeLifecycleOwner and a ViewTreeSavedStateRegistryOwner to
+	// be set before it attaches to the window, or it crashes immediately - InputMethodService
+	// provides neither by default the way an Activity/Fragment does.
+	private val savedStateRegistryController = SavedStateRegistryController.create(this)
+	override val savedStateRegistry: SavedStateRegistry
+		get() = savedStateRegistryController.savedStateRegistry
 
 	// onCreate
 	//  Shared Preferences
@@ -107,6 +122,7 @@ class ImageKeyboard : InputMethodService(), LifecycleOwner, KeyboardDataSource {
 	override fun onCreate() {
 		// Misc
 		super.onCreate()
+		savedStateRegistryController.performRestore(null)
 		lifecycleRegistry.currentState = Lifecycle.State.CREATED
 		startLogger(filesDir)
 
@@ -203,6 +219,7 @@ class ImageKeyboard : InputMethodService(), LifecycleOwner, KeyboardDataSource {
 
 		return ComposeView(this).apply {
 			setViewTreeLifecycleOwner(this@ImageKeyboard)
+			setViewTreeSavedStateRegistryOwner(this@ImageKeyboard)
 			setContent {
 				KeyboardScreen(
 					dataSource = this@ImageKeyboard,

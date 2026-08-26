@@ -79,6 +79,7 @@ dependencies {
 	implementation("androidx.compose.ui:ui")
 	implementation("androidx.compose.foundation:foundation")
 	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+	implementation("androidx.savedstate:savedstate-ktx:1.2.1")
 	implementation("androidx.gridlayout:gridlayout:1.0.0")
 	implementation("androidx.viewpager2:viewpager2:1.1.0")
 	implementation("io.noties.markwon:core:4.6.2")
