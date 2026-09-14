@@ -217,6 +217,16 @@ class ImageKeyboard :
 				?: RECENT_PACK_NAME
 		this.activePack = initialSection
 
+		// Compose looks up the window's recomposer starting from the *root* of the window's view
+		// hierarchy, not from the view returned below - and that root is a container the system
+		// wraps around it (InputMethodService's own softinput window decor), several levels above
+		// what onCreateInputView() returns. Tagging just the ComposeView below isn't enough; the
+		// tree-owner lookup that matters walks up from the window's real decorView.
+		window.window?.decorView?.let {
+			it.setViewTreeLifecycleOwner(this)
+			it.setViewTreeSavedStateRegistryOwner(this)
+		}
+
 		return ComposeView(this).apply {
 			setViewTreeLifecycleOwner(this@ImageKeyboard)
 			setViewTreeSavedStateRegistryOwner(this@ImageKeyboard)
