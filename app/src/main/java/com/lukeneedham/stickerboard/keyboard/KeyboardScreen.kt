@@ -549,7 +549,7 @@ private fun SearchContent(
 				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
 		)
 		BoxWithConstraints(Modifier.fillMaxWidth()) {
-			QwertyKeyboard(
+			OrthoKeyboard(
 				keyWidth = maxWidth / 10.4f,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
@@ -561,8 +561,17 @@ private fun SearchContent(
 	}
 }
 
+/**
+ * Ortholinear layout (every row spans the same total width, unlike the staggered qwerty offsets):
+ * ```
+ * q w e r t y u i o p
+ * a s d f g h j k l <
+ * __ z x c v b n m __
+ * ```
+ * where `<` is backspace and `__` are spacebar keys.
+ */
 @Composable
-private fun QwertyKeyboard(
+private fun OrthoKeyboard(
 	keyWidth: Dp,
 	onKeyTap: (String) -> Unit,
 	onBackspace: () -> Unit,
@@ -570,26 +579,28 @@ private fun QwertyKeyboard(
 ) {
 	Column(Modifier.fillMaxWidth()) {
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "QWERTYUIOP", "1234567890", onKeyTap)
+			OrthoRowKeys(keyWidth, "qwertyuiop", onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "ASDFGHJKL", "@#£_&-+()", onKeyTap)
-		}
-		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "ZXCVBNM", "*\"':;!?", onKeyTap)
-			QwertyKey(
-				primary = "←",
-				secondary = "",
-				width = keyWidth * 2,
+			OrthoRowKeys(keyWidth, "asdfghjkl", onKeyTap)
+			OrthoKey(
+				text = "←",
+				width = keyWidth,
 				onTap = onBackspace,
 				onLongTap = onClear,
 			)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyKey(
-				primary = " ",
-				secondary = " ",
-				width = keyWidth * 7,
+			OrthoKey(
+				text = " ",
+				width = keyWidth * 1.5f,
+				onTap = { onKeyTap(" ") },
+				onLongTap = { onKeyTap(" ") },
+			)
+			OrthoRowKeys(keyWidth, "zxcvbnm", onKeyTap)
+			OrthoKey(
+				text = " ",
+				width = keyWidth * 1.5f,
 				onTap = { onKeyTap(" ") },
 				onLongTap = { onKeyTap(" ") },
 			)
@@ -598,29 +609,25 @@ private fun QwertyKeyboard(
 }
 
 @Composable
-private fun QwertyRowKeys(
+private fun OrthoRowKeys(
 	keyWidth: Dp,
-	primaryChars: String,
-	secondaryChars: String,
+	chars: String,
 	onKeyTap: (String) -> Unit,
 ) {
-	for (i in primaryChars.indices) {
-		val primary = primaryChars[i].toString()
-		val secondary = secondaryChars.getOrNull(i)?.toString().orEmpty()
-		QwertyKey(
-			primary = primary,
-			secondary = secondary,
+	for (char in chars) {
+		val key = char.toString()
+		OrthoKey(
+			text = key,
 			width = keyWidth,
-			onTap = { onKeyTap(primary.lowercase()) },
-			onLongTap = { if (secondary.isNotEmpty()) onKeyTap(secondary) },
+			onTap = { onKeyTap(key) },
+			onLongTap = {},
 		)
 	}
 }
 
 @Composable
-private fun QwertyKey(
-	primary: String,
-	secondary: String,
+private fun OrthoKey(
+	text: String,
 	width: Dp,
 	onTap: () -> Unit,
 	onLongTap: () -> Unit,
@@ -635,17 +642,10 @@ private fun QwertyKey(
 			.combinedClickable(onClick = onTap, onLongClick = onLongTap),
 	) {
 		BasicText(
-			text = primary,
+			text = text,
 			style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
 			modifier = Modifier.align(Alignment.Center),
 		)
-		if (secondary.isNotEmpty()) {
-			BasicText(
-				text = secondary,
-				style = TextStyle(color = colorResource(R.color.fg), fontSize = 10.sp),
-				modifier = Modifier.align(Alignment.TopEnd),
-			)
-		}
 	}
 }
 
