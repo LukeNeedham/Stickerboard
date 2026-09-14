@@ -2,6 +2,13 @@
 
 package com.lukeneedham.stickerboard.keyboard
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,6 +46,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +58,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -73,7 +84,9 @@ import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.trimString
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.hypot
@@ -114,18 +127,33 @@ fun KeyboardScreen(
 	var mode by remember { mutableStateOf<Mode>(Mode.Board) }
 	var activeSection by remember { mutableStateOf(initialActivePack) }
 	var boardItems by remember { mutableStateOf(dataSource.boardItems()) }
+	var packNavIcons by remember { mutableStateOf(dataSource.packNavIcons()) }
 	var searchQuery by remember { mutableStateOf("") }
 	var searchResults by remember { mutableStateOf(dataSource.searchStickers("")) }
+	var isRefreshingStickers by remember { mutableStateOf(false) }
 	val gridState = rememberLazyGridState()
 	val scope = rememberCoroutineScope()
 
 	fun refreshBoard() {
 		boardItems = dataSource.boardItems()
+		packNavIcons = dataSource.packNavIcons()
 	}
 
 	fun sendSticker(file: File) {
 		dataSource.onStickerSend(file)
 		refreshBoard()
+	}
+
+	// Packs/stickers can be added on disk (e.g. via the app's gallery) while the keyboard is open,
+	// so pulling down re-scans them in rather than requiring the keyboard to be fully reloaded.
+	fun refreshStickers() {
+		if (isRefreshingStickers) return
+		isRefreshingStickers = true
+		scope.launch {
+			withContext(Dispatchers.IO) { dataSource.refreshStickers() }
+			refreshBoard()
+			isRefreshingStickers = false
+		}
 	}
 
 	fun jumpToSection(packName: String) {
@@ -197,7 +225,7 @@ fun KeyboardScreen(
 			Column(Modifier.weight(1f).fillMaxWidth()) {
 				if (mode is Mode.Board) {
 					PackNavRow(
-						packs = dataSource.packNavIcons(),
+						packs = packNavIcons,
 						activeSection = activeSection,
 						onPackClick = { jumpToSection(it) },
 					)
@@ -211,6 +239,7 @@ fun KeyboardScreen(
 							keyboardHeightPx = keyboardHeightPx,
 							swipeEnabled = swipeEnabled,
 							vibrate = vibrate,
+							isRefreshing = isRefreshingStickers,
 							onStickerClick = { sendSticker(it) },
 							onStickerLongClick = { mode = Mode.Preview(it, Mode.Board) },
 							onZoomStep = { delta ->
@@ -223,6 +252,7 @@ fun KeyboardScreen(
 							onSwipeNext = {
 								dataSource.nextSection(activeSection)?.let { jumpToSection(it) }
 							},
+							onRefresh = { refreshStickers() },
 						)
 						Mode.Search -> SearchContent(
 							query = searchQuery,
@@ -400,55 +430,122 @@ private fun BoardGrid(
 	keyboardHeightPx: Int,
 	swipeEnabled: Boolean,
 	vibrate: Boolean,
+	isRefreshing: Boolean,
 	onStickerClick: (File) -> Unit,
 	onStickerLongClick: (File) -> Unit,
 	onZoomStep: (Int) -> Unit,
 	onSwipePrevious: () -> Unit,
 	onSwipeNext: () -> Unit,
+	onRefresh: () -> Unit,
 ) {
 	val density = LocalDensity.current
 	val touchSlop = LocalViewConfiguration.current.touchSlop
-	LazyVerticalGrid(
-		columns = GridCells.Fixed(columns),
-		state = gridState,
-		// A final section with too few stickers to fill the viewport otherwise could never be
-		// scrolled all the way to the top, so it'd be stuck partway down the screen unable to
-		// become the active section - this padding gives it room to scroll into.
-		contentPadding = PaddingValues(bottom = with(density) { keyboardHeightPx.toDp() }),
-		modifier = Modifier
-			.fillMaxSize()
-			.boardGestures(swipeEnabled, touchSlop, onZoomStep, onSwipePrevious, onSwipeNext),
-	) {
-		items(
-			count = items.size,
-			key = { index ->
+	val pullThresholdPx = with(density) { dimensionResource(R.dimen.pull_refresh_threshold).toPx() }
+	var pullDistancePx by remember { mutableFloatStateOf(0f) }
+	val indicatorDistancePx by animateFloatAsState(
+		targetValue = if (isRefreshing) pullThresholdPx else pullDistancePx,
+		label = "pullRefreshIndicator",
+	)
+
+	Box(Modifier.fillMaxSize()) {
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(columns),
+			state = gridState,
+			// A final section with too few stickers to fill the viewport otherwise could never be
+			// scrolled all the way to the top, so it'd be stuck partway down the screen unable to
+			// become the active section - this padding gives it room to scroll into.
+			contentPadding = PaddingValues(bottom = with(density) { keyboardHeightPx.toDp() }),
+			modifier = Modifier
+				.fillMaxSize()
+				.boardGestures(
+					swipeEnabled = swipeEnabled,
+					touchSlopPx = touchSlop,
+					isAtTop = {
+						gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0
+					},
+					pullRefreshThresholdPx = pullThresholdPx,
+					isRefreshing = isRefreshing,
+					onZoomStep = onZoomStep,
+					onSwipePrevious = onSwipePrevious,
+					onSwipeNext = onSwipeNext,
+					onPull = { pullDistancePx = it },
+					onRefresh = onRefresh,
+				),
+		) {
+			items(
+				count = items.size,
+				key = { index ->
+					when (val item = items[index]) {
+						is BoardItem.Header -> "header:${item.packName}"
+						is BoardItem.EmptyMessage -> "empty:${item.packName}"
+						is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
+						is BoardItem.AddPhoto -> "add:${item.packName}"
+					}
+				},
+				span = { index ->
+					when (items[index]) {
+						is BoardItem.Header, is BoardItem.EmptyMessage -> GridItemSpan(maxLineSpan)
+						else -> GridItemSpan(1)
+					}
+				},
+			) { index ->
 				when (val item = items[index]) {
-					is BoardItem.Header -> "header:${item.packName}"
-					is BoardItem.EmptyMessage -> "empty:${item.packName}"
-					is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
-					is BoardItem.AddPhoto -> "add:${item.packName}"
+					is BoardItem.Header -> SectionHeader(item.displayName)
+					is BoardItem.EmptyMessage -> SectionEmptyMessage(item.message)
+					is BoardItem.Sticker -> StickerCell(
+						file = item.file,
+						contentDescription = stringResource(R.string.pack_icon),
+						vibrate = vibrate,
+						onClick = { onStickerClick(item.file) },
+						onLongClick = { onStickerLongClick(item.file) },
+					)
+					// Board mode (unlike the sticker gallery) never surfaces AddPhoto cells.
+					is BoardItem.AddPhoto -> Unit
 				}
-			},
-			span = { index ->
-				when (items[index]) {
-					is BoardItem.Header, is BoardItem.EmptyMessage -> GridItemSpan(maxLineSpan)
-					else -> GridItemSpan(1)
-				}
-			},
-		) { index ->
-			when (val item = items[index]) {
-				is BoardItem.Header -> SectionHeader(item.displayName)
-				is BoardItem.EmptyMessage -> SectionEmptyMessage(item.message)
-				is BoardItem.Sticker -> StickerCell(
-					file = item.file,
-					contentDescription = stringResource(R.string.pack_icon),
-					vibrate = vibrate,
-					onClick = { onStickerClick(item.file) },
-					onLongClick = { onStickerLongClick(item.file) },
-				)
-				// Board mode (unlike the sticker gallery) never surfaces AddPhoto cells.
-				is BoardItem.AddPhoto -> Unit
 			}
+		}
+		PullRefreshIndicator(
+			progress = (indicatorDistancePx / pullThresholdPx).coerceIn(0f, 1f),
+			isRefreshing = isRefreshing,
+			modifier = Modifier
+				.align(Alignment.TopCenter)
+				.padding(top = dimensionResource(R.dimen.sticker_padding)),
+		)
+	}
+}
+
+@Composable
+private fun PullRefreshIndicator(
+	progress: Float,
+	isRefreshing: Boolean,
+	modifier: Modifier = Modifier,
+) {
+	val infiniteTransition = rememberInfiniteTransition(label = "pullRefreshSpin")
+	val spinAngle by infiniteTransition.animateFloat(
+		initialValue = 0f,
+		targetValue = 360f,
+		animationSpec = infiniteRepeatable(tween(durationMillis = 800, easing = LinearEasing)),
+		label = "pullRefreshAngle",
+	)
+	val color = colorResource(R.color.accent)
+	Canvas(
+		modifier
+			.size(dimensionResource(R.dimen.pull_refresh_indicator_size))
+			.alpha(if (isRefreshing) 1f else progress),
+	) {
+		val stroke = Stroke(width = size.minDimension * 0.12f, cap = StrokeCap.Round)
+		if (isRefreshing) {
+			rotate(spinAngle) {
+				drawArc(color = color, startAngle = 0f, sweepAngle = 270f, useCenter = false, style = stroke)
+			}
+		} else {
+			drawArc(
+				color = color,
+				startAngle = -90f,
+				sweepAngle = 360f * progress,
+				useCenter = false,
+				style = stroke,
+			)
 		}
 	}
 }
@@ -702,23 +799,31 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 }
 
 /**
- * Pinch to zoom (spread = fewer, bigger stickers per row; pinch = more, smaller) and swipe to
- * switch section - both live at the [BoardGrid] level so they can intercept multi/single-pointer
- * gestures before the grid's own vertical-scroll handling sees them, without stealing plain
- * single-finger vertical scrolling or taps.
+ * Pinch to zoom (spread = fewer, bigger stickers per row; pinch = more, smaller), swipe to switch
+ * section, and pull-down-to-refresh (re-scan stickers from disk) when already at the top of the
+ * list - all live at the [BoardGrid] level so they can intercept multi/single-pointer gestures
+ * before the grid's own vertical-scroll handling sees them, without stealing plain single-finger
+ * vertical scrolling or taps.
  */
 private fun Modifier.boardGestures(
 	swipeEnabled: Boolean,
 	touchSlopPx: Float,
+	isAtTop: () -> Boolean,
+	pullRefreshThresholdPx: Float,
+	isRefreshing: Boolean,
 	onZoomStep: (Int) -> Unit,
 	onSwipePrevious: () -> Unit,
 	onSwipeNext: () -> Unit,
-): Modifier = pointerInput(swipeEnabled) {
+	onPull: (Float) -> Unit,
+	onRefresh: () -> Unit,
+): Modifier = pointerInput(swipeEnabled, isRefreshing) {
 	awaitEachGesture {
 		var cumulativeZoom = 1f
 		var prevPinchDistance = 0f
 		var panX = 0f
+		var panY = 0f
 		var swiped = false
+		var pulling = false
 		do {
 			val event = awaitPointerEvent(PointerEventPass.Initial)
 			val pressed = event.changes.filter { it.pressed }
@@ -739,19 +844,47 @@ private fun Modifier.boardGestures(
 					}
 					prevPinchDistance = distance
 					event.changes.forEach { it.consume() }
+					if (pulling) {
+						pulling = false
+						onPull(0f)
+					}
 				}
-				swipeEnabled && pressed.size == 1 && !swiped -> {
+				pulling -> {
+					prevPinchDistance = 0f
+					val change = pressed.firstOrNull()
+					if (change != null) {
+						panY += change.positionChange().y
+						onPull(panY.coerceAtLeast(0f))
+						change.consume()
+					}
+				}
+				pressed.size == 1 && !swiped -> {
 					prevPinchDistance = 0f
 					val change = pressed[0]
-					panX += change.positionChange().x
-					if (abs(panX) > touchSlopPx) {
-						swiped = true
-						if (panX > 0) onSwipePrevious() else onSwipeNext()
-						change.consume()
+					val delta = change.positionChange()
+					panX += delta.x
+					panY += delta.y
+					val pullTripped = isAtTop() && panY > touchSlopPx && panY > abs(panX)
+					val swipeTripped = swipeEnabled && abs(panX) > touchSlopPx && abs(panX) > panY
+					when {
+						pullTripped -> {
+							pulling = true
+							onPull(panY.coerceAtLeast(0f))
+							change.consume()
+						}
+						swipeTripped -> {
+							swiped = true
+							if (panX > 0) onSwipePrevious() else onSwipeNext()
+							change.consume()
+						}
 					}
 				}
 				else -> prevPinchDistance = 0f
 			}
 		} while (event.changes.any { it.pressed })
+		if (pulling) {
+			onPull(0f)
+			if (panY >= pullRefreshThresholdPx) onRefresh()
+		}
 	}
 }
