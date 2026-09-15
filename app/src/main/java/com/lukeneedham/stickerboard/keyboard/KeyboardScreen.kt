@@ -141,9 +141,12 @@ fun KeyboardScreen(
 		if (isRefreshingStickers) return
 		isRefreshingStickers = true
 		scope.launch {
-			withContext(Dispatchers.IO) { dataSource.refreshStickers() }
-			refreshBoard()
-			isRefreshingStickers = false
+			try {
+				withContext(Dispatchers.IO) { dataSource.refreshStickers() }
+				refreshBoard()
+			} finally {
+				isRefreshingStickers = false
+			}
 		}
 	}
 
