@@ -82,6 +82,9 @@ import kotlin.math.roundToInt
 /** Cumulative pinch scale factor needed to change iconsPerX by one column. */
 private const val PINCH_STEP_THRESHOLD = 1.15f
 
+/** The search keyboard's widest row - determines the per-key width all other rows share. */
+private const val QWERTY_TOP_ROW = "qwertyuiop"
+
 /** Which content is currently showing below the pull bar. */
 private sealed interface Mode {
 	data object Board : Mode
@@ -549,9 +552,9 @@ private fun SearchContent(
 				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
 		)
 		BoxWithConstraints(Modifier.fillMaxWidth()) {
-			// The widest row has 10 keys, each padded on both sides - subtract that padding up
-			// front so the keys' visible width sums to exactly maxWidth instead of overflowing it.
-			val keyCount = 10
+			// The widest row's keys are each padded on both sides - subtract that padding up
+			// front so their visible width sums to exactly maxWidth instead of overflowing it.
+			val keyCount = QWERTY_TOP_ROW.length
 			val keyPadding = dimensionResource(R.dimen.sticker_padding)
 			QwertyKeyboard(
 				keyWidth = (maxWidth - keyPadding * 2 * keyCount) / keyCount,
@@ -583,7 +586,7 @@ private fun QwertyKeyboard(
 ) {
 	Column(Modifier.fillMaxWidth()) {
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "qwertyuiop", onKeyTap)
+			QwertyRowKeys(keyWidth, QWERTY_TOP_ROW, onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
 			QwertyRowKeys(keyWidth, "asdfghjkl", onKeyTap)
