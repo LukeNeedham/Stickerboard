@@ -37,6 +37,8 @@ import java.io.IOException
  * @property imageLoader: coil imageLoader object used to convert a sticker file to a drawable ready
  * for writing to a compat sticker
  * @property isPngFallback: is a png fallback enabled
+ * @property onCannotSend: called when no way was found to deliver the sticker to the current app
+ * (neither commitContent nor a share target), so the caller can let the user know
  */
 class StickerSender(
 	private val context: Context,
@@ -47,6 +49,7 @@ class StickerSender(
 	private val compatCache: Cache,
 	private val imageLoader: ImageLoader,
 	private val isPngFallback: Boolean,
+	private val onCannotSend: () -> Unit,
 ) {
 
 	private val supportedMimes = this.currentInputEditorInfo?.contentMimeTypes ?: emptyArray()
@@ -191,13 +194,15 @@ class StickerSender(
 	}
 
 	/**
-	 * Called by doFallbackCommitContent. Opens a share sheet to send the sticker
+	 * Called by doFallbackCommitContent. Opens a share sheet to send the sticker, but only if the
+	 * current app actually has a component that can receive it - otherwise the system chooser would
+	 * show its own "no apps can perform this action" dialog, closing the keyboard to do so. In that
+	 * case, report failure via [onCannotSend] instead so the keyboard can show its own message.
 	 *
 	 * @param mimeType String
 	 * @param file File
 	 */
 	private fun openShareSheet(mimeType: String, file: File) {
-		XLog.i("$packageName reports that is doesn't support png over its InputConnectionCompat, so open a share sheet")
 		val uri = FileProvider.getUriForFile(
 			context,
 			"com.lukeneedham.stickerboard.inputcontent",
@@ -208,11 +213,17 @@ class StickerSender(
 			action = Intent.ACTION_SEND
 			putExtra(Intent.EXTRA_STREAM, uri)
 			type = mimeType
+			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+			setPackage(packageName)
 		}
 
-		shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-		shareIntent.setPackage(packageName)
+		if (shareIntent.resolveActivity(context.packageManager) == null) {
+			XLog.i("$packageName has no component that can receive a shared $mimeType, giving up")
+			onCannotSend()
+			return
+		}
 
+		XLog.i("$packageName reports that is doesn't support png over its InputConnectionCompat, so open a share sheet")
 		val chooserIntent = Intent.createChooser(shareIntent, "Share Sticker")
 		chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 		context.startActivity(chooserIntent)

@@ -9,6 +9,8 @@ import android.os.Build.VERSION.SDK_INT
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -114,6 +116,9 @@ class ImageKeyboard :
 
 	//  Ordered map of section-name -> board-item position of that section's header row
 	private var headerPositions: LinkedHashMap<String, Int> = LinkedHashMap()
+
+	private val _statusMessage = mutableStateOf<String?>(null)
+	override val statusMessage: State<String?> get() = _statusMessage
 
 	/**
 	 * When the activity is created...
@@ -314,7 +319,16 @@ class ImageKeyboard :
 			this.compatCache,
 			this.imageLoader,
 			this.isPngFallback,
+			onCannotSend = { showStatusMessage(getString(R.string.cannot_send_sticker)) },
 		)
+	}
+
+	private fun showStatusMessage(message: String) {
+		_statusMessage.value = message
+	}
+
+	override fun onStatusMessageShown() {
+		_statusMessage.value = null
 	}
 
 	/** When leaving some input field update the caches */

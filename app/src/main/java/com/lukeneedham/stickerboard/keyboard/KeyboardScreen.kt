@@ -97,6 +97,9 @@ private const val PINCH_STEP_THRESHOLD = 1.15f
  */
 private const val MIN_REFRESH_INDICATOR_MS = 500L
 
+/** How long the [StatusBanner] (e.g. "Cannot send image") stays on screen before auto-dismissing. */
+private const val STATUS_MESSAGE_DURATION_MS = 2500L
+
 /** Which content is currently showing below the pull bar. */
 private sealed interface Mode {
 	data object Board : Mode
@@ -285,6 +288,42 @@ fun KeyboardScreen(
 				}
 			}
 		}
+
+		val statusMessage by dataSource.statusMessage
+		if (statusMessage != null) {
+			LaunchedEffect(statusMessage) {
+				delay(STATUS_MESSAGE_DURATION_MS)
+				dataSource.onStatusMessageShown()
+			}
+			StatusBanner(
+				message = statusMessage,
+				modifier = Modifier
+					.align(Alignment.BottomCenter)
+					.padding(bottom = dimensionResource(R.dimen.content_margin)),
+			)
+		}
+	}
+}
+
+/**
+ * A snackbar-style banner shown briefly over the keyboard (e.g. "Cannot send image") in place of a
+ * system dialog, which would otherwise close the keyboard to show itself.
+ */
+@Composable
+private fun StatusBanner(message: String, modifier: Modifier = Modifier) {
+	Box(
+		modifier
+			.clip(RoundedCornerShape(dimensionResource(R.dimen.corner)))
+			.background(colorResource(R.color.accent))
+			.padding(
+				horizontal = dimensionResource(R.dimen.card_margin),
+				vertical = dimensionResource(R.dimen.content_margin),
+			),
+	) {
+		BasicText(
+			text = message,
+			style = TextStyle(color = colorResource(R.color.onAccent), fontSize = 16.sp),
+		)
 	}
 }
 
