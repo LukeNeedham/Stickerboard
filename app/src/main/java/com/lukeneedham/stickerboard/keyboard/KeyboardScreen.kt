@@ -2,6 +2,10 @@
 
 package com.lukeneedham.stickerboard.keyboard
 
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,7 +28,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -90,6 +93,9 @@ private const val PINCH_STEP_THRESHOLD = 1.15f
 
 /** The search keyboard's widest row - determines the per-key width all other rows share. */
 private const val QWERTY_TOP_ROW = "qwertyuiop"
+
+/** Full on/off cycle time for the search bar's blinking text-cursor, mimicking a text field caret. */
+private const val CURSOR_BLINK_PERIOD_MS = 1000
 
 /**
  * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
@@ -215,11 +221,10 @@ fun KeyboardScreen(
 				},
 				onHeightDragEnd = { dataSource.onKeyboardHeightSettled(keyboardHeightPx) },
 				onBackOrClose = {
-					val current = mode
-					if (current is Mode.Preview) {
-						mode = current.returnTo
-					} else {
-						dataSource.onClose()
+					when (val current = mode) {
+						is Mode.Preview -> mode = current.returnTo
+						Mode.Search -> mode = Mode.Board
+						Mode.Board -> dataSource.onClose()
 					}
 				},
 				onSearchOrSend = {
@@ -301,6 +306,7 @@ private fun PullBar(
 	onSearchOrSend: () -> Unit,
 ) {
 	val isPreview = mode is Mode.Preview
+	val isSearch = mode is Mode.Search
 	Box(
 		Modifier
 			.fillMaxWidth()
@@ -312,13 +318,13 @@ private fun PullBar(
 				}
 			},
 	) {
-		if (isPreview || showCloseButton) {
+		if (isPreview || isSearch || showCloseButton) {
 			CircleIconButton(
-				iconRes = if (isPreview) R.drawable.ic_back else R.drawable.ic_close,
-				contentDescription = if (isPreview) {
-					stringResource(R.string.close_sticker_preview)
-				} else {
-					stringResource(R.string.pack_icon)
+				iconRes = if (isPreview || isSearch) R.drawable.ic_back else R.drawable.ic_close,
+				contentDescription = when {
+					isPreview -> stringResource(R.string.close_sticker_preview)
+					isSearch -> stringResource(R.string.close_search)
+					else -> stringResource(R.string.pack_icon)
 				},
 				selected = false,
 				onClick = onBackOrClose,
@@ -588,15 +594,7 @@ private fun SearchContent(
 				)
 			}
 		}
-		BasicText(
-			text = query,
-			style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(dimensionResource(R.dimen.qwerty_row_height))
-				.wrapContentHeight(Alignment.CenterVertically)
-				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
-		)
+		SearchQueryBar(query)
 		BoxWithConstraints(
 			Modifier
 				.fillMaxWidth()
@@ -614,6 +612,49 @@ private fun SearchContent(
 				onClear = { onQueryChange("") },
 			)
 		}
+	}
+}
+
+/**
+ * The search query, shown above the qwerty keyboard with a blinking text-cursor after it, so the
+ * bar reads clearly as live text input rather than a static label.
+ */
+@Composable
+private fun SearchQueryBar(query: String) {
+	val infiniteTransition = rememberInfiniteTransition(label = "search-cursor-blink")
+	val cursorAlpha by infiniteTransition.animateFloat(
+		initialValue = 1f,
+		targetValue = 1f,
+		animationSpec = infiniteRepeatable(
+			animation = keyframes {
+				durationMillis = CURSOR_BLINK_PERIOD_MS
+				1f at 0
+				1f at CURSOR_BLINK_PERIOD_MS / 2
+				0f at CURSOR_BLINK_PERIOD_MS / 2
+				0f at CURSOR_BLINK_PERIOD_MS
+			},
+		),
+		label = "search-cursor-alpha",
+	)
+	Row(
+		Modifier
+			.fillMaxWidth()
+			.height(dimensionResource(R.dimen.qwerty_row_height))
+			.padding(horizontal = dimensionResource(R.dimen.card_margin)),
+		verticalAlignment = Alignment.CenterVertically,
+	) {
+		BasicText(
+			text = query,
+			style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
+		)
+		Box(
+			Modifier
+				.padding(start = 2.dp)
+				.width(2.dp)
+				.height(20.dp)
+				.alpha(cursorAlpha)
+				.background(colorResource(R.color.fg)),
+		)
 	}
 }
 
