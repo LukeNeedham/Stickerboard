@@ -29,4 +29,7 @@ interface KeyboardDataSource {
 	fun onActivePackChanged(packName: String)
 	fun onStickerSend(sticker: File)
 	fun onClose()
+
+	/** Open the app's settings screen, e.g. from a button in the keyboard's pull bar. */
+	fun onOpenSettings()
 }

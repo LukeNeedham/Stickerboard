@@ -1,6 +1,7 @@
 package com.lukeneedham.stickerboard
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.InputMethodService.Insets
@@ -448,6 +449,10 @@ class ImageKeyboard :
 	}
 
 	override fun onClose() = closeKeyboard()
+
+	override fun onOpenSettings() {
+		startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+	}
 
 	private fun closeKeyboard() {
 		if (SDK_INT >= 28) {

@@ -25,6 +25,11 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<!-- Enable Keyboard -->
 	<string name="enable_keyboard_heading">Enable Keyboard</string>
 	<string name="enable_keyboard_button">Launch Settings</string>
+	<!-- Try It Out -->
+	<string name="try_it_out_heading">Try It Out</string>
+	<string name="try_it_out_info">Tap the field below, switch to the StickerBoard keyboard, and send a sticker to try it out.</string>
+	<string name="try_it_out_hint">Tap here, then switch keyboards</string>
+	<string name="open_settings_button">Open StickerBoard settings</string>
 	<!-- Update Sticker Pack -->
 	<string name="update_sticker_pack_heading">Update Sticker Pack</string>
 	<string name="update_sticker_pack_button">Choose sticker source directory</string>

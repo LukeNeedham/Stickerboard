@@ -203,6 +203,7 @@ fun KeyboardScreen(
 				mode = mode,
 				showCloseButton = showCloseButton,
 				showSearchButton = showSearchButton,
+				onOpenSettings = { dataSource.onOpenSettings() },
 				onHeightDrag = { dragAmountPx ->
 					val newHeight = (keyboardHeightPx - dragAmountPx)
 						.roundToInt()
@@ -292,6 +293,7 @@ private fun PullBar(
 	mode: Mode,
 	showCloseButton: Boolean,
 	showSearchButton: Boolean,
+	onOpenSettings: () -> Unit,
 	onHeightDrag: (Float) -> Unit,
 	onHeightDragEnd: () -> Unit,
 	onBackOrClose: () -> Unit,
@@ -331,20 +333,31 @@ private fun PullBar(
 				.height(4.dp)
 				.background(colorResource(R.color.pull_handle), RoundedCornerShape(2.dp)),
 		)
-		if (isPreview || showSearchButton) {
-			CircleIconButton(
-				iconRes = if (isPreview) R.drawable.ic_send else R.drawable.ic_search,
-				contentDescription = if (isPreview) {
-					stringResource(R.string.send_sticker)
-				} else {
-					stringResource(R.string.pack_icon)
-				},
-				selected = mode is Mode.Search,
-				onClick = onSearchOrSend,
-				modifier = Modifier
-					.align(Alignment.CenterEnd)
-					.padding(end = dimensionResource(R.dimen.sticker_padding)),
-			)
+		Row(
+			Modifier
+				.align(Alignment.CenterEnd)
+				.padding(end = dimensionResource(R.dimen.sticker_padding)),
+		) {
+			if (!isPreview) {
+				CircleIconButton(
+					iconRes = R.drawable.ic_settings,
+					contentDescription = stringResource(R.string.open_settings_button),
+					selected = false,
+					onClick = onOpenSettings,
+				)
+			}
+			if (isPreview || showSearchButton) {
+				CircleIconButton(
+					iconRes = if (isPreview) R.drawable.ic_send else R.drawable.ic_search,
+					contentDescription = if (isPreview) {
+						stringResource(R.string.send_sticker)
+					} else {
+						stringResource(R.string.pack_icon)
+					},
+					selected = mode is Mode.Search,
+					onClick = onSearchOrSend,
+				)
+			}
 		}
 	}
 }
