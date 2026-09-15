@@ -549,8 +549,12 @@ private fun SearchContent(
 				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
 		)
 		BoxWithConstraints(Modifier.fillMaxWidth()) {
+			// The widest row has 10 keys, each padded on both sides - subtract that padding up
+			// front so the keys' visible width sums to exactly maxWidth instead of overflowing it.
+			val keyCount = 10
+			val keyPadding = dimensionResource(R.dimen.sticker_padding)
 			QwertyKeyboard(
-				keyWidth = maxWidth / 10.4f,
+				keyWidth = (maxWidth - keyPadding * 2 * keyCount) / keyCount,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
 					if (query.isNotEmpty()) onQueryChange(query.substring(0, query.length - 1))
