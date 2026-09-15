@@ -57,6 +57,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -533,10 +535,24 @@ private fun PullRefreshIndicator(
 			.size(dimensionResource(R.dimen.pull_refresh_indicator_size))
 			.alpha(if (isRefreshing) 1f else progress),
 	) {
-		val stroke = Stroke(width = size.minDimension * 0.12f, cap = StrokeCap.Round)
+		val strokeWidth = size.minDimension * 0.12f
+		val stroke = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+		// drawArc's default bounding box spans the full canvas, so a stroked arc's width - which
+		// straddles the path - bleeds past the canvas edge and gets clipped; inset by half the
+		// stroke width so the whole stroke stays inside.
+		val arcTopLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
+		val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
 		if (isRefreshing) {
 			rotate(spinAngle) {
-				drawArc(color = color, startAngle = 0f, sweepAngle = 270f, useCenter = false, style = stroke)
+				drawArc(
+					color = color,
+					startAngle = 0f,
+					sweepAngle = 270f,
+					useCenter = false,
+					topLeft = arcTopLeft,
+					size = arcSize,
+					style = stroke,
+				)
 			}
 		} else {
 			drawArc(
@@ -544,6 +560,8 @@ private fun PullRefreshIndicator(
 				startAngle = -90f,
 				sweepAngle = 360f * progress,
 				useCenter = false,
+				topLeft = arcTopLeft,
+				size = arcSize,
 				style = stroke,
 			)
 		}
