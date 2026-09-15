@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+	style="@style/card"
+	android:clickable="true"
+	android:focusable="true">
+
+	<LinearLayout
+		style="@style/cardchild"
+		android:orientation="vertical">
+
+		<TextView
+			android:id="@+id/crashItemTimestamp"
+			style="@style/body_text"
+			android:layout_width="match_parent"
+			android:layout_marginVertical="@dimen/zero"
+			android:textColor="@color/accent"
+			android:textStyle="bold" />
+
+		<TextView
+			android:id="@+id/crashItemStackTrace"
+			style="@style/body_text"
+			android:layout_width="match_parent"
+			android:layout_marginVertical="@dimen/zero"
+			android:ellipsize="end"
+			android:fontFamily="monospace"
+			android:maxLines="3" />
+
+	</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
