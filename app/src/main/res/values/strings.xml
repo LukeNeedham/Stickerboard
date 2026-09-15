@@ -115,6 +115,8 @@ Copyright © Randy Zhou</string>
 	<!-- Keyboard -->
 	<string name="recent_heading">Recently used</string>
 	<string name="recent_empty">No stickers used yet</string>
+	<string name="space_key">Space</string>
+	<string name="backspace_key">Backspace</string>
 	<!-- Debug -->
 	<string name="debug_heading">Debug</string>
 	<string name="debug_info">Tools for debugging StickerBoard. Only shown in debug builds.</string>

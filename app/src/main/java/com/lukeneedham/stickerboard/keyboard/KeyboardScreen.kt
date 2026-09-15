@@ -88,6 +88,9 @@ import kotlin.system.measureTimeMillis
 /** Cumulative pinch scale factor needed to change iconsPerX by one column. */
 private const val PINCH_STEP_THRESHOLD = 1.15f
 
+/** The search keyboard's widest row - determines the per-key width all other rows share. */
+private const val QWERTY_TOP_ROW = "qwertyuiop"
+
 /**
  * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
  * re-scan can finish within a single frame, and PullToRefreshBox's animation only reacts when it
@@ -594,9 +597,16 @@ private fun SearchContent(
 				.wrapContentHeight(Alignment.CenterVertically)
 				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
 		)
-		BoxWithConstraints(Modifier.fillMaxWidth()) {
+		BoxWithConstraints(
+			Modifier
+				.fillMaxWidth()
+				.padding(bottom = dimensionResource(R.dimen.qwerty_bottom_margin)),
+		) {
+			// The widest row's keys share maxWidth evenly, with no margin between them.
+			val keyWidth = maxWidth / QWERTY_TOP_ROW.length
 			QwertyKeyboard(
-				keyWidth = maxWidth / 10.4f,
+				keyWidth = keyWidth,
+				keyHeight = keyWidth * 1.5f,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
 					if (query.isNotEmpty()) onQueryChange(query.substring(0, query.length - 1))
@@ -607,37 +617,47 @@ private fun SearchContent(
 	}
 }
 
+/**
+ * Staggered qwerty layout with no long-press symbols - just letters, space, and backspace:
+ * ```
+ * q w e r t y u i o p
+ *  a s d f g h j k l
+ * __ z x c v b n m <
+ * ```
+ * where `<` is backspace and `__` is the spacebar.
+ */
 @Composable
 private fun QwertyKeyboard(
 	keyWidth: Dp,
+	keyHeight: Dp,
 	onKeyTap: (String) -> Unit,
 	onBackspace: () -> Unit,
 	onClear: () -> Unit,
 ) {
 	Column(Modifier.fillMaxWidth()) {
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "QWERTYUIOP", "1234567890", onKeyTap)
+			QwertyRowKeys(keyWidth, keyHeight, QWERTY_TOP_ROW, onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "ASDFGHJKL", "@#£_&-+()", onKeyTap)
-		}
-		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "ZXCVBNM", "*\"':;!?", onKeyTap)
-			QwertyKey(
-				primary = "←",
-				secondary = "",
-				width = keyWidth * 2,
-				onTap = onBackspace,
-				onLongTap = onClear,
-			)
+			QwertyRowKeys(keyWidth, keyHeight, "asdfghjkl", onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
 			QwertyKey(
-				primary = " ",
-				secondary = " ",
-				width = keyWidth * 7,
+				iconRes = R.drawable.ic_space,
+				contentDescription = stringResource(R.string.space_key),
+				width = keyWidth * 1.5f,
+				height = keyHeight,
 				onTap = { onKeyTap(" ") },
 				onLongTap = { onKeyTap(" ") },
+			)
+			QwertyRowKeys(keyWidth, keyHeight, "zxcvbnm", onKeyTap)
+			QwertyKey(
+				iconRes = R.drawable.ic_backspace,
+				contentDescription = stringResource(R.string.backspace_key),
+				width = keyWidth * 1.5f,
+				height = keyHeight,
+				onTap = onBackspace,
+				onLongTap = onClear,
 			)
 		}
 	}
@@ -646,50 +666,49 @@ private fun QwertyKeyboard(
 @Composable
 private fun QwertyRowKeys(
 	keyWidth: Dp,
-	primaryChars: String,
-	secondaryChars: String,
+	keyHeight: Dp,
+	chars: String,
 	onKeyTap: (String) -> Unit,
 ) {
-	for (i in primaryChars.indices) {
-		val primary = primaryChars[i].toString()
-		val secondary = secondaryChars.getOrNull(i)?.toString().orEmpty()
+	for (char in chars) {
+		val key = char.toString()
 		QwertyKey(
-			primary = primary,
-			secondary = secondary,
+			text = key,
 			width = keyWidth,
-			onTap = { onKeyTap(primary.lowercase()) },
-			onLongTap = { if (secondary.isNotEmpty()) onKeyTap(secondary) },
+			height = keyHeight,
+			onTap = { onKeyTap(key) },
+			onLongTap = {},
 		)
 	}
 }
 
 @Composable
 private fun QwertyKey(
-	primary: String,
-	secondary: String,
 	width: Dp,
+	height: Dp,
 	onTap: () -> Unit,
 	onLongTap: () -> Unit,
+	text: String? = null,
+	iconRes: Int? = null,
+	contentDescription: String? = null,
 ) {
 	Box(
 		Modifier
-			.padding(dimensionResource(R.dimen.sticker_padding))
 			.width(width)
-			.height(dimensionResource(R.dimen.qwerty_row_height))
-			.clip(RoundedCornerShape(dimensionResource(R.dimen.corner)))
-			.background(colorResource(R.color.bg2))
+			.height(height)
 			.combinedClickable(onClick = onTap, onLongClick = onLongTap),
+		contentAlignment = Alignment.Center,
 	) {
-		BasicText(
-			text = primary,
-			style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
-			modifier = Modifier.align(Alignment.Center),
-		)
-		if (secondary.isNotEmpty()) {
+		if (iconRes != null) {
+			Image(
+				painter = painterResource(iconRes),
+				contentDescription = contentDescription,
+				modifier = Modifier.size(dimensionResource(R.dimen.qwerty_key_icon_size)),
+			)
+		} else if (text != null) {
 			BasicText(
-				text = secondary,
-				style = TextStyle(color = colorResource(R.color.fg), fontSize = 10.sp),
-				modifier = Modifier.align(Alignment.TopEnd),
+				text = text,
+				style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
 			)
 		}
 	}
