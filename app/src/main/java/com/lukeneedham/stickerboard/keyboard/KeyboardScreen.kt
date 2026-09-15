@@ -1,14 +1,7 @@
-@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 
 package com.lukeneedham.stickerboard.keyboard
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,10 +36,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,12 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -442,14 +431,11 @@ private fun BoardGrid(
 ) {
 	val density = LocalDensity.current
 	val touchSlop = LocalViewConfiguration.current.touchSlop
-	val pullThresholdPx = with(density) { dimensionResource(R.dimen.pull_refresh_threshold).toPx() }
-	var pullDistancePx by remember { mutableFloatStateOf(0f) }
-	val indicatorDistancePx by animateFloatAsState(
-		targetValue = if (isRefreshing) pullThresholdPx else pullDistancePx,
-		label = "pullRefreshIndicator",
-	)
-
-	Box(Modifier.fillMaxSize()) {
+	PullToRefreshBox(
+		isRefreshing = isRefreshing,
+		onRefresh = onRefresh,
+		modifier = Modifier.fillMaxSize(),
+	) {
 		LazyVerticalGrid(
 			columns = GridCells.Fixed(columns),
 			state = gridState,
@@ -459,20 +445,7 @@ private fun BoardGrid(
 			contentPadding = PaddingValues(bottom = with(density) { keyboardHeightPx.toDp() }),
 			modifier = Modifier
 				.fillMaxSize()
-				.boardGestures(
-					swipeEnabled = swipeEnabled,
-					touchSlopPx = touchSlop,
-					isAtTop = {
-						gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0
-					},
-					pullRefreshThresholdPx = pullThresholdPx,
-					isRefreshing = isRefreshing,
-					onZoomStep = onZoomStep,
-					onSwipePrevious = onSwipePrevious,
-					onSwipeNext = onSwipeNext,
-					onPull = { pullDistancePx = it },
-					onRefresh = onRefresh,
-				),
+				.boardGestures(swipeEnabled, touchSlop, onZoomStep, onSwipePrevious, onSwipeNext),
 		) {
 			items(
 				count = items.size,
@@ -505,65 +478,6 @@ private fun BoardGrid(
 					is BoardItem.AddPhoto -> Unit
 				}
 			}
-		}
-		PullRefreshIndicator(
-			progress = (indicatorDistancePx / pullThresholdPx).coerceIn(0f, 1f),
-			isRefreshing = isRefreshing,
-			modifier = Modifier
-				.align(Alignment.TopCenter)
-				.padding(top = dimensionResource(R.dimen.sticker_padding)),
-		)
-	}
-}
-
-@Composable
-private fun PullRefreshIndicator(
-	progress: Float,
-	isRefreshing: Boolean,
-	modifier: Modifier = Modifier,
-) {
-	val infiniteTransition = rememberInfiniteTransition(label = "pullRefreshSpin")
-	val spinAngle by infiniteTransition.animateFloat(
-		initialValue = 0f,
-		targetValue = 360f,
-		animationSpec = infiniteRepeatable(tween(durationMillis = 800, easing = LinearEasing)),
-		label = "pullRefreshAngle",
-	)
-	val color = colorResource(R.color.accent)
-	Canvas(
-		modifier
-			.size(dimensionResource(R.dimen.pull_refresh_indicator_size))
-			.alpha(if (isRefreshing) 1f else progress),
-	) {
-		val strokeWidth = size.minDimension * 0.12f
-		val stroke = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-		// drawArc's default bounding box spans the full canvas, so a stroked arc's width - which
-		// straddles the path - bleeds past the canvas edge and gets clipped; inset by half the
-		// stroke width so the whole stroke stays inside.
-		val arcTopLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
-		val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
-		if (isRefreshing) {
-			rotate(spinAngle) {
-				drawArc(
-					color = color,
-					startAngle = 0f,
-					sweepAngle = 270f,
-					useCenter = false,
-					topLeft = arcTopLeft,
-					size = arcSize,
-					style = stroke,
-				)
-			}
-		} else {
-			drawArc(
-				color = color,
-				startAngle = -90f,
-				sweepAngle = 360f * progress,
-				useCenter = false,
-				topLeft = arcTopLeft,
-				size = arcSize,
-				style = stroke,
-			)
 		}
 	}
 }
@@ -817,31 +731,23 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 }
 
 /**
- * Pinch to zoom (spread = fewer, bigger stickers per row; pinch = more, smaller), swipe to switch
- * section, and pull-down-to-refresh (re-scan stickers from disk) when already at the top of the
- * list - all live at the [BoardGrid] level so they can intercept multi/single-pointer gestures
- * before the grid's own vertical-scroll handling sees them, without stealing plain single-finger
- * vertical scrolling or taps.
+ * Pinch to zoom (spread = fewer, bigger stickers per row; pinch = more, smaller) and swipe to
+ * switch section - both live at the [BoardGrid] level so they can intercept multi/single-pointer
+ * gestures before the grid's own vertical-scroll handling sees them, without stealing plain
+ * single-finger vertical scrolling or taps.
  */
 private fun Modifier.boardGestures(
 	swipeEnabled: Boolean,
 	touchSlopPx: Float,
-	isAtTop: () -> Boolean,
-	pullRefreshThresholdPx: Float,
-	isRefreshing: Boolean,
 	onZoomStep: (Int) -> Unit,
 	onSwipePrevious: () -> Unit,
 	onSwipeNext: () -> Unit,
-	onPull: (Float) -> Unit,
-	onRefresh: () -> Unit,
-): Modifier = pointerInput(swipeEnabled, isRefreshing) {
+): Modifier = pointerInput(swipeEnabled) {
 	awaitEachGesture {
 		var cumulativeZoom = 1f
 		var prevPinchDistance = 0f
 		var panX = 0f
-		var panY = 0f
 		var swiped = false
-		var pulling = false
 		do {
 			val event = awaitPointerEvent(PointerEventPass.Initial)
 			val pressed = event.changes.filter { it.pressed }
@@ -862,47 +768,19 @@ private fun Modifier.boardGestures(
 					}
 					prevPinchDistance = distance
 					event.changes.forEach { it.consume() }
-					if (pulling) {
-						pulling = false
-						onPull(0f)
-					}
 				}
-				pulling -> {
-					prevPinchDistance = 0f
-					val change = pressed.firstOrNull()
-					if (change != null) {
-						panY += change.positionChange().y
-						onPull(panY.coerceAtLeast(0f))
-						change.consume()
-					}
-				}
-				pressed.size == 1 && !swiped -> {
+				swipeEnabled && pressed.size == 1 && !swiped -> {
 					prevPinchDistance = 0f
 					val change = pressed[0]
-					val delta = change.positionChange()
-					panX += delta.x
-					panY += delta.y
-					val pullTripped = isAtTop() && panY > touchSlopPx && panY > abs(panX)
-					val swipeTripped = swipeEnabled && abs(panX) > touchSlopPx && abs(panX) > panY
-					when {
-						pullTripped -> {
-							pulling = true
-							onPull(panY.coerceAtLeast(0f))
-							change.consume()
-						}
-						swipeTripped -> {
-							swiped = true
-							if (panX > 0) onSwipePrevious() else onSwipeNext()
-							change.consume()
-						}
+					panX += change.positionChange().x
+					if (abs(panX) > touchSlopPx) {
+						swiped = true
+						if (panX > 0) onSwipePrevious() else onSwipeNext()
+						change.consume()
 					}
 				}
 				else -> prevPinchDistance = 0f
 			}
 		} while (event.changes.any { it.pressed })
-		if (pulling) {
-			onPull(0f)
-			if (panY >= pullRefreshThresholdPx) onRefresh()
-		}
 	}
 }

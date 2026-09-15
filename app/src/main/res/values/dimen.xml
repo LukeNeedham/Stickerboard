@@ -22,6 +22,4 @@
 	<dimen name="sticker_padding">4dp</dimen>
 	<dimen name="section_header_top_margin">14dp</dimen>
 	<dimen name="pull_bar_height">44dp</dimen>
-	<dimen name="pull_refresh_threshold">64dp</dimen>
-	<dimen name="pull_refresh_indicator_size">24dp</dimen>
 </resources>
