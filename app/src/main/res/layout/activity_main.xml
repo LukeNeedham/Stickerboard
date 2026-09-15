@@ -83,6 +83,22 @@
 						android:textColor="@color/fg"
 						android:textColorHint="@color/pull_handle"
 						android:textSize="@dimen/text_size_body" />
+
+					<HorizontalScrollView
+						android:id="@+id/tryItOutMediaScroll"
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="@dimen/content_margin_top"
+						android:scrollbars="none"
+						android:visibility="gone">
+
+						<LinearLayout
+							android:id="@+id/tryItOutMedia"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:orientation="horizontal" />
+
+					</HorizontalScrollView>
 				</LinearLayout>
 			</com.google.android.material.card.MaterialCardView>
 			<!-- Update Sticker Pack -->
