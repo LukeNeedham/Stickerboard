@@ -597,7 +597,11 @@ private fun SearchContent(
 				.wrapContentHeight(Alignment.CenterVertically)
 				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
 		)
-		BoxWithConstraints(Modifier.fillMaxWidth()) {
+		BoxWithConstraints(
+			Modifier
+				.fillMaxWidth()
+				.padding(bottom = dimensionResource(R.dimen.qwerty_bottom_margin)),
+		) {
 			// The widest row's keys share maxWidth evenly, with no margin between them.
 			QwertyKeyboard(
 				keyWidth = maxWidth / QWERTY_TOP_ROW.length,

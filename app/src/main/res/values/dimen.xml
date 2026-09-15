@@ -21,6 +21,7 @@
 	<dimen name="nav_button_icon_padding">8dp</dimen>
 	<dimen name="sticker_padding">4dp</dimen>
 	<dimen name="qwerty_key_icon_size">20dp</dimen>
+	<dimen name="qwerty_bottom_margin">10dp</dimen>
 	<dimen name="section_header_top_margin">14dp</dimen>
 	<dimen name="pull_bar_height">44dp</dimen>
 </resources>
