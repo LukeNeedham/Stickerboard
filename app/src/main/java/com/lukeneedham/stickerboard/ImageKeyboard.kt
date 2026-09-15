@@ -408,8 +408,12 @@ class ImageKeyboard :
 	override fun refreshStickers() = loadPacks()
 
 	override fun searchStickers(query: String): List<File> {
+		val queryTerms = query.split('-', '_', ' ').filter { it.isNotEmpty() }
 		return this.allStickers
-			.filter { stickerSearchTerms(it).any { term -> term.contains(query, ignoreCase = true) } }
+			.filter { file ->
+				val terms = stickerSearchTerms(file)
+				queryTerms.all { queryTerm -> terms.any { term -> term.contains(queryTerm, ignoreCase = true) } }
+			}
 			.take(SEARCH_RESULT_LIMIT)
 	}
 
