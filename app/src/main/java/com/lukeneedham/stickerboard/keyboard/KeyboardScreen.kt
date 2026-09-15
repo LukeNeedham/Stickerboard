@@ -549,7 +549,7 @@ private fun SearchContent(
 				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
 		)
 		BoxWithConstraints(Modifier.fillMaxWidth()) {
-			OrthoKeyboard(
+			QwertyKeyboard(
 				keyWidth = maxWidth / 10.4f,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
@@ -562,16 +562,16 @@ private fun SearchContent(
 }
 
 /**
- * Ortholinear layout (every row spans the same total width, unlike the staggered qwerty offsets):
+ * Staggered qwerty layout with no long-press symbols - just letters, space, and backspace:
  * ```
  * q w e r t y u i o p
- * a s d f g h j k l <
- * __ z x c v b n m __
+ *  a s d f g h j k l
+ * __ z x c v b n m <
  * ```
- * where `<` is backspace and `__` are spacebar keys.
+ * where `<` is backspace and `__` is the spacebar.
  */
 @Composable
-private fun OrthoKeyboard(
+private fun QwertyKeyboard(
 	keyWidth: Dp,
 	onKeyTap: (String) -> Unit,
 	onBackspace: () -> Unit,
@@ -579,44 +579,38 @@ private fun OrthoKeyboard(
 ) {
 	Column(Modifier.fillMaxWidth()) {
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			OrthoRowKeys(keyWidth, "qwertyuiop", onKeyTap)
+			QwertyRowKeys(keyWidth, "qwertyuiop", onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			OrthoRowKeys(keyWidth, "asdfghjkl", onKeyTap)
-			OrthoKey(
+			QwertyRowKeys(keyWidth, "asdfghjkl", onKeyTap)
+		}
+		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+			QwertyKey(
+				text = " ",
+				width = keyWidth * 1.5f,
+				onTap = { onKeyTap(" ") },
+				onLongTap = { onKeyTap(" ") },
+			)
+			QwertyRowKeys(keyWidth, "zxcvbnm", onKeyTap)
+			QwertyKey(
 				text = "←",
-				width = keyWidth,
+				width = keyWidth * 1.5f,
 				onTap = onBackspace,
 				onLongTap = onClear,
-			)
-		}
-		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			OrthoKey(
-				text = " ",
-				width = keyWidth * 1.5f,
-				onTap = { onKeyTap(" ") },
-				onLongTap = { onKeyTap(" ") },
-			)
-			OrthoRowKeys(keyWidth, "zxcvbnm", onKeyTap)
-			OrthoKey(
-				text = " ",
-				width = keyWidth * 1.5f,
-				onTap = { onKeyTap(" ") },
-				onLongTap = { onKeyTap(" ") },
 			)
 		}
 	}
 }
 
 @Composable
-private fun OrthoRowKeys(
+private fun QwertyRowKeys(
 	keyWidth: Dp,
 	chars: String,
 	onKeyTap: (String) -> Unit,
 ) {
 	for (char in chars) {
 		val key = char.toString()
-		OrthoKey(
+		QwertyKey(
 			text = key,
 			width = keyWidth,
 			onTap = { onKeyTap(key) },
@@ -626,7 +620,7 @@ private fun OrthoRowKeys(
 }
 
 @Composable
-private fun OrthoKey(
+private fun QwertyKey(
 	text: String,
 	width: Dp,
 	onTap: () -> Unit,
