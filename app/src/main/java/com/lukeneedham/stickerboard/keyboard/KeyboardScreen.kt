@@ -289,7 +289,7 @@ fun KeyboardScreen(
 			}
 		}
 
-		val statusMessage by dataSource.statusMessage
+		val statusMessage: String? = dataSource.statusMessage.value
 		if (statusMessage != null) {
 			LaunchedEffect(statusMessage) {
 				delay(STATUS_MESSAGE_DURATION_MS)
