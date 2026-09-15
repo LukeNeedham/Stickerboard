@@ -398,7 +398,7 @@ class ImageKeyboard :
 
 	override fun searchStickers(query: String): List<File> {
 		return this.allStickers
-			.filter { it.name.contains(query, ignoreCase = true) }
+			.filter { stickerSearchTerms(it).any { term -> term.contains(query, ignoreCase = true) } }
 			.take(SEARCH_RESULT_LIMIT)
 	}
 
@@ -481,4 +481,13 @@ fun prettifyPackName(name: String): String {
 	return name.split('_', '-', ' ')
 		.filter { it.isNotEmpty() }
 		.joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+}
+
+/**
+ * A sticker's search terms: its file name (without extension), split into words on hyphens,
+ * underscores, and spaces - so e.g. "happy-cat_meme" is searchable by "happy", "cat", or "meme"
+ * individually, not just as a match against the whole name.
+ */
+private fun stickerSearchTerms(file: File): List<String> {
+	return file.nameWithoutExtension.split('-', '_', ' ').filter { it.isNotEmpty() }
 }
