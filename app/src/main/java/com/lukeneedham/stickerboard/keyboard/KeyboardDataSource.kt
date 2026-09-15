@@ -21,6 +21,9 @@ interface KeyboardDataSource {
 	fun nextSection(current: String): String?
 	fun searchStickers(query: String): List<File>
 	fun changeIconsPerX(delta: Int): Int
+
+	/** Re-scan the sticker source directory from disk, picking up packs/stickers added since launch. */
+	fun refreshStickers()
 	fun onKeyboardHeightChanged(heightPx: Int)
 	fun onKeyboardHeightSettled(heightPx: Int)
 	fun onActivePackChanged(packName: String)

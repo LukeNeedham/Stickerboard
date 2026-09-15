@@ -162,21 +162,7 @@ class ImageKeyboard :
 		this.internalDir = File(filesDir, "stickers")
 		this.toaster = Toaster(baseContext)
 		//  Load Packs
-		this.loadedPacks = HashMap()
-		val packs =
-			this.internalDir.listFiles { obj: File ->
-				obj.isDirectory && !obj.absolutePath.contains("__compatSticker__")
-			}
-				?: arrayOf()
-		for (file in packs) {
-			val pack = StickerPack(file)
-			if (pack.stickerList.isNotEmpty()) {
-				this.loadedPacks[file.name] = pack
-			}
-			this.allStickers += pack.stickerList
-		}
-
-		XLog.i("Loaded all packs: [${this.loadedPacks.keys.joinToString(", ")}]")
+		loadPacks()
 		this.activePack = this.sharedPreferences.getString("activePack", "").toString()
 		//  Caches
 		this.sharedPreferences.getString("recentCache", "")?.let {
@@ -245,6 +231,29 @@ class ImageKeyboard :
 				)
 			}
 		}
+	}
+
+	/**
+	 * Scan [internalDir] and (re)populate [loadedPacks]/[allStickers] from what's on disk. Safe to
+	 * call again after the initial [onCreate] load - e.g. from [refreshStickers] - to pick up packs
+	 * or stickers added since.
+	 */
+	private fun loadPacks() {
+		this.loadedPacks = HashMap()
+		this.allStickers = listOf()
+		val packs =
+			this.internalDir.listFiles { obj: File ->
+				obj.isDirectory && !obj.absolutePath.contains("__compatSticker__")
+			}
+				?: arrayOf()
+		for (file in packs) {
+			val pack = StickerPack(file)
+			if (pack.stickerList.isNotEmpty()) {
+				this.loadedPacks[file.name] = pack
+			}
+			this.allStickers += pack.stickerList
+		}
+		XLog.i("Loaded all packs: [${this.loadedPacks.keys.joinToString(", ")}]")
 	}
 
 	override fun onWindowShown() {
@@ -395,6 +404,8 @@ class ImageKeyboard :
 		val index = names.indexOf(current).let { if (it == -1) 0 else it }
 		return names[(index + 1) % names.size]
 	}
+
+	override fun refreshStickers() = loadPacks()
 
 	override fun searchStickers(query: String): List<File> {
 		return this.allStickers

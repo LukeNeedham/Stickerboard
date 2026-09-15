@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 
 package com.lukeneedham.stickerboard.keyboard
 
@@ -36,6 +36,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,17 +75,30 @@ import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.trimString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.roundToInt
+import kotlin.system.measureTimeMillis
 
 /** Cumulative pinch scale factor needed to change iconsPerX by one column. */
 private const val PINCH_STEP_THRESHOLD = 1.15f
 
 /** The search keyboard's widest row - determines the per-key width all other rows share. */
 private const val QWERTY_TOP_ROW = "qwertyuiop"
+
+/**
+ * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
+ * re-scan can finish within a single frame, and PullToRefreshBox's animation only reacts when it
+ * observes isRefreshing actually change between recompositions - without this floor, a fast
+ * enough refresh can flip true then false before that happens, so the indicator never sees a
+ * transition to animate away and is left stuck wherever the pull gesture released it.
+ */
+private const val MIN_REFRESH_INDICATOR_MS = 500L
 
 /** Which content is currently showing below the pull bar. */
 private sealed interface Mode {
@@ -117,18 +132,39 @@ fun KeyboardScreen(
 	var mode by remember { mutableStateOf<Mode>(Mode.Board) }
 	var activeSection by remember { mutableStateOf(initialActivePack) }
 	var boardItems by remember { mutableStateOf(dataSource.boardItems()) }
+	var packNavIcons by remember { mutableStateOf(dataSource.packNavIcons()) }
 	var searchQuery by remember { mutableStateOf("") }
 	var searchResults by remember { mutableStateOf(dataSource.searchStickers("")) }
+	var isRefreshingStickers by remember { mutableStateOf(false) }
 	val gridState = rememberLazyGridState()
 	val scope = rememberCoroutineScope()
 
 	fun refreshBoard() {
 		boardItems = dataSource.boardItems()
+		packNavIcons = dataSource.packNavIcons()
 	}
 
 	fun sendSticker(file: File) {
 		dataSource.onStickerSend(file)
 		refreshBoard()
+	}
+
+	// Packs/stickers can be added on disk (e.g. via the app's gallery) while the keyboard is open,
+	// so pulling down re-scans them in rather than requiring the keyboard to be fully reloaded.
+	fun refreshStickers() {
+		if (isRefreshingStickers) return
+		isRefreshingStickers = true
+		scope.launch {
+			try {
+				val elapsedMs = measureTimeMillis {
+					withContext(Dispatchers.IO) { dataSource.refreshStickers() }
+					refreshBoard()
+				}
+				delay((MIN_REFRESH_INDICATOR_MS - elapsedMs).coerceAtLeast(0))
+			} finally {
+				isRefreshingStickers = false
+			}
+		}
 	}
 
 	fun jumpToSection(packName: String) {
@@ -200,7 +236,7 @@ fun KeyboardScreen(
 			Column(Modifier.weight(1f).fillMaxWidth()) {
 				if (mode is Mode.Board) {
 					PackNavRow(
-						packs = dataSource.packNavIcons(),
+						packs = packNavIcons,
 						activeSection = activeSection,
 						onPackClick = { jumpToSection(it) },
 					)
@@ -214,6 +250,7 @@ fun KeyboardScreen(
 							keyboardHeightPx = keyboardHeightPx,
 							swipeEnabled = swipeEnabled,
 							vibrate = vibrate,
+							isRefreshing = isRefreshingStickers,
 							onStickerClick = { sendSticker(it) },
 							onStickerLongClick = { mode = Mode.Preview(it, Mode.Board) },
 							onZoomStep = { delta ->
@@ -226,6 +263,7 @@ fun KeyboardScreen(
 							onSwipeNext = {
 								dataSource.nextSection(activeSection)?.let { jumpToSection(it) }
 							},
+							onRefresh = { refreshStickers() },
 						)
 						Mode.Search -> SearchContent(
 							query = searchQuery,
@@ -403,54 +441,62 @@ private fun BoardGrid(
 	keyboardHeightPx: Int,
 	swipeEnabled: Boolean,
 	vibrate: Boolean,
+	isRefreshing: Boolean,
 	onStickerClick: (File) -> Unit,
 	onStickerLongClick: (File) -> Unit,
 	onZoomStep: (Int) -> Unit,
 	onSwipePrevious: () -> Unit,
 	onSwipeNext: () -> Unit,
+	onRefresh: () -> Unit,
 ) {
 	val density = LocalDensity.current
 	val touchSlop = LocalViewConfiguration.current.touchSlop
-	LazyVerticalGrid(
-		columns = GridCells.Fixed(columns),
-		state = gridState,
-		// A final section with too few stickers to fill the viewport otherwise could never be
-		// scrolled all the way to the top, so it'd be stuck partway down the screen unable to
-		// become the active section - this padding gives it room to scroll into.
-		contentPadding = PaddingValues(bottom = with(density) { keyboardHeightPx.toDp() }),
-		modifier = Modifier
-			.fillMaxSize()
-			.boardGestures(swipeEnabled, touchSlop, onZoomStep, onSwipePrevious, onSwipeNext),
+	PullToRefreshBox(
+		isRefreshing = isRefreshing,
+		onRefresh = onRefresh,
+		modifier = Modifier.fillMaxSize(),
 	) {
-		items(
-			count = items.size,
-			key = { index ->
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(columns),
+			state = gridState,
+			// A final section with too few stickers to fill the viewport otherwise could never be
+			// scrolled all the way to the top, so it'd be stuck partway down the screen unable to
+			// become the active section - this padding gives it room to scroll into.
+			contentPadding = PaddingValues(bottom = with(density) { keyboardHeightPx.toDp() }),
+			modifier = Modifier
+				.fillMaxSize()
+				.boardGestures(swipeEnabled, touchSlop, onZoomStep, onSwipePrevious, onSwipeNext),
+		) {
+			items(
+				count = items.size,
+				key = { index ->
+					when (val item = items[index]) {
+						is BoardItem.Header -> "header:${item.packName}"
+						is BoardItem.EmptyMessage -> "empty:${item.packName}"
+						is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
+						is BoardItem.AddPhoto -> "add:${item.packName}"
+					}
+				},
+				span = { index ->
+					when (items[index]) {
+						is BoardItem.Header, is BoardItem.EmptyMessage -> GridItemSpan(maxLineSpan)
+						else -> GridItemSpan(1)
+					}
+				},
+			) { index ->
 				when (val item = items[index]) {
-					is BoardItem.Header -> "header:${item.packName}"
-					is BoardItem.EmptyMessage -> "empty:${item.packName}"
-					is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
-					is BoardItem.AddPhoto -> "add:${item.packName}"
+					is BoardItem.Header -> SectionHeader(item.displayName)
+					is BoardItem.EmptyMessage -> SectionEmptyMessage(item.message)
+					is BoardItem.Sticker -> StickerCell(
+						file = item.file,
+						contentDescription = stringResource(R.string.pack_icon),
+						vibrate = vibrate,
+						onClick = { onStickerClick(item.file) },
+						onLongClick = { onStickerLongClick(item.file) },
+					)
+					// Board mode (unlike the sticker gallery) never surfaces AddPhoto cells.
+					is BoardItem.AddPhoto -> Unit
 				}
-			},
-			span = { index ->
-				when (items[index]) {
-					is BoardItem.Header, is BoardItem.EmptyMessage -> GridItemSpan(maxLineSpan)
-					else -> GridItemSpan(1)
-				}
-			},
-		) { index ->
-			when (val item = items[index]) {
-				is BoardItem.Header -> SectionHeader(item.displayName)
-				is BoardItem.EmptyMessage -> SectionEmptyMessage(item.message)
-				is BoardItem.Sticker -> StickerCell(
-					file = item.file,
-					contentDescription = stringResource(R.string.pack_icon),
-					vibrate = vibrate,
-					onClick = { onStickerClick(item.file) },
-					onLongClick = { onStickerLongClick(item.file) },
-				)
-				// Board mode (unlike the sticker gallery) never surfaces AddPhoto cells.
-				is BoardItem.AddPhoto -> Unit
 			}
 		}
 	}
