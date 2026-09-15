@@ -100,6 +100,9 @@ private const val QWERTY_TOP_ROW = "qwertyuiop"
  */
 private const val MIN_REFRESH_INDICATOR_MS = 500L
 
+/** How long the [StatusBanner] (e.g. "Cannot send image") stays on screen before auto-dismissing. */
+private const val STATUS_MESSAGE_DURATION_MS = 2500L
+
 /** Which content is currently showing below the pull bar. */
 private sealed interface Mode {
 	data object Board : Mode
@@ -206,6 +209,7 @@ fun KeyboardScreen(
 				mode = mode,
 				showCloseButton = showCloseButton,
 				showSearchButton = showSearchButton,
+				onOpenSettings = { dataSource.onOpenSettings() },
 				onHeightDrag = { dragAmountPx ->
 					val newHeight = (keyboardHeightPx - dragAmountPx)
 						.roundToInt()
@@ -287,6 +291,42 @@ fun KeyboardScreen(
 				}
 			}
 		}
+
+		val statusMessage: String? = dataSource.statusMessage.value
+		if (statusMessage != null) {
+			LaunchedEffect(statusMessage) {
+				delay(STATUS_MESSAGE_DURATION_MS)
+				dataSource.onStatusMessageShown()
+			}
+			StatusBanner(
+				message = statusMessage,
+				modifier = Modifier
+					.align(Alignment.BottomCenter)
+					.padding(bottom = dimensionResource(R.dimen.content_margin)),
+			)
+		}
+	}
+}
+
+/**
+ * A snackbar-style banner shown briefly over the keyboard (e.g. "Cannot send image") in place of a
+ * system dialog, which would otherwise close the keyboard to show itself.
+ */
+@Composable
+private fun StatusBanner(message: String, modifier: Modifier = Modifier) {
+	Box(
+		modifier
+			.clip(RoundedCornerShape(dimensionResource(R.dimen.corner)))
+			.background(colorResource(R.color.accent))
+			.padding(
+				horizontal = dimensionResource(R.dimen.card_margin),
+				vertical = dimensionResource(R.dimen.content_margin),
+			),
+	) {
+		BasicText(
+			text = message,
+			style = TextStyle(color = colorResource(R.color.onAccent), fontSize = 16.sp),
+		)
 	}
 }
 
@@ -295,6 +335,7 @@ private fun PullBar(
 	mode: Mode,
 	showCloseButton: Boolean,
 	showSearchButton: Boolean,
+	onOpenSettings: () -> Unit,
 	onHeightDrag: (Float) -> Unit,
 	onHeightDragEnd: () -> Unit,
 	onBackOrClose: () -> Unit,
@@ -334,20 +375,31 @@ private fun PullBar(
 				.height(4.dp)
 				.background(colorResource(R.color.pull_handle), RoundedCornerShape(2.dp)),
 		)
-		if (isPreview || showSearchButton) {
-			CircleIconButton(
-				iconRes = if (isPreview) R.drawable.ic_send else R.drawable.ic_search,
-				contentDescription = if (isPreview) {
-					stringResource(R.string.send_sticker)
-				} else {
-					stringResource(R.string.pack_icon)
-				},
-				selected = mode is Mode.Search,
-				onClick = onSearchOrSend,
-				modifier = Modifier
-					.align(Alignment.CenterEnd)
-					.padding(end = dimensionResource(R.dimen.sticker_padding)),
-			)
+		Row(
+			Modifier
+				.align(Alignment.CenterEnd)
+				.padding(end = dimensionResource(R.dimen.sticker_padding)),
+		) {
+			if (!isPreview) {
+				CircleIconButton(
+					iconRes = R.drawable.ic_settings,
+					contentDescription = stringResource(R.string.open_settings_button),
+					selected = false,
+					onClick = onOpenSettings,
+				)
+			}
+			if (isPreview || showSearchButton) {
+				CircleIconButton(
+					iconRes = if (isPreview) R.drawable.ic_send else R.drawable.ic_search,
+					contentDescription = if (isPreview) {
+						stringResource(R.string.send_sticker)
+					} else {
+						stringResource(R.string.pack_icon)
+					},
+					selected = mode is Mode.Search,
+					onClick = onSearchOrSend,
+				)
+			}
 		}
 	}
 }

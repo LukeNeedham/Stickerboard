@@ -5,18 +5,25 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.CompoundButton
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import coil.load
 import com.elvishew.xlog.XLog
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.lukeneedham.stickerboard.utilities.StickerImporter
@@ -79,6 +86,7 @@ class MainActivity : AppCompatActivity() {
 		this.contextView = findViewById(R.id.activityMainRoot)
 		this.toaster = Toaster(baseContext)
 		refreshStickerDirPath()
+		setUpTryItOut()
 		// Update UI with config
 		seekBar(findViewById(R.id.iconsPerXSb), findViewById(R.id.iconsPerXLbl), "iconsPerX", 4)
 		seekBar(findViewById(R.id.iconSizeSb), findViewById(R.id.iconSizeLbl), "iconSize", 80, 20)
@@ -327,6 +335,45 @@ class MainActivity : AppCompatActivity() {
 				}
 			},
 		)
+	}
+
+	/**
+	 * Lets the "Try It Out" field on the settings screen receive stickers sent via
+	 * [android.view.inputmethod.InputConnection.commitContent] - the same mechanism
+	 * [com.lukeneedham.stickerboard.utilities.StickerSender] uses to deliver stickers to any other
+	 * app - by declaring support for image/video content and rendering each received item as a
+	 * thumbnail beneath the field, rather than as a text edit.
+	 */
+	private fun setUpTryItOut() {
+		val input = findViewById<EditText>(R.id.tryItOutInput)
+		val mediaScroll = findViewById<View>(R.id.tryItOutMediaScroll)
+		val media = findViewById<LinearLayout>(R.id.tryItOutMedia)
+
+		ViewCompat.setOnReceiveContentListener(input, arrayOf("image/*", "video/*")) { _, payload ->
+			val split = payload.partition { it.uri != null }
+			val mediaContent = split.first
+			if (mediaContent != null) {
+				for (i in 0 until mediaContent.clip.itemCount) {
+					mediaContent.clip.getItemAt(i).uri?.let { uri -> addTryItOutMedia(media, uri) }
+				}
+				mediaScroll.isVisible = true
+			}
+			split.second
+		}
+	}
+
+	/** Prepend a thumbnail of a sticker received by [setUpTryItOut] to the try-it-out gallery. */
+	private fun addTryItOutMedia(container: LinearLayout, uri: Uri) {
+		val size = resources.getDimensionPixelSize(R.dimen.try_it_out_image_size)
+		val imageView = ImageView(this).apply {
+			layoutParams = LinearLayout.LayoutParams(size, size).apply {
+				marginEnd = resources.getDimensionPixelSize(R.dimen.content_margin)
+			}
+			scaleType = ImageView.ScaleType.FIT_CENTER
+			contentDescription = getString(R.string.try_it_out_image_content_description)
+			load(uri)
+		}
+		container.addView(imageView, 0)
 	}
 
 	/** Reads saved sticker dir path from preferences */

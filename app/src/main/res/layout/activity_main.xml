@@ -58,6 +58,49 @@
 						app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
 				</LinearLayout>
 			</com.google.android.material.card.MaterialCardView>
+			<!-- Try It Out -->
+			<com.google.android.material.card.MaterialCardView style="@style/card">
+
+				<LinearLayout
+					style="@style/cardchild"
+					android:orientation="vertical">
+
+					<TextView
+						style="@style/heading"
+						android:text="@string/try_it_out_heading" />
+
+					<TextView
+						style="@style/body_text"
+						android:text="@string/try_it_out_info" />
+
+					<EditText
+						android:id="@+id/tryItOutInput"
+						style="@style/widget"
+						android:background="@drawable/try_it_out_input_background"
+						android:hint="@string/try_it_out_hint"
+						android:inputType="text"
+						android:padding="@dimen/card_margin"
+						android:textColor="@color/fg"
+						android:textColorHint="@color/pull_handle"
+						android:textSize="@dimen/text_size_body" />
+
+					<HorizontalScrollView
+						android:id="@+id/tryItOutMediaScroll"
+						android:layout_width="match_parent"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="@dimen/content_margin_top"
+						android:scrollbars="none"
+						android:visibility="gone">
+
+						<LinearLayout
+							android:id="@+id/tryItOutMedia"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:orientation="horizontal" />
+
+					</HorizontalScrollView>
+				</LinearLayout>
+			</com.google.android.material.card.MaterialCardView>
 			<!-- Update Sticker Pack -->
 			<com.google.android.material.card.MaterialCardView style="@style/card">
 

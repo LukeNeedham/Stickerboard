@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard.keyboard
 
+import androidx.compose.runtime.State
 import com.lukeneedham.stickerboard.model.BoardItem
 import java.io.File
 
@@ -29,4 +30,16 @@ interface KeyboardDataSource {
 	fun onActivePackChanged(packName: String)
 	fun onStickerSend(sticker: File)
 	fun onClose()
+
+	/** Open the app's settings screen, e.g. from a button in the keyboard's pull bar. */
+	fun onOpenSettings()
+
+	/**
+	 * Transient status text (e.g. "Cannot send image") to show as a snackbar-style banner over the
+	 * keyboard, or null when none is pending.
+	 */
+	val statusMessage: State<String?>
+
+	/** Dismiss the current [statusMessage], e.g. once its on-screen timeout elapses. */
+	fun onStatusMessageShown()
 }
