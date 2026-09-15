@@ -603,8 +603,10 @@ private fun SearchContent(
 				.padding(bottom = dimensionResource(R.dimen.qwerty_bottom_margin)),
 		) {
 			// The widest row's keys share maxWidth evenly, with no margin between them.
+			val keyWidth = maxWidth / QWERTY_TOP_ROW.length
 			QwertyKeyboard(
-				keyWidth = maxWidth / QWERTY_TOP_ROW.length,
+				keyWidth = keyWidth,
+				keyHeight = keyWidth * 1.5f,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
 					if (query.isNotEmpty()) onQueryChange(query.substring(0, query.length - 1))
@@ -627,30 +629,33 @@ private fun SearchContent(
 @Composable
 private fun QwertyKeyboard(
 	keyWidth: Dp,
+	keyHeight: Dp,
 	onKeyTap: (String) -> Unit,
 	onBackspace: () -> Unit,
 	onClear: () -> Unit,
 ) {
 	Column(Modifier.fillMaxWidth()) {
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, QWERTY_TOP_ROW, onKeyTap)
+			QwertyRowKeys(keyWidth, keyHeight, QWERTY_TOP_ROW, onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, "asdfghjkl", onKeyTap)
+			QwertyRowKeys(keyWidth, keyHeight, "asdfghjkl", onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
 			QwertyKey(
 				iconRes = R.drawable.ic_space,
 				contentDescription = stringResource(R.string.space_key),
 				width = keyWidth * 1.5f,
+				height = keyHeight,
 				onTap = { onKeyTap(" ") },
 				onLongTap = { onKeyTap(" ") },
 			)
-			QwertyRowKeys(keyWidth, "zxcvbnm", onKeyTap)
+			QwertyRowKeys(keyWidth, keyHeight, "zxcvbnm", onKeyTap)
 			QwertyKey(
 				iconRes = R.drawable.ic_backspace,
 				contentDescription = stringResource(R.string.backspace_key),
 				width = keyWidth * 1.5f,
+				height = keyHeight,
 				onTap = onBackspace,
 				onLongTap = onClear,
 			)
@@ -661,6 +666,7 @@ private fun QwertyKeyboard(
 @Composable
 private fun QwertyRowKeys(
 	keyWidth: Dp,
+	keyHeight: Dp,
 	chars: String,
 	onKeyTap: (String) -> Unit,
 ) {
@@ -669,6 +675,7 @@ private fun QwertyRowKeys(
 		QwertyKey(
 			text = key,
 			width = keyWidth,
+			height = keyHeight,
 			onTap = { onKeyTap(key) },
 			onLongTap = {},
 		)
@@ -678,6 +685,7 @@ private fun QwertyRowKeys(
 @Composable
 private fun QwertyKey(
 	width: Dp,
+	height: Dp,
 	onTap: () -> Unit,
 	onLongTap: () -> Unit,
 	text: String? = null,
@@ -687,7 +695,7 @@ private fun QwertyKey(
 	Box(
 		Modifier
 			.width(width)
-			.height(dimensionResource(R.dimen.qwerty_row_height))
+			.height(height)
 			.combinedClickable(onClick = onTap, onLongClick = onLongTap),
 		contentAlignment = Alignment.Center,
 	) {
