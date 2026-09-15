@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/debugRoot"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/bg">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="@color/accent"
+		android:paddingTop="@dimen/status_bar_padding">
+
+		<com.google.android.material.appbar.MaterialToolbar
+			android:id="@+id/debugToolbar"
+			android:layout_width="match_parent"
+			android:layout_height="?attr/actionBarSize"
+			android:background="@color/accent"
+			app:title="@string/debug_heading"
+			app:titleTextColor="@color/onAccent" />
+
+	</com.google.android.material.appbar.AppBarLayout>
+
+	<androidx.core.widget.NestedScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+		<LinearLayout
+			style="@style/widthMatchHeightWrap"
+			android:orientation="vertical"
+			android:padding="@dimen/content_margin">
+
+			<com.google.android.material.card.MaterialCardView style="@style/card">
+
+				<LinearLayout
+					style="@style/cardchild"
+					android:orientation="vertical">
+
+					<TextView
+						style="@style/heading"
+						android:text="@string/debug_crashes_heading" />
+
+					<TextView
+						style="@style/body_text"
+						android:text="@string/debug_crashes_info" />
+
+					<Button
+						style="@style/button"
+						android:onClick="openCrashes"
+						android:text="@string/debug_crashes_button"
+						app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+
+				</LinearLayout>
+			</com.google.android.material.card.MaterialCardView>
+
+		</LinearLayout>
+
+	</androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
