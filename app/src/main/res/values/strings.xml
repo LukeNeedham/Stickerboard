@@ -115,4 +115,6 @@ Copyright © Randy Zhou</string>
 	<!-- Keyboard -->
 	<string name="recent_heading">Recently used</string>
 	<string name="recent_empty">No stickers used yet</string>
+	<string name="space_key">Space</string>
+	<string name="backspace_key">Backspace</string>
 </resources>

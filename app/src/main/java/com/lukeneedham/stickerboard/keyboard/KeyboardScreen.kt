@@ -552,12 +552,9 @@ private fun SearchContent(
 				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
 		)
 		BoxWithConstraints(Modifier.fillMaxWidth()) {
-			// The widest row's keys are each padded on both sides - subtract that padding up
-			// front so their visible width sums to exactly maxWidth instead of overflowing it.
-			val keyCount = QWERTY_TOP_ROW.length
-			val keyHorizontalMargin = dimensionResource(R.dimen.qwerty_key_horizontal_margin)
+			// The widest row's keys share maxWidth evenly, with no margin between them.
 			QwertyKeyboard(
-				keyWidth = (maxWidth - keyHorizontalMargin * 2 * keyCount) / keyCount,
+				keyWidth = maxWidth / QWERTY_TOP_ROW.length,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
 					if (query.isNotEmpty()) onQueryChange(query.substring(0, query.length - 1))
@@ -593,14 +590,16 @@ private fun QwertyKeyboard(
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
 			QwertyKey(
-				text = " ",
+				iconRes = R.drawable.ic_space,
+				contentDescription = stringResource(R.string.space_key),
 				width = keyWidth * 1.5f,
 				onTap = { onKeyTap(" ") },
 				onLongTap = { onKeyTap(" ") },
 			)
 			QwertyRowKeys(keyWidth, "zxcvbnm", onKeyTap)
 			QwertyKey(
-				text = "←",
+				iconRes = R.drawable.ic_backspace,
+				contentDescription = stringResource(R.string.backspace_key),
 				width = keyWidth * 1.5f,
 				onTap = onBackspace,
 				onLongTap = onClear,
@@ -628,28 +627,32 @@ private fun QwertyRowKeys(
 
 @Composable
 private fun QwertyKey(
-	text: String,
 	width: Dp,
 	onTap: () -> Unit,
 	onLongTap: () -> Unit,
+	text: String? = null,
+	iconRes: Int? = null,
+	contentDescription: String? = null,
 ) {
 	Box(
 		Modifier
-			.padding(
-				horizontal = dimensionResource(R.dimen.qwerty_key_horizontal_margin),
-				vertical = dimensionResource(R.dimen.sticker_padding),
-			)
 			.width(width)
 			.height(dimensionResource(R.dimen.qwerty_row_height))
-			.clip(RoundedCornerShape(dimensionResource(R.dimen.corner)))
-			.background(colorResource(R.color.bg2))
 			.combinedClickable(onClick = onTap, onLongClick = onLongTap),
+		contentAlignment = Alignment.Center,
 	) {
-		BasicText(
-			text = text,
-			style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
-			modifier = Modifier.align(Alignment.Center),
-		)
+		if (iconRes != null) {
+			Image(
+				painter = painterResource(iconRes),
+				contentDescription = contentDescription,
+				modifier = Modifier.size(dimensionResource(R.dimen.qwerty_key_icon_size)),
+			)
+		} else if (text != null) {
+			BasicText(
+				text = text,
+				style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
+			)
+		}
 	}
 }
 
