@@ -455,6 +455,31 @@
 						app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
 				</LinearLayout>
 			</com.google.android.material.card.MaterialCardView>
+			<!-- Debug (debug builds only) -->
+			<com.google.android.material.card.MaterialCardView
+				android:id="@+id/debugCard"
+				style="@style/card"
+				android:visibility="gone">
+
+				<LinearLayout
+					style="@style/cardchild"
+					android:orientation="vertical">
+
+					<TextView
+						style="@style/heading"
+						android:text="@string/debug_heading" />
+
+					<TextView
+						style="@style/body_text"
+						android:text="@string/debug_info" />
+
+					<Button
+						style="@style/button"
+						android:onClick="openDebug"
+						android:text="@string/debug_open_button"
+						app:shapeAppearance="?attr/shapeAppearanceSmallComponent" />
+				</LinearLayout>
+			</com.google.android.material.card.MaterialCardView>
 
 		</LinearLayout>
 

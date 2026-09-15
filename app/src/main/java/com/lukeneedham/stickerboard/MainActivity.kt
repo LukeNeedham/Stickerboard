@@ -103,6 +103,9 @@ class MainActivity : AppCompatActivity() {
 
 		versionText.text = version
 		XLog.i("Version: $version")
+
+		findViewById<View>(R.id.debugCard).visibility =
+			if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
 	}
 
 	/**
@@ -217,6 +220,16 @@ class MainActivity : AppCompatActivity() {
 	 */
 	fun viewStickers(ignoredView: View) {
 		startActivity(Intent(this, StickerGalleryActivity::class.java))
+	}
+
+	/**
+	 * Called on button press to open the debug tools screen. Only reachable when [BuildConfig.DEBUG]
+	 * is true, since the button that calls this is hidden otherwise.
+	 *
+	 * @param ignoredView: View
+	 */
+	fun openDebug(ignoredView: View) {
+		startActivity(Intent(this, DebugActivity::class.java))
 	}
 
 	/** Import files from storage to internal directory */

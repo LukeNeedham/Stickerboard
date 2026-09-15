@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/crashDetailRoot"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/bg">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="@color/accent"
+		android:paddingTop="@dimen/status_bar_padding">
+
+		<com.google.android.material.appbar.MaterialToolbar
+			android:id="@+id/crashDetailToolbar"
+			android:layout_width="match_parent"
+			android:layout_height="?attr/actionBarSize"
+			android:background="@color/accent"
+			app:title="@string/crash_detail_heading"
+			app:titleTextColor="@color/onAccent" />
+
+	</com.google.android.material.appbar.AppBarLayout>
+
+	<androidx.core.widget.NestedScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+		<LinearLayout
+			style="@style/widthMatchHeightWrap"
+			android:orientation="vertical"
+			android:padding="@dimen/content_margin">
+
+			<TextView
+				android:id="@+id/crashDetailTimestamp"
+				style="@style/body_text"
+				android:layout_width="match_parent"
+				android:textColor="@color/accent"
+				android:textStyle="bold" />
+
+			<TextView
+				android:id="@+id/crashDetailStackTrace"
+				style="@style/body_text"
+				android:layout_width="match_parent"
+				android:fontFamily="monospace"
+				android:textIsSelectable="true" />
+
+		</LinearLayout>
+
+	</androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
