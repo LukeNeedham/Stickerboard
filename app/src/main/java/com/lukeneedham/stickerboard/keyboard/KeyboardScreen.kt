@@ -76,15 +76,26 @@ import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.trimString
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.roundToInt
+import kotlin.system.measureTimeMillis
 
 /** Cumulative pinch scale factor needed to change iconsPerX by one column. */
 private const val PINCH_STEP_THRESHOLD = 1.15f
+
+/**
+ * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
+ * re-scan can finish within a single frame, and PullToRefreshBox's animation only reacts when it
+ * observes isRefreshing actually change between recompositions - without this floor, a fast
+ * enough refresh can flip true then false before that happens, so the indicator never sees a
+ * transition to animate away and is left stuck wherever the pull gesture released it.
+ */
+private const val MIN_REFRESH_INDICATOR_MS = 500L
 
 /** Which content is currently showing below the pull bar. */
 private sealed interface Mode {
@@ -142,8 +153,11 @@ fun KeyboardScreen(
 		isRefreshingStickers = true
 		scope.launch {
 			try {
-				withContext(Dispatchers.IO) { dataSource.refreshStickers() }
-				refreshBoard()
+				val elapsedMs = measureTimeMillis {
+					withContext(Dispatchers.IO) { dataSource.refreshStickers() }
+					refreshBoard()
+				}
+				delay((MIN_REFRESH_INDICATOR_MS - elapsedMs).coerceAtLeast(0))
 			} finally {
 				isRefreshingStickers = false
 			}
