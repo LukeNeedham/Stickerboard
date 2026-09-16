@@ -2,10 +2,6 @@
 
 package com.lukeneedham.stickerboard.keyboard
 
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -94,8 +90,8 @@ private const val PINCH_STEP_THRESHOLD = 1.15f
 /** The search keyboard's widest row - determines the per-key width all other rows share. */
 private const val QWERTY_TOP_ROW = "qwertyuiop"
 
-/** Full on/off cycle time for the search bar's blinking text-cursor, mimicking a text field caret. */
-private const val CURSOR_BLINK_PERIOD_MS = 1000
+/** How long the search bar's text-cursor stays visible, then invisible, each half of its blink cycle. */
+private const val CURSOR_BLINK_HALF_PERIOD_MS = 500L
 
 /**
  * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
@@ -604,7 +600,7 @@ private fun SearchContent(
 			val keyWidth = maxWidth / QWERTY_TOP_ROW.length
 			QwertyKeyboard(
 				keyWidth = keyWidth,
-				keyHeight = keyWidth * 1.5f,
+				keyHeight = keyWidth * 1.3f,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
 					if (query.isNotEmpty()) onQueryChange(query.substring(0, query.length - 1))
@@ -621,21 +617,13 @@ private fun SearchContent(
  */
 @Composable
 private fun SearchQueryBar(query: String) {
-	val infiniteTransition = rememberInfiniteTransition(label = "search-cursor-blink")
-	val cursorAlpha by infiniteTransition.animateFloat(
-		initialValue = 1f,
-		targetValue = 1f,
-		animationSpec = infiniteRepeatable(
-			animation = keyframes {
-				durationMillis = CURSOR_BLINK_PERIOD_MS
-				1f at 0
-				1f at CURSOR_BLINK_PERIOD_MS / 2
-				0f at CURSOR_BLINK_PERIOD_MS / 2
-				0f at CURSOR_BLINK_PERIOD_MS
-			},
-		),
-		label = "search-cursor-alpha",
-	)
+	var cursorVisible by remember { mutableStateOf(true) }
+	LaunchedEffect(Unit) {
+		while (true) {
+			delay(CURSOR_BLINK_HALF_PERIOD_MS)
+			cursorVisible = !cursorVisible
+		}
+	}
 	Row(
 		Modifier
 			.fillMaxWidth()
@@ -652,7 +640,7 @@ private fun SearchQueryBar(query: String) {
 				.padding(start = 2.dp)
 				.width(2.dp)
 				.height(20.dp)
-				.alpha(cursorAlpha)
+				.alpha(if (cursorVisible) 1f else 0f)
 				.background(colorResource(R.color.fg)),
 		)
 	}
