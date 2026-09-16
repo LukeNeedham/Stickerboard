@@ -5,7 +5,4 @@
 	<color name="app_background">#0E1514</color>
 	<color name="app_surface">#151C1B</color>
 	<color name="app_on_surface">#DDE4E2</color>
-	<color name="app_surface_variant">#3F4948</color>
-	<color name="app_on_surface_variant">#BFC9C7</color>
-	<color name="app_primary_ripple">#3383D4D3</color>
 </resources>

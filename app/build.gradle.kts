@@ -84,7 +84,6 @@ dependencies {
 	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 	implementation("androidx.savedstate:savedstate-ktx:1.2.1")
 	implementation("androidx.gridlayout:gridlayout:1.0.0")
-	implementation("androidx.viewpager2:viewpager2:1.1.0")
 	implementation("com.elvishew:xlog:1.11.1")
 	androidTestImplementation("junit:junit:4.13.2")
 	androidTestImplementation("androidx.test:core:1.6.1")
