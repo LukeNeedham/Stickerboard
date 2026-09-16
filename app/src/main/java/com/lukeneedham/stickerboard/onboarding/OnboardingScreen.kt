@@ -2,6 +2,15 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
+import android.provider.Settings
+import android.view.View
+import android.view.inputmethod.InputMethodManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,18 +28,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.preference.PreferenceManager
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.TonalActionButton
+import com.lukeneedham.stickerboard.utilities.StickerImporter
+import com.lukeneedham.stickerboard.utilities.Toaster
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Calendar
 
 private const val PAGE_WELCOME = 0
 private const val PAGE_KEYBOARD = 1
@@ -201,3 +225,116 @@ private fun OnboardingHeading(text: String) {
 		color = MaterialTheme.colorScheme.primary,
 	)
 }
+
+/**
+ * Wires [OnboardingScreen] up with its real dependencies (prefs, the sticker importer, the
+ * enable-keyboard/choose-dir system intents) - the nav-host destination that used to be
+ * OnboardingActivity. [onFinished] replaces this destination with the settings screen on the
+ * shared back stack so the user can never swipe/back their way back into onboarding.
+ */
+@Composable
+fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
+	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
+	val sharedPreferences = remember { PreferenceManager.getDefaultSharedPreferences(context) }
+	val toaster = remember { Toaster(context) }
+	var progressBar by remember { mutableStateOf<LinearProgressIndicator?>(null) }
+
+	var uiState by remember {
+		mutableStateOf(
+			OnboardingUiState(
+				keyboardEnabled = isKeyboardEnabled(context),
+				folderChosen = hasChosenStickerDir(sharedPreferences),
+				isImporting = false,
+			),
+		)
+	}
+
+	fun refreshRequirements() {
+		uiState = uiState.copy(
+			keyboardEnabled = isKeyboardEnabled(context),
+			folderChosen = hasChosenStickerDir(sharedPreferences),
+		)
+	}
+
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshRequirements() }
+
+	fun importStickers(stickerDirPath: String) {
+		val bar = progressBar ?: return
+		toaster.toast(context.getString(R.string.imported_010))
+		uiState = uiState.copy(isImporting = true)
+		scope.launch(Dispatchers.IO) {
+			val totalStickers = StickerImporter(context, toaster, bar).importStickers(stickerDirPath)
+			withContext(Dispatchers.Main) {
+				if (toaster.messages.size > 0) {
+					toaster.toastOnMessages()
+				} else {
+					toaster.toast(context.getString(R.string.imported_020, totalStickers))
+				}
+				sharedPreferences.edit().putInt("numStickersImported", totalStickers).apply()
+				uiState = uiState.copy(isImporting = false)
+			}
+		}
+	}
+
+	val chooseDirResultLauncher = rememberLauncherForActivityResult(
+		ActivityResultContracts.StartActivityForResult(),
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			val uri = result.data?.data
+			val stickerDirPath = result.data?.data.toString()
+			if (uri != null) {
+				val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+				context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+			}
+			sharedPreferences.edit()
+				.putString("stickerDirPath", stickerDirPath)
+				.putString("lastUpdateDate", Calendar.getInstance().time.toString())
+				.putString("recentCache", "")
+				.putString("compatCache", "")
+				.apply()
+			refreshRequirements()
+			importStickers(stickerDirPath)
+		}
+	}
+
+	OnboardingScreen(
+		state = uiState,
+		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
+		onChooseDir = {
+			val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+			}
+			chooseDirResultLauncher.launch(intent)
+		},
+		onRequirementUnmet = { message -> toaster.toast(message) },
+		onFinish = {
+			sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
+			onFinished()
+		},
+		progressIndicator = {
+			AndroidView(
+				modifier = Modifier.fillMaxWidth(),
+				factory = { c ->
+					LinearProgressIndicator(c).apply {
+						visibility = View.GONE
+						progressBar = this
+					}
+				},
+			)
+		},
+		modifier = modifier,
+	)
+}
+
+/** Whether the StickerBoard keyboard is enabled in the system's input method settings. */
+private fun isKeyboardEnabled(context: Context): Boolean {
+	val inputMethodManager =
+		context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+	return inputMethodManager.enabledInputMethodList.any { it.packageName == context.packageName }
+}
+
+/** Whether a sticker source directory has been chosen. */
+private fun hasChosenStickerDir(sharedPreferences: SharedPreferences): Boolean =
+	sharedPreferences.contains("stickerDirPath")

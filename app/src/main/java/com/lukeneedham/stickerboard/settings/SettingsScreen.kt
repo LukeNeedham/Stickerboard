@@ -2,9 +2,15 @@
 
 package com.lukeneedham.stickerboard.settings
 
+import android.app.Activity
+import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.provider.Settings
+import android.view.View
 import android.widget.EditText
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,12 +40,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -48,8 +59,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
+import androidx.preference.PreferenceManager
 import coil.compose.AsyncImage
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.utilities.StickerImporter
+import com.lukeneedham.stickerboard.utilities.Toaster
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Calendar
 
 /** Everything the settings screen needs to render - plain state, matching the rest of the app. */
 data class SettingsUiState(
@@ -330,4 +350,129 @@ internal fun TonalActionButton(
 	) {
 		Text(text)
 	}
+}
+
+/**
+ * Wires [SettingsScreen] up with its real dependencies (prefs, the sticker importer, the
+ * enable-keyboard/choose-dir system intents) - the nav-host destination that used to be
+ * MainActivity itself.
+ */
+@Composable
+fun SettingsRoute(
+	onViewStickers: () -> Unit,
+	onOpenDebug: () -> Unit,
+	modifier: Modifier = Modifier,
+) {
+	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
+	val sharedPreferences = remember { PreferenceManager.getDefaultSharedPreferences(context) }
+	val toaster = remember { Toaster(context) }
+	var progressBar by remember { mutableStateOf<LinearProgressIndicator?>(null) }
+
+	fun currentStickerDirPath(): String {
+		val default = context.getString(R.string.update_sticker_pack_info_path)
+		return sharedPreferences.getString("stickerDirPath", default) ?: default
+	}
+
+	fun currentLastUpdateDate(): String {
+		val default = context.getString(R.string.update_sticker_pack_info_date)
+		return sharedPreferences.getString("lastUpdateDate", default) ?: default
+	}
+
+	var uiState by remember {
+		mutableStateOf(
+			SettingsUiState(
+				stickerDirPath = currentStickerDirPath(),
+				lastUpdateDate = currentLastUpdateDate(),
+				numStickersImported = sharedPreferences.getInt("numStickersImported", 0),
+				isImporting = false,
+				showDebugCard = BuildConfig.DEBUG,
+			),
+		)
+	}
+
+	fun refreshStickerDirPath() {
+		uiState = uiState.copy(
+			stickerDirPath = currentStickerDirPath(),
+			lastUpdateDate = currentLastUpdateDate(),
+			numStickersImported = sharedPreferences.getInt("numStickersImported", 0),
+		)
+	}
+
+	fun importStickers(stickerDirPath: String) {
+		val bar = progressBar ?: return
+		toaster.toast(context.getString(R.string.imported_010))
+		uiState = uiState.copy(isImporting = true)
+		scope.launch(Dispatchers.IO) {
+			val totalStickers = StickerImporter(context, toaster, bar).importStickers(stickerDirPath)
+			withContext(Dispatchers.Main) {
+				if (toaster.messages.size > 0) {
+					toaster.toastOnMessages()
+				} else {
+					toaster.toast(context.getString(R.string.imported_020, totalStickers))
+				}
+				sharedPreferences.edit().putInt("numStickersImported", totalStickers).apply()
+				refreshStickerDirPath()
+				uiState = uiState.copy(isImporting = false)
+			}
+		}
+	}
+
+	val chooseDirResultLauncher = rememberLauncherForActivityResult(
+		ActivityResultContracts.StartActivityForResult(),
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			val uri = result.data?.data
+			val stickerDirPath = result.data?.data.toString()
+			if (uri != null) {
+				val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+				context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+			}
+			sharedPreferences.edit()
+				.putString("stickerDirPath", stickerDirPath)
+				.putString("lastUpdateDate", Calendar.getInstance().time.toString())
+				.putString("recentCache", "")
+				.putString("compatCache", "")
+				.apply()
+			refreshStickerDirPath()
+			importStickers(stickerDirPath)
+		}
+	}
+
+	SettingsScreen(
+		state = uiState,
+		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
+		onTryItOutMediaReceived = { uri ->
+			uiState = uiState.copy(tryItOutMedia = listOf(uri) + uiState.tryItOutMedia)
+		},
+		onChooseDir = {
+			val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+			}
+			chooseDirResultLauncher.launch(intent)
+		},
+		onReloadStickers = {
+			val stickerDirPath = sharedPreferences.getString("stickerDirPath", null)
+			if (stickerDirPath != null) {
+				importStickers(stickerDirPath)
+			} else {
+				toaster.toast(context.getString(R.string.imported_034))
+			}
+		},
+		onViewStickers = onViewStickers,
+		onOpenDebug = onOpenDebug,
+		progressIndicator = {
+			AndroidView(
+				modifier = Modifier.fillMaxWidth(),
+				factory = { c ->
+					LinearProgressIndicator(c).apply {
+						visibility = View.GONE
+						progressBar = this
+					}
+				},
+			)
+		},
+		modifier = modifier,
+	)
 }

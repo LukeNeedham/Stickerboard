@@ -21,27 +21,6 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity
-			android:name="com.lukeneedham.stickerboard.OnboardingActivity"
-			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-			android:exported="false"
-			android:windowSoftInputMode="adjustResize" />
-		<activity
-			android:name="com.lukeneedham.stickerboard.StickerGalleryActivity"
-			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-			android:exported="false" />
-		<activity
-			android:name="com.lukeneedham.stickerboard.DebugActivity"
-			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-			android:exported="false" />
-		<activity
-			android:name="com.lukeneedham.stickerboard.CrashesActivity"
-			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-			android:exported="false" />
-		<activity
-			android:name="com.lukeneedham.stickerboard.CrashDetailActivity"
-			android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-			android:exported="false" />
 		<service
 			android:name="com.lukeneedham.stickerboard.ImageKeyboard"
 			android:exported="false"

@@ -16,15 +16,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import java.text.DateFormat
@@ -99,4 +105,28 @@ private fun CrashCard(crash: CrashRecord, onClick: () -> Unit) {
 			)
 		}
 	}
+}
+
+/**
+ * Wires [CrashesScreen] up with [CrashStore] - the nav-host destination that used to be
+ * CrashesActivity. Re-scans crashes on resume, in case one was just recorded while this
+ * destination wasn't in the foreground.
+ */
+@Composable
+fun CrashesRoute(
+	onBack: () -> Unit,
+	onCrashClick: (crashId: String) -> Unit,
+	modifier: Modifier = Modifier,
+) {
+	val context = LocalContext.current
+	val crashStore = remember { CrashStore(context) }
+	var crashes by remember { mutableStateOf(crashStore.list()) }
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { crashes = crashStore.list() }
+
+	CrashesScreen(
+		crashes = crashes,
+		onBack = onBack,
+		onCrashClick = { crash -> onCrashClick(crash.id) },
+		modifier = modifier,
+	)
 }
