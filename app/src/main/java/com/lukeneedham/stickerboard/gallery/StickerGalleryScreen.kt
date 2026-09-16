@@ -215,7 +215,10 @@ private fun GalleryAddPhotoCell(vibrate: Boolean, onClick: () -> Unit) {
 /** A simple, read-only enlarged preview of a sticker - tap the image (or outside) to dismiss. */
 @Composable
 private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit) {
-	Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+	Dialog(
+		onDismissRequest = onDismiss,
+		properties = DialogProperties(usePlatformDefaultWidth = false),
+	) {
 		Column(
 			modifier = Modifier
 				.fillMaxSize()

@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.elvishew.xlog.XLog
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.lukeneedham.stickerboard.onboarding.OnboardingScreen
 import com.lukeneedham.stickerboard.onboarding.OnboardingUiState

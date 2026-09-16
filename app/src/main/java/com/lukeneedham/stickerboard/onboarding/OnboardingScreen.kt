@@ -140,7 +140,10 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun OnboardingPageContainer(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+private fun OnboardingPageContainer(
+	modifier: Modifier = Modifier,
+	content: @Composable ColumnScope.() -> Unit,
+) {
 	Column(
 		modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
 		content = content,
