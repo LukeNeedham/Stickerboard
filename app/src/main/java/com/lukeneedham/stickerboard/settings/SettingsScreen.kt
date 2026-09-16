@@ -119,7 +119,7 @@ fun SettingsScreen(
 
 /** Common modern card shell: soft rounded corners, a flat tonal surface, no harsh elevation. */
 @Composable
-private fun SettingsCard(
+internal fun SettingsCard(
 	modifier: Modifier = Modifier,
 	content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -138,7 +138,7 @@ private fun SettingsCard(
 }
 
 @Composable
-private fun CardHeading(iconRes: Int, text: String) {
+internal fun CardHeading(iconRes: Int, text: String) {
 	Row(verticalAlignment = Alignment.CenterVertically) {
 		Image(
 			painter = painterResource(iconRes),
@@ -156,7 +156,7 @@ private fun CardHeading(iconRes: Int, text: String) {
 }
 
 @Composable
-private fun CardBody(text: String) {
+internal fun CardBody(text: String) {
 	Text(
 		text = text,
 		style = MaterialTheme.typography.bodyMedium,
@@ -299,24 +299,34 @@ private fun DebugCard(onOpenDebug: () -> Unit) {
 }
 
 @Composable
-private fun FilledActionButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
+internal fun FilledActionButton(
+	text: String,
+	onClick: () -> Unit,
+	enabled: Boolean = true,
+	modifier: Modifier = Modifier,
+) {
 	Button(
 		onClick = onClick,
 		enabled = enabled,
 		shape = RoundedCornerShape(16.dp),
-		modifier = Modifier.fillMaxWidth(),
+		modifier = modifier.fillMaxWidth(),
 	) {
 		Text(text)
 	}
 }
 
 @Composable
-private fun TonalActionButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
+internal fun TonalActionButton(
+	text: String,
+	onClick: () -> Unit,
+	enabled: Boolean = true,
+	modifier: Modifier = Modifier,
+) {
 	FilledTonalButton(
 		onClick = onClick,
 		enabled = enabled,
 		shape = RoundedCornerShape(16.dp),
-		modifier = Modifier.fillMaxWidth(),
+		modifier = modifier.fillMaxWidth(),
 	) {
 		Text(text)
 	}

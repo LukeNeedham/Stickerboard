@@ -12,7 +12,4 @@
 	<color name="app_background">#F4FAF9</color>
 	<color name="app_surface">#FFFFFF</color>
 	<color name="app_on_surface">#171D1C</color>
-	<color name="app_surface_variant">#DAE5E3</color>
-	<color name="app_on_surface_variant">#3F4948</color>
-	<color name="app_primary_ripple">#3300696C</color>
 </resources>

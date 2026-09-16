@@ -8,129 +8,103 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.Button
-import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import androidx.viewpager2.widget.ViewPager2
-import com.lukeneedham.stickerboard.adapter.OnboardingPageAdapter
-import com.lukeneedham.stickerboard.utilities.OnboardingPageListener
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.lukeneedham.stickerboard.onboarding.OnboardingScreen
+import com.lukeneedham.stickerboard.onboarding.OnboardingUiState
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
 import com.lukeneedham.stickerboard.utilities.startLogger
-import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
-
-private const val PAGE_WELCOME = 0
-private const val PAGE_KEYBOARD = 1
-private const val PAGE_FOLDER = 2
-private const val LAST_PAGE_INDEX = PAGE_FOLDER
 
 /**
  * OnboardingActivity walks first-time users through what StickerBoard is, how to enable it as a
  * keyboard, and how to choose a sticker source directory, before handing off to MainActivity.
  * Shown once - see MainActivity.isOnboardingComplete for the check that skips it afterwards.
  */
-class OnboardingActivity : AppCompatActivity(), OnboardingPageListener {
+class OnboardingActivity : AppCompatActivity() {
 	private lateinit var sharedPreferences: SharedPreferences
 	private lateinit var toaster: Toaster
-	private lateinit var viewPager: ViewPager2
-	private lateinit var stepLabel: TextView
-	private lateinit var backButton: Button
-	private lateinit var nextButton: Button
 
-	// Bound when the choose-directory button is tapped, and used again once the picker result and
-	// sticker import complete - the folder page stays alive across that gap since the picker is a
-	// foreground activity launched on top of this one.
-	private var chooseDirButton: Button? = null
-	private var progressBar: LinearProgressIndicator? = null
+	// Assigned once by ProgressIndicatorView's AndroidView factory, which runs during the first
+	// composition - well before any button press can trigger importStickers().
+	private lateinit var progressBar: LinearProgressIndicator
 
-	/**
-	 * Sets up content view, shared prefs, and wires up the onboarding pager
-	 *
-	 * @param savedInstanceState saved state
-	 */
+	private var uiState by mutableStateOf(
+		OnboardingUiState(keyboardEnabled = false, folderChosen = false, isImporting = false),
+	)
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		setContentView(R.layout.activity_onboarding)
-
 		startLogger(filesDir)
 
 		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 		this.toaster = Toaster(baseContext)
+		refreshRequirements()
 
-		this.viewPager = findViewById(R.id.onboardingPager)
-		this.stepLabel = findViewById(R.id.onboardingStepLabel)
-		this.backButton = findViewById(R.id.onboardingBackBtn)
-		this.nextButton = findViewById(R.id.onboardingNextBtn)
+		setContent {
+			StickerBoardSettingsTheme {
+				OnboardingScreen(
+					state = uiState,
+					onEnableKeyboard = ::enableKeyboard,
+					onChooseDir = ::chooseDir,
+					onRequirementUnmet = { message -> toaster.toast(message) },
+					onFinish = ::finishOnboarding,
+					progressIndicator = { ProgressIndicatorView() },
+				)
+			}
+		}
+	}
 
-		this.viewPager.adapter = OnboardingPageAdapter(this)
-		this.viewPager.registerOnPageChangeCallback(
-			object : ViewPager2.OnPageChangeCallback() {
-				override fun onPageSelected(position: Int) {
-					// Block swiping onto a page whose predecessor's required step isn't done yet
-					if (position > PAGE_WELCOME && !isPageRequirementMet(position - 1)) {
-						viewPager.setCurrentItem(position - 1, true)
-						toaster.toast(requirementMessage(position - 1))
-						return
-					}
-					updateControls(position)
+	/** Hosts the real Material [LinearProgressIndicator] that [StickerImporter] mutates directly. */
+	@Composable
+	private fun ProgressIndicatorView() {
+		AndroidView(
+			modifier = Modifier.fillMaxWidth(),
+			factory = { context ->
+				LinearProgressIndicator(context).apply {
+					visibility = View.GONE
+					progressBar = this
 				}
 			},
 		)
-
-		updateControls(this.viewPager.currentItem)
 	}
 
 	/** Re-checks the current page's requirement, e.g. after returning from keyboard settings */
 	override fun onResume() {
 		super.onResume()
-		updateControls(this.viewPager.currentItem)
+		refreshRequirements()
 	}
 
-	/**
-	 * Called on button press to advance to the next onboarding page, or finish onboarding if
-	 * already on the last page
-	 *
-	 * @param ignoredView: View
-	 */
-	fun onboardingNext(ignoredView: View) {
-		val page = this.viewPager.currentItem
-		if (!isPageRequirementMet(page)) {
-			toaster.toast(requirementMessage(page))
-			return
-		}
-		if (page >= LAST_PAGE_INDEX) {
-			finishOnboarding()
-			return
-		}
-		this.viewPager.currentItem = page + 1
-	}
-
-	/**
-	 * Called on button press to return to the previous onboarding page
-	 *
-	 * @param ignoredView: View
-	 */
-	fun onboardingBack(ignoredView: View) {
-		this.viewPager.currentItem -= 1
+	private fun refreshRequirements() {
+		uiState = uiState.copy(
+			keyboardEnabled = isKeyboardEnabled(),
+			folderChosen = hasChosenStickerDir(),
+		)
 	}
 
 	/** Called when the user taps the button to launch settings to enable the StickerBoard keyboard */
-	override fun onEnableKeyboardClick() {
+	private fun enableKeyboard() {
 		startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
 	}
 
 	/** Called when the user taps the button to choose a sticker source directory */
-	override fun onChooseDirClick(chooseDirButton: Button, progressBar: LinearProgressIndicator) {
-		this.chooseDirButton = chooseDirButton
-		this.progressBar = progressBar
-
+	private fun chooseDir() {
 		val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
 		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 		intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
@@ -161,18 +135,15 @@ class OnboardingActivity : AppCompatActivity(), OnboardingPageListener {
 				editor.putString("recentCache", "")
 				editor.putString("compatCache", "")
 				editor.apply()
-				updateControls(this.viewPager.currentItem)
+				refreshRequirements()
 				importStickers(stickerDirPath)
 			}
 		}
 
 	/** Import files from storage to internal directory - mirrors MainActivity.importStickers */
 	private fun importStickers(stickerDirPath: String) {
-		val chooseDirButton = this.chooseDirButton ?: return
-		val progressBar = this.progressBar ?: return
-
 		toaster.toast(getString(R.string.imported_010))
-		chooseDirButton.isEnabled = false
+		uiState = uiState.copy(isImporting = true)
 
 		lifecycleScope.launch(Dispatchers.IO) {
 			val totalStickers =
@@ -188,49 +159,9 @@ class OnboardingActivity : AppCompatActivity(), OnboardingPageListener {
 				val editor = sharedPreferences.edit()
 				editor.putInt("numStickersImported", totalStickers)
 				editor.apply()
-				chooseDirButton.isEnabled = true
+				uiState = uiState.copy(isImporting = false)
 			}
 		}
-	}
-
-	/**
-	 * Updates the step label plus back/next button visibility, text and enabled state for the
-	 * current page - next is disabled until that page's required step is completed
-	 */
-	private fun updateControls(page: Int) {
-		this.stepLabel.text = getString(R.string.onboarding_step_label, page + 1, LAST_PAGE_INDEX + 1)
-		this.backButton.visibility = if (page == PAGE_WELCOME) View.INVISIBLE else View.VISIBLE
-		this.nextButton.text = if (page == LAST_PAGE_INDEX) {
-			getString(R.string.onboarding_finish_button)
-		} else {
-			getString(R.string.onboarding_next_button)
-		}
-		this.nextButton.isEnabled = isPageRequirementMet(page)
-	}
-
-	/**
-	 * Checks whether the required step for a given onboarding page has been completed - the
-	 * welcome page has no requirement
-	 *
-	 * @param page page index to check
-	 * @return Boolean true if the user may move on from this page
-	 */
-	private fun isPageRequirementMet(page: Int): Boolean = when (page) {
-		PAGE_KEYBOARD -> isKeyboardEnabled()
-		PAGE_FOLDER -> hasChosenStickerDir()
-		else -> true
-	}
-
-	/**
-	 * Gets the message to show when the user tries to move on without completing a page's required
-	 * step
-	 *
-	 * @param page page index the message is for
-	 */
-	private fun requirementMessage(page: Int): String = when (page) {
-		PAGE_KEYBOARD -> getString(R.string.onboarding_keyboard_required)
-		PAGE_FOLDER -> getString(R.string.onboarding_folder_required)
-		else -> ""
 	}
 
 	/**

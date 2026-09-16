@@ -1,35 +1,28 @@
 package com.lukeneedham.stickerboard
 
-import android.app.Dialog
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
-import android.view.GestureDetector
-import android.view.View
-import android.view.ViewGroup
-import android.view.Window
 import android.webkit.MimeTypeMap
-import android.widget.ImageButton
-import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import coil.load
 import com.elvishew.xlog.XLog
-import com.google.android.material.appbar.MaterialToolbar
-import com.lukeneedham.stickerboard.adapter.StickerBoardAdapter
+import com.lukeneedham.stickerboard.gallery.StickerGalleryScreen
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
-import com.lukeneedham.stickerboard.utilities.StickerClickListener
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import com.lukeneedham.stickerboard.utilities.Toaster
-import com.lukeneedham.stickerboard.utilities.applyStatusBarTopInset
 import com.lukeneedham.stickerboard.utilities.startLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,24 +42,17 @@ private const val MAX_ICONS_PER_X = 6
  * ImageKeyboard, with an extra "add photo" cell at the end of each pack's section. Tapping that
  * cell opens the device's photo picker and copies the chosen photos straight into that pack.
  */
-class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
+class StickerGalleryActivity : AppCompatActivity() {
 	private lateinit var sharedPreferences: SharedPreferences
 	private lateinit var backupSharedPreferences: SharedPreferences
 	private lateinit var toaster: Toaster
 	private lateinit var internalDir: File
-	private lateinit var recyclerView: RecyclerView
-	private lateinit var emptyText: TextView
 
-	private var iconsPerX = 4
-	private var iconSize = 0
+	private var iconsPerX by mutableIntStateOf(4)
 	private var insensitiveSort = false
 	private var vibrate = true
-	private var boardAdapter: StickerBoardAdapter? = null
+	private var boardItems by mutableStateOf(emptyList<BoardItem>())
 	private var pendingPackName: String? = null
-
-	private val gestureDetector by lazy {
-		GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {})
-	}
 
 	private val pickPhotosLauncher =
 		registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
@@ -79,7 +65,6 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		setContentView(R.layout.activity_sticker_gallery)
 		startLogger(filesDir)
 
 		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -92,33 +77,25 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 				.coerceIn(MIN_ICONS_PER_X, MAX_ICONS_PER_X)
 		this.insensitiveSort = this.backupSharedPreferences.getBoolean("insensitiveSort", false)
 		this.vibrate = this.backupSharedPreferences.getBoolean("vibrate", true)
-		recomputeIconSize()
 
-		findViewById<View>(R.id.stickerGalleryAppBar).applyStatusBarTopInset()
-
-		val toolbar = findViewById<MaterialToolbar>(R.id.stickerGalleryToolbar)
-		val navIcon = getDrawable(R.drawable.ic_back)?.mutate()
-		navIcon?.setTint(getColor(R.color.app_on_primary))
-		toolbar.navigationIcon = navIcon
-		toolbar.setNavigationOnClickListener { finish() }
-
-		this.recyclerView = findViewById(R.id.stickerGalleryRecyclerView)
-		this.emptyText = findViewById(R.id.stickerGalleryEmptyText)
-
-		buildBoard()
+		setContent {
+			StickerBoardSettingsTheme {
+				StickerGalleryScreen(
+					items = boardItems,
+					columns = iconsPerX,
+					vibrate = vibrate,
+					onBack = { finish() },
+					onOpenFolder = { openStickerFolder() },
+					onAddPhotoClick = { packName -> onAddPhotoClicked(packName) },
+				)
+			}
+		}
 	}
 
 	/** Re-scan packs in case they changed while this activity wasn't in the foreground. */
 	override fun onResume() {
 		super.onResume()
-		buildBoard()
-	}
-
-	private fun recomputeIconSize() {
-		val totalIconPadding =
-			(resources.getDimension(R.dimen.sticker_padding) * 2 * (iconsPerX + 1)).toInt()
-		iconSize =
-			((resources.displayMetrics.widthPixels - totalIconPadding) / iconsPerX.toFloat()).toInt()
+		refreshBoard()
 	}
 
 	private fun sortedPackNames(loadedPacks: Map<String, StickerPack>): List<String> =
@@ -155,31 +132,9 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 		return items
 	}
 
-	/** Build the board the first time, or refresh it in place (preserving scroll) afterwards. */
-	private fun buildBoard() {
-		val items = computeBoardItems()
-		emptyText.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
-		recyclerView.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
-
-		val existingAdapter = boardAdapter
-		if (existingAdapter != null) {
-			existingAdapter.updateIconSize(iconSize)
-			existingAdapter.updateItems(items)
-			return
-		}
-
-		val layoutManager = GridLayoutManager(this, iconsPerX, RecyclerView.VERTICAL, false)
-		val adapter =
-			StickerBoardAdapter(iconSize, items, this, gestureDetector, vibrate) { packName ->
-				onAddPhotoClicked(packName)
-			}
-		layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-			override fun getSpanSize(position: Int): Int =
-				if (adapter.isFullWidth(position)) iconsPerX else 1
-		}
-		recyclerView.layoutManager = layoutManager
-		recyclerView.adapter = adapter
-		boardAdapter = adapter
+	/** Recomputes the board, preserving the LazyVerticalGrid's scroll position where it can. */
+	private fun refreshBoard() {
+		boardItems = computeBoardItems()
 	}
 
 	private fun onAddPhotoClicked(packName: String) {
@@ -218,7 +173,7 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 						sharedPreferences.getInt("numStickersImported", 0) + addedCount,
 					)
 					editor.apply()
-					buildBoard()
+					refreshBoard()
 				} else if (!skippedLimit) {
 					toaster.toast(getString(R.string.add_photo_051, displayName))
 				}
@@ -273,42 +228,11 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 		}
 	}
 
-	override fun onStickerClicked(sticker: File) = showStickerPreview(sticker)
-
-	override fun onStickerLongClicked(sticker: File) = showStickerPreview(sticker)
-
-	/** A simple, read-only enlarged preview of a sticker - tap the image (or outside) to dismiss. */
-	private fun showStickerPreview(sticker: File) {
-		val view = layoutInflater.inflate(R.layout.sticker_preview, null, false)
-		view.findViewById<TextView>(R.id.stickerPreviewPackName).text =
-			prettifyPackName(sticker.parentFile?.name ?: "")
-		view.findViewById<TextView>(R.id.stickerPreviewStickerName).text = trimString(sticker.name)
-
-		// sticker_preview.xml relies on a definite parent height to size the weighted image (it's
-		// normally hosted in the keyboard's fixed-height packContent). AlertDialog wraps any custom
-		// view in its own wrap-content container regardless of the window's size, which collapses
-		// that weighted view to zero height - a plain Dialog uses the view as its content directly,
-		// so resizing its window to fill the screen actually gives the weighted view something to
-		// fill.
-		val dialog = Dialog(this)
-		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-		dialog.setContentView(view)
-		dialog.window?.setBackgroundDrawableResource(R.color.app_background)
-
-		view.findViewById<ImageButton>(R.id.stickerPreviewImage).apply {
-			load(sticker)
-			contentDescription = trimString(sticker.name)
-			setOnClickListener { dialog.dismiss() }
-		}
-		dialog.show()
-		dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-	}
-
 	/**
 	 * Opens the user's chosen external sticker source directory in their device's file browser app,
 	 * if one is configured and something can handle it.
 	 */
-	fun openStickerFolder(ignoredView: View) {
+	private fun openStickerFolder() {
 		val stickerDirPath = sharedPreferences.getString("stickerDirPath", null)
 		if (stickerDirPath == null) {
 			toaster.toast(getString(R.string.open_folder_missing_dir))
