@@ -4,6 +4,7 @@
 	<string name="pack_icon">Pack icon</string>
 	<string name="sticker_icon">Sticker icon</string>
 	<string name="close_sticker_preview">Close preview</string>
+	<string name="close_search">Close search</string>
 	<string name="send_sticker">Send sticker</string>
 	<string name="cannot_send_sticker">Cannot send image</string>
 	<!-- Onboarding -->

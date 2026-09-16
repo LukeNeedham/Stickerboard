@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -90,6 +89,9 @@ private const val PINCH_STEP_THRESHOLD = 1.15f
 
 /** The search keyboard's widest row - determines the per-key width all other rows share. */
 private const val QWERTY_TOP_ROW = "qwertyuiop"
+
+/** How long the search bar's text-cursor stays visible, then invisible, each half of its blink cycle. */
+private const val CURSOR_BLINK_HALF_PERIOD_MS = 500L
 
 /**
  * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
@@ -219,11 +221,10 @@ fun KeyboardScreen(
 				},
 				onHeightDragEnd = { dataSource.onKeyboardHeightSettled(keyboardHeightPx) },
 				onBackOrClose = {
-					val current = mode
-					if (current is Mode.Preview) {
-						mode = current.returnTo
-					} else {
-						dataSource.onClose()
+					when (val current = mode) {
+						is Mode.Preview -> mode = current.returnTo
+						Mode.Search -> mode = Mode.Board
+						Mode.Board -> dataSource.onClose()
 					}
 				},
 				onSearchOrSend = {
@@ -342,6 +343,7 @@ private fun PullBar(
 	onSearchOrSend: () -> Unit,
 ) {
 	val isPreview = mode is Mode.Preview
+	val isSearch = mode is Mode.Search
 	Box(
 		Modifier
 			.fillMaxWidth()
@@ -353,13 +355,13 @@ private fun PullBar(
 				}
 			},
 	) {
-		if (isPreview || showCloseButton) {
+		if (isPreview || isSearch || showCloseButton) {
 			CircleIconButton(
-				iconRes = if (isPreview) R.drawable.ic_back else R.drawable.ic_close,
-				contentDescription = if (isPreview) {
-					stringResource(R.string.close_sticker_preview)
-				} else {
-					stringResource(R.string.pack_icon)
+				iconRes = if (isPreview || isSearch) R.drawable.ic_back else R.drawable.ic_close,
+				contentDescription = when {
+					isPreview -> stringResource(R.string.close_sticker_preview)
+					isSearch -> stringResource(R.string.close_search)
+					else -> stringResource(R.string.pack_icon)
 				},
 				selected = false,
 				onClick = onBackOrClose,
@@ -640,15 +642,7 @@ private fun SearchContent(
 				)
 			}
 		}
-		BasicText(
-			text = query,
-			style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(dimensionResource(R.dimen.qwerty_row_height))
-				.wrapContentHeight(Alignment.CenterVertically)
-				.padding(horizontal = dimensionResource(R.dimen.card_margin)),
-		)
+		SearchQueryBar(query)
 		BoxWithConstraints(
 			Modifier
 				.fillMaxWidth()
@@ -658,7 +652,7 @@ private fun SearchContent(
 			val keyWidth = maxWidth / QWERTY_TOP_ROW.length
 			QwertyKeyboard(
 				keyWidth = keyWidth,
-				keyHeight = keyWidth * 1.5f,
+				keyHeight = keyWidth * 1.3f,
 				onKeyTap = { onQueryChange(query + it) },
 				onBackspace = {
 					if (query.isNotEmpty()) onQueryChange(query.substring(0, query.length - 1))
@@ -666,6 +660,41 @@ private fun SearchContent(
 				onClear = { onQueryChange("") },
 			)
 		}
+	}
+}
+
+/**
+ * The search query, shown above the qwerty keyboard with a blinking text-cursor after it, so the
+ * bar reads clearly as live text input rather than a static label.
+ */
+@Composable
+private fun SearchQueryBar(query: String) {
+	var cursorVisible by remember { mutableStateOf(true) }
+	LaunchedEffect(Unit) {
+		while (true) {
+			delay(CURSOR_BLINK_HALF_PERIOD_MS)
+			cursorVisible = !cursorVisible
+		}
+	}
+	Row(
+		Modifier
+			.fillMaxWidth()
+			.height(dimensionResource(R.dimen.qwerty_row_height))
+			.padding(horizontal = dimensionResource(R.dimen.card_margin)),
+		verticalAlignment = Alignment.CenterVertically,
+	) {
+		BasicText(
+			text = query,
+			style = TextStyle(color = colorResource(R.color.fg), fontSize = 16.sp),
+		)
+		Box(
+			Modifier
+				.padding(start = 2.dp)
+				.width(2.dp)
+				.height(20.dp)
+				.alpha(if (cursorVisible) 1f else 0f)
+				.background(colorResource(R.color.fg)),
+		)
 	}
 }
 
