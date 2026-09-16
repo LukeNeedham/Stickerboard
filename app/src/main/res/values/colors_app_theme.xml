@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Modern Material 3 palette for the settings app (MainActivity and the screens it opens: onboarding,
+	the sticker gallery, debug and crash tools). Deliberately separate from color/accent, color/bg,
+	color/fg, color/onAccent and color/pull_handle in colors.xml/themes.xml, which the keyboard IME
+	(KeyboardScreen) reads directly by resource name - restyling the settings app must never change
+	how the keyboard itself looks. Mirrors the Compose ColorScheme in settings/SettingsTheme.kt.
+-->
+<resources>
+	<color name="app_primary">#00696C</color>
+	<color name="app_on_primary">#FFFFFF</color>
+	<color name="app_background">#F4FAF9</color>
+	<color name="app_surface">#FFFFFF</color>
+	<color name="app_on_surface">#171D1C</color>
+	<color name="app_surface_variant">#DAE5E3</color>
+	<color name="app_on_surface_variant">#3F4948</color>
+	<color name="app_primary_ripple">#3300696C</color>
+</resources>

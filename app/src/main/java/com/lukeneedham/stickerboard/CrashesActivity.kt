@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.lukeneedham.stickerboard.adapter.CrashListAdapter
 import com.lukeneedham.stickerboard.crash.CrashStore
+import com.lukeneedham.stickerboard.utilities.applyStatusBarTopInset
 import com.lukeneedham.stickerboard.utilities.startLogger
 
 /** Shows every crash recorded by the app or the keyboard, most recent first. */
@@ -26,9 +27,11 @@ class CrashesActivity : AppCompatActivity() {
 
 		this.crashStore = CrashStore(this)
 
+		findViewById<View>(R.id.crashesAppBar).applyStatusBarTopInset()
+
 		val toolbar = findViewById<MaterialToolbar>(R.id.crashesToolbar)
 		val navIcon = getDrawable(R.drawable.ic_back)?.mutate()
-		navIcon?.setTint(getColor(R.color.onAccent))
+		navIcon?.setTint(getColor(R.color.app_on_primary))
 		toolbar.navigationIcon = navIcon
 		toolbar.setNavigationOnClickListener { finish() }
 
