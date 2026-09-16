@@ -5,6 +5,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.lukeneedham.stickerboard.crash.CrashStore
+import com.lukeneedham.stickerboard.utilities.applyStatusBarTopInset
 import com.lukeneedham.stickerboard.utilities.startLogger
 import java.text.DateFormat
 import java.util.Date
@@ -16,9 +17,11 @@ class CrashDetailActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_crash_detail)
 		startLogger(filesDir)
 
+		findViewById<android.view.View>(R.id.crashDetailAppBar).applyStatusBarTopInset()
+
 		val toolbar = findViewById<MaterialToolbar>(R.id.crashDetailToolbar)
 		val navIcon = getDrawable(R.drawable.ic_back)?.mutate()
-		navIcon?.setTint(getColor(R.color.onAccent))
+		navIcon?.setTint(getColor(R.color.app_on_primary))
 		toolbar.navigationIcon = navIcon
 		toolbar.setNavigationOnClickListener { finish() }
 

@@ -1,51 +1,55 @@
 package com.lukeneedham.stickerboard
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.widget.Button
-import android.widget.CompoundButton
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
-import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.isVisible
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import coil.load
 import com.elvishew.xlog.XLog
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.lukeneedham.stickerboard.settings.SettingsScreen
+import com.lukeneedham.stickerboard.settings.SettingsUiState
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
 import com.lukeneedham.stickerboard.utilities.startLogger
-import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
-/** MainActivity class inherits from the AppCompatActivity class - provides the settings view */
+/** MainActivity - the settings app's root screen, rebuilt in Compose. */
 class MainActivity : AppCompatActivity() {
-	// onCreate
 	private lateinit var sharedPreferences: SharedPreferences
-	private lateinit var backupSharedPreferences: SharedPreferences
-	private lateinit var contextView: View
 	private lateinit var toaster: Toaster
+
+	// Assigned once by ProgressIndicatorView's AndroidView factory, which runs during the first
+	// composition - well before any button press can trigger importStickers().
+	private lateinit var progressBar: LinearProgressIndicator
+
+	private var uiState by mutableStateOf(
+		SettingsUiState(
+			stickerDirPath = "",
+			lastUpdateDate = "",
+			numStickersImported = 0,
+			isImporting = false,
+			showDebugCard = BuildConfig.DEBUG,
+		),
+	)
 
 	/**
 	 * Sets up content view, shared prefs, etc.
@@ -53,7 +57,6 @@ class MainActivity : AppCompatActivity() {
 	 * @param savedInstanceState saved state
 	 */
 	override fun onCreate(savedInstanceState: Bundle?) {
-		// Inflate view
 		super.onCreate(savedInstanceState)
 
 		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -63,57 +66,44 @@ class MainActivity : AppCompatActivity() {
 			return
 		}
 
-		setContentView(R.layout.activity_main)
-
 		startLogger(filesDir)
 
 		XLog.i("=".repeat(80))
 		XLog.i("Loaded $packageName:$localClassName")
 
-		val markwon: Markwon = Markwon.create(this)
-		val featuresText = findViewById<TextView>(R.id.features_text)
-		markwon.setMarkdown(featuresText, getString(R.string.features_text))
-
-		val linksText = findViewById<TextView>(R.id.links_text)
-		markwon.setMarkdown(linksText, getString(R.string.links_text))
-
-		// Set late-init attrs
-		this.backupSharedPreferences =
-			this.getSharedPreferences("backup_prefs", Context.MODE_PRIVATE)
-
-		XLog.i("Loading private shared preferences: ${this.sharedPreferences.all}")
-		XLog.i("Loading backup shared preferences: ${this.backupSharedPreferences.all}")
-		this.contextView = findViewById(R.id.activityMainRoot)
 		this.toaster = Toaster(baseContext)
+
+		XLog.i("Loading shared preferences: ${this.sharedPreferences.all}")
 		refreshStickerDirPath()
-		setUpTryItOut()
-		// Update UI with config
-		seekBar(findViewById(R.id.iconsPerXSb), findViewById(R.id.iconsPerXLbl), "iconsPerX", 4)
-		seekBar(findViewById(R.id.iconSizeSb), findViewById(R.id.iconSizeLbl), "iconSize", 80, 20)
-		toggle(findViewById(R.id.showBackButton), "showBackButton", true) {}
-		toggle(findViewById(R.id.showSearchButton), "showSearchButton", true) {}
-		toggle(findViewById(R.id.vibrate), "vibrate", true) {}
-		toggle(findViewById(R.id.vertical), "vertical") { isChecked: Boolean ->
-			findViewById<SeekBar>(R.id.iconSizeSb).isEnabled = !isChecked
+
+		setContent {
+			StickerBoardSettingsTheme {
+				SettingsScreen(
+					state = uiState,
+					onEnableKeyboard = ::enableKeyboard,
+					onTryItOutMediaReceived = ::onTryItOutMediaReceived,
+					onChooseDir = ::chooseDir,
+					onReloadStickers = ::reloadStickers,
+					onViewStickers = ::viewStickers,
+					onOpenDebug = ::openDebug,
+					progressIndicator = { ProgressIndicatorView() },
+				)
+			}
 		}
-		toggle(findViewById(R.id.restoreOnClose), "restoreOnClose", false) {}
-		toggle(findViewById(R.id.scroll), "scroll", false) {}
-		toggle(findViewById(R.id.insensitive_sort), "insensitiveSort", false) {}
-		toggle(findViewById(R.id.pngFallback), "isPngFallback", true) {}
+	}
 
-		val versionText: TextView = findViewById(R.id.versionText)
-		var version = getString(R.string.version_text)
-		try {
-			val packageInfo = packageManager.getPackageInfo(packageName, 0)
-			version = packageInfo.versionName ?: version
-		} catch (_: PackageManager.NameNotFoundException) {
-		}
-
-		versionText.text = version
-		XLog.i("Version: $version")
-
-		findViewById<View>(R.id.debugCard).visibility =
-			if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
+	/** Hosts the real Material [LinearProgressIndicator] that [StickerImporter] mutates directly. */
+	@Composable
+	private fun ProgressIndicatorView() {
+		AndroidView(
+			modifier = Modifier.fillMaxWidth(),
+			factory = { context ->
+				LinearProgressIndicator(context).apply {
+					visibility = View.GONE
+					progressBar = this
+				}
+			},
+		)
 	}
 
 	/**
@@ -144,41 +134,13 @@ class MainActivity : AppCompatActivity() {
 			}
 		}
 
-	private val saveFileLauncher =
-		registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-			if (result.resultCode == RESULT_OK) {
-				result.data?.data?.also { uri ->
-					val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-					val currentDate = Date()
-					val logFileName = dateFormatter.format(currentDate)
-					val file = File(filesDir, "logs/$logFileName")
-					if (file.exists()) {
-						contentResolver.openOutputStream(uri)?.use { outputStream ->
-							file.inputStream().use { inputStream ->
-								inputStream.copyTo(outputStream)
-							}
-						}
-					}
-				}
-			}
-		}
-
-	/**
-	 * Called on button press to launch settings
-	 *
-	 * @param ignoredView: View
-	 */
-	fun enableKeyboard(ignoredView: View) {
-		val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
-		startActivity(intent)
+	/** Called on button press to launch settings */
+	private fun enableKeyboard() {
+		startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
 	}
 
-	/**
-	 * Called on button press to choose a new directory
-	 *
-	 * @param ignoredView: View
-	 */
-	fun chooseDir(ignoredView: View) {
+	/** Called on button press to choose a new directory */
+	private fun chooseDir() {
 		val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
 		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 		intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
@@ -186,27 +148,10 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	/**
-	 * Called on button press to save logs
-	 *
-	 * @param ignoredView: View
+	 * Called when a user taps the reload stickers button. If we have a set stickerDirPath, call
+	 * importStickers()
 	 */
-	fun saveLogs(ignoredView: View) {
-		val saveIntent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-			addCategory(Intent.CATEGORY_OPENABLE)
-			type = "text/plain"
-			putExtra(Intent.EXTRA_TITLE, "stickerboard.log")
-		}
-		saveFileLauncher.launch(saveIntent)
-	}
-
-	/**
-	 * reloadStickers
-	 *
-	 * Call this function when a user taps the reload stickers button. If we have a set stickerDirPath, call importStickers()
-	 *
-	 * @param ignoredView: View
-	 */
-	fun reloadStickers(ignoredView: View) {
+	private fun reloadStickers() {
 		val stickerDirPath = this.sharedPreferences.getString(
 			"stickerDirPath",
 			null,
@@ -223,31 +168,23 @@ class MainActivity : AppCompatActivity() {
 	/**
 	 * Called on button press to open the sticker gallery, where the user can browse their packs and
 	 * add photos from the device's photo gallery to any of them.
-	 *
-	 * @param ignoredView: View
 	 */
-	fun viewStickers(ignoredView: View) {
+	private fun viewStickers() {
 		startActivity(Intent(this, StickerGalleryActivity::class.java))
 	}
 
 	/**
 	 * Called on button press to open the debug tools screen. Only reachable when [BuildConfig.DEBUG]
 	 * is true, since the button that calls this is hidden otherwise.
-	 *
-	 * @param ignoredView: View
 	 */
-	fun openDebug(ignoredView: View) {
+	private fun openDebug() {
 		startActivity(Intent(this, DebugActivity::class.java))
 	}
 
 	/** Import files from storage to internal directory */
 	private fun importStickers(stickerDirPath: String) {
 		toaster.toast(getString(R.string.imported_010))
-		val button = findViewById<Button>(R.id.updateStickerPackInfoBtn)
-		val button2 = findViewById<Button>(R.id.reloadStickerPackInfoBtn)
-		val progressBar = findViewById<LinearProgressIndicator>(R.id.linearProgressIndicator)
-		button.isEnabled = false
-		button2.isEnabled = false
+		uiState = uiState.copy(isImporting = true)
 
 		lifecycleScope.launch(Dispatchers.IO) {
 			val totalStickers =
@@ -264,130 +201,32 @@ class MainActivity : AppCompatActivity() {
 				editor.putInt("numStickersImported", totalStickers)
 				editor.apply()
 				refreshStickerDirPath()
-				button.isEnabled = true
-				button2.isEnabled = true
+				uiState = uiState.copy(isImporting = false)
 			}
 		}
-	}
-
-	/**
-	 * Add toggle logic for each toggle/ checkbox in the layout
-	 *
-	 * @param compoundButton CompoundButton
-	 * @param sharedPrefKey String - Id/Key of the SharedPreferences to update
-	 * @param sharedPrefDefault Boolean - default value (default=false)
-	 * @param callback (Boolean) -> Unit - Add custom behaviour with a callback - for instance to
-	 * disable some options
-	 */
-	private fun toggle(
-		compoundButton: CompoundButton,
-		sharedPrefKey: String,
-		sharedPrefDefault: Boolean = false,
-		callback: (Boolean) -> Unit,
-	) {
-		compoundButton.isChecked =
-			this.backupSharedPreferences.getBoolean(sharedPrefKey, sharedPrefDefault)
-		callback(compoundButton.isChecked)
-		compoundButton.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
-			showChangedPrefText()
-			callback(compoundButton.isChecked)
-			val editor = this.backupSharedPreferences.edit()
-			editor.putBoolean(sharedPrefKey, isChecked)
-			editor.apply()
-		}
-	}
-
-	/**
-	 * Add seekbar logic for each seekbar in the layout
-	 *
-	 * @param seekBar SeekBar
-	 * @param seekBarLabel TextView - the label with a value updated when the progress is changed
-	 * @param sharedPrefKey String - Id/Key of the SharedPreferences to update
-	 * @param sharedPrefDefault Int - default value
-	 * @param multiplier Int - multiplier (used to update SharedPreferences and set the
-	 * seekBarLabel)
-	 */
-	private fun seekBar(
-		seekBar: SeekBar,
-		seekBarLabel: TextView,
-		sharedPrefKey: String,
-		sharedPrefDefault: Int,
-		multiplier: Int = 1,
-	) {
-		seekBarLabel.text =
-			this.backupSharedPreferences.getInt(sharedPrefKey, sharedPrefDefault).toString()
-		seekBar.progress =
-			this.backupSharedPreferences.getInt(sharedPrefKey, sharedPrefDefault) / multiplier
-		seekBar.setOnSeekBarChangeListener(
-			object : OnSeekBarChangeListener {
-				var progressMultiplier = sharedPrefDefault
-				override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-					progressMultiplier = progress * multiplier
-					seekBarLabel.text = progressMultiplier.toString()
-				}
-
-				override fun onStartTrackingTouch(seekBar: SeekBar) {}
-				override fun onStopTrackingTouch(seekBar: SeekBar) {
-					val editor = backupSharedPreferences.edit()
-					editor.putInt(sharedPrefKey, progressMultiplier)
-					editor.apply()
-					showChangedPrefText()
-				}
-			},
-		)
 	}
 
 	/**
 	 * Lets the "Try It Out" field on the settings screen receive stickers sent via
 	 * [android.view.inputmethod.InputConnection.commitContent] - the same mechanism
 	 * [com.lukeneedham.stickerboard.utilities.StickerSender] uses to deliver stickers to any other
-	 * app - by declaring support for image/video content and rendering each received item as a
-	 * thumbnail beneath the field, rather than as a text edit.
+	 * app - by prepending each received item to the try-it-out gallery shown beneath the field.
 	 */
-	private fun setUpTryItOut() {
-		val input = findViewById<EditText>(R.id.tryItOutInput)
-		val mediaScroll = findViewById<View>(R.id.tryItOutMediaScroll)
-		val media = findViewById<LinearLayout>(R.id.tryItOutMedia)
-
-		ViewCompat.setOnReceiveContentListener(input, arrayOf("image/*", "video/*")) { _, payload ->
-			val split = payload.partition { it.uri != null }
-			val mediaContent = split.first
-			if (mediaContent != null) {
-				for (i in 0 until mediaContent.clip.itemCount) {
-					mediaContent.clip.getItemAt(i).uri?.let { uri -> addTryItOutMedia(media, uri) }
-				}
-				mediaScroll.isVisible = true
-			}
-			split.second
-		}
-	}
-
-	/** Prepend a thumbnail of a sticker received by [setUpTryItOut] to the try-it-out gallery. */
-	private fun addTryItOutMedia(container: LinearLayout, uri: Uri) {
-		val size = resources.getDimensionPixelSize(R.dimen.try_it_out_image_size)
-		val imageView = ImageView(this).apply {
-			layoutParams = LinearLayout.LayoutParams(size, size).apply {
-				marginEnd = resources.getDimensionPixelSize(R.dimen.content_margin)
-			}
-			scaleType = ImageView.ScaleType.FIT_CENTER
-			contentDescription = getString(R.string.try_it_out_image_content_description)
-			load(uri)
-		}
-		container.addView(imageView, 0)
+	private fun onTryItOutMediaReceived(uri: Uri) {
+		uiState = uiState.copy(tryItOutMedia = listOf(uri) + uiState.tryItOutMedia)
 	}
 
 	/** Reads saved sticker dir path from preferences */
 	private fun refreshStickerDirPath() {
-		findViewById<TextView>(R.id.stickerPackInfoPath).text =
-			this.sharedPreferences.getString(
+		uiState = uiState.copy(
+			stickerDirPath = this.sharedPreferences.getString(
 				"stickerDirPath", resources.getString(R.string.update_sticker_pack_info_path),
-			)
-		findViewById<TextView>(R.id.stickerPackInfoDate).text =
-			this.sharedPreferences.getString(
+			) ?: resources.getString(R.string.update_sticker_pack_info_path),
+			lastUpdateDate = this.sharedPreferences.getString(
 				"lastUpdateDate", resources.getString(R.string.update_sticker_pack_info_date),
-			)
-		findViewById<TextView>(R.id.stickerPackInfoTotal).text =
-			this.sharedPreferences.getInt("numStickersImported", 0).toString()
+			) ?: resources.getString(R.string.update_sticker_pack_info_date),
+			numStickersImported = this.sharedPreferences.getInt("numStickersImported", 0),
+		)
 	}
 
 	/**
@@ -406,12 +245,5 @@ class MainActivity : AppCompatActivity() {
 			return true
 		}
 		return false
-	}
-
-	/** Reusable function to warn about changing preferences */
-	private fun showChangedPrefText() {
-		this.toaster.toast(
-			getString(R.string.pref_000),
-		)
 	}
 }

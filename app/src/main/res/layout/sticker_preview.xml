@@ -26,7 +26,7 @@
 			android:ellipsize="end"
 			android:gravity="center"
 			android:maxLines="1"
-			android:textColor="@color/accent"
+			android:textColor="@color/app_primary"
 			android:textSize="@dimen/text_size_subheading"
 			android:textStyle="bold"
 			tools:text="Cat Memes" />
@@ -39,7 +39,7 @@
 			android:ellipsize="end"
 			android:gravity="center"
 			android:maxLines="1"
-			android:textColor="@color/fg"
+			android:textColor="@color/app_on_surface_variant"
 			android:textSize="@dimen/text_size_tiny"
 			tools:text="cool_cat.webp" />
 

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
+import com.lukeneedham.stickerboard.utilities.applyStatusBarTopInset
 import com.lukeneedham.stickerboard.utilities.startLogger
 
 /**
@@ -22,9 +23,11 @@ class DebugActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_debug)
 		startLogger(filesDir)
 
+		findViewById<View>(R.id.debugAppBar).applyStatusBarTopInset()
+
 		val toolbar = findViewById<MaterialToolbar>(R.id.debugToolbar)
 		val navIcon = getDrawable(R.drawable.ic_back)?.mutate()
-		navIcon?.setTint(getColor(R.color.onAccent))
+		navIcon?.setTint(getColor(R.color.app_on_primary))
 		toolbar.navigationIcon = navIcon
 		toolbar.setNavigationOnClickListener { finish() }
 	}

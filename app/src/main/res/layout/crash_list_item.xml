@@ -13,7 +13,7 @@
 			style="@style/body_text"
 			android:layout_width="match_parent"
 			android:layout_marginVertical="@dimen/zero"
-			android:textColor="@color/accent"
+			android:textColor="@color/app_primary"
 			android:textStyle="bold" />
 
 		<TextView

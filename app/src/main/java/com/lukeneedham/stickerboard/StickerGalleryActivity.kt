@@ -29,6 +29,7 @@ import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.utilities.StickerClickListener
 import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.applyStatusBarTopInset
 import com.lukeneedham.stickerboard.utilities.startLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -93,9 +94,11 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 		this.vibrate = this.backupSharedPreferences.getBoolean("vibrate", true)
 		recomputeIconSize()
 
+		findViewById<View>(R.id.stickerGalleryAppBar).applyStatusBarTopInset()
+
 		val toolbar = findViewById<MaterialToolbar>(R.id.stickerGalleryToolbar)
 		val navIcon = getDrawable(R.drawable.ic_back)?.mutate()
-		navIcon?.setTint(getColor(R.color.onAccent))
+		navIcon?.setTint(getColor(R.color.app_on_primary))
 		toolbar.navigationIcon = navIcon
 		toolbar.setNavigationOnClickListener { finish() }
 
@@ -290,7 +293,7 @@ class StickerGalleryActivity : AppCompatActivity(), StickerClickListener {
 		val dialog = Dialog(this)
 		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
 		dialog.setContentView(view)
-		dialog.window?.setBackgroundDrawableResource(R.color.bg)
+		dialog.window?.setBackgroundDrawableResource(R.color.app_background)
 
 		view.findViewById<ImageButton>(R.id.stickerPreviewImage).apply {
 			load(sticker)
