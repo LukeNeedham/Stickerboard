@@ -10,12 +10,10 @@
 	<string name="update_sticker_pack_heading">Atualizar Pacote de Adesivos</string>
     <string name="update_sticker_pack_button">Escolher diretório de origem dos adesivos</string>
     <string name="reload_sticker_pack_button">Recarregar adesivos</string>
-    <string name="update_sticker_pack_info">Informações atuais dos pacotes de adesivos carregados:</string>
     <string name="update_sticker_pack_info_path_lbl">- Diretório:</string>
     <string name="update_sticker_pack_info_path">Não definido</string>
     <string name="update_sticker_pack_info_date_lbl">- Data:</string>
     <string name="update_sticker_pack_info_date">Nunca</string>
-    <string name="update_sticker_pack_info_total_lbl">- Total:</string>
     <!-- Opções -->
     <!-- Informações -->
     <!-- Recursos -->
@@ -23,10 +21,6 @@
     <!-- Licença -->
     <!-- Links -->
     <!-- Mensagens Interativas -->
-    <string name="imported_010">Iniciando a importação. Isso pode levar algum tempo!</string>
-    <string name="imported_020">Importados %1$d adesivos. Recarregue o teclado para mostrar os novos adesivos</string>
-    <string name="imported_034">E034: Falha ao recarregar adesivos, tente escolher um diretório de origem dos adesivos</string>
-    <string name="fallback_041">E041: IOException inesperada ao converter adesivo</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pacote: %2$s)</string>
     <string name="imported_032">E032: Encontrado mais do que %1$d autocolantes em pack (%2$s)</string>

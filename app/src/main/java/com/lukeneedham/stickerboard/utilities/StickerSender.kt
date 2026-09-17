@@ -13,7 +13,6 @@ import androidx.core.view.inputmethod.InputContentInfoCompat
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.elvishew.xlog.XLog
-import com.lukeneedham.stickerboard.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,8 +25,6 @@ import java.io.IOException
  * InputConnection
  *
  * @property context: application baseContext
- * @property toaster: an instance of Toaster (used to store an error state for later reporting to the
- * user)
  * @property internalDir: the internal /stickers directory used when creating a compat sticker
  * @property currentInputConnection: the currentInputConnection. i.e. the input field that the
  * keyboard is going to send a sticker to
@@ -42,7 +39,6 @@ import java.io.IOException
  */
 class StickerSender(
 	private val context: Context,
-	private val toaster: Toaster,
 	private val internalDir: File,
 	private val currentInputConnection: InputConnection?,
 	private val currentInputEditorInfo: EditorInfo?,
@@ -60,20 +56,8 @@ class StickerSender(
 	}
 
 	/**
-	 * Wrapper function to display a toast message to the user
-	 *
-	 * @param message String
-	 */
-	private fun showToast(message: String) {
-		CoroutineScope(Dispatchers.Main).launch {
-			toaster.toast(message)
-		}
-	}
-
-	/**
 	 * In the event that a mimetype is unsupported by a InputConnectionCompat (looking at you,
-	 * Signal) create a temporary png and send that. In the event that png is not supported, alert
-	 * the user.
+	 * Signal) create a temporary png and send that.
 	 *
 	 * @param file: File
 	 */
@@ -98,8 +82,9 @@ class StickerSender(
 					}
 					.build()
 				imageLoader.execute(request)
-			} catch (ignore: IOException) {
-				showToast(context.getString(R.string.fallback_041))
+			} catch (e: IOException) {
+				XLog.e("Unexpected IOException when converting sticker '${file.name}' to a fallback png")
+				XLog.e(e)
 				return null
 			}
 		}

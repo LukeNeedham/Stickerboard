@@ -11,12 +11,10 @@
     <string name="update_sticker_pack_heading">Perbarui Paket Stiker</string>
     <string name="update_sticker_pack_button">Pilih direktori sumber stiker</string>
     <string name="reload_sticker_pack_button">Muat ulang stiker</string>
-    <string name="update_sticker_pack_info">Informasi paket stiker saat ini yang dimuat:</string>
     <string name="update_sticker_pack_info_path_lbl">- jalur:</string>
     <string name="update_sticker_pack_info_path">Belum Diatur</string>
     <string name="update_sticker_pack_info_date_lbl">- Tanggal:</string>
     <string name="update_sticker_pack_info_date">Tidak Pernah</string>
-    <string name="update_sticker_pack_info_total_lbl">- Total:</string>
     <!-- Opsi -->
     <!-- Informasi -->
     <!-- Fitur-fitur -->
@@ -24,10 +22,6 @@
     <!-- Lisensi -->
     <!-- Tautan -->
     <!-- Pesan Interaktif -->
-    <string name="imported_010">Mulai impor. Ini mungkin membutuhkan waktu!</string>
-    <string name="imported_020">Mengimpor stiker %1$d. Muat ulang keyboard agar stiker baru dapat ditampilkan</string>
-    <string name="imported_034">E034: Gagal memuat ulang stiker, coba pilih direktori sumber stiker</string>
-    <string name="fallback_041">E041: IOException yang tidak diharapkan saat mengonversi stiker</string>
     <!-- Keyboard -->
     <string name="sticker_pack_info">%1$s (Paket: %2$s)</string>
     <string name="imported_032">E032: Didirikan lebih dari %1$d stiker dalam kemasan (%2$s)</string>

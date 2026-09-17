@@ -168,7 +168,7 @@ class ImageKeyboard :
 		this.iconsPerX = this.backupSharedPreferences.getInt("iconsPerX", 4)
 		//  Constants
 		this.internalDir = File(filesDir, "stickers")
-		this.toaster = Toaster(baseContext)
+		this.toaster = Toaster()
 		//  Load Packs
 		loadPacks()
 		this.activePack = this.sharedPreferences.getString("activePack", "").toString()
@@ -314,7 +314,6 @@ class ImageKeyboard :
 	override fun onStartInput(info: EditorInfo?, restarting: Boolean) {
 		this.stickerSender = StickerSender(
 			this.baseContext,
-			this.toaster,
 			this.internalDir,
 			this.currentInputConnection,
 			this.currentInputEditorInfo,

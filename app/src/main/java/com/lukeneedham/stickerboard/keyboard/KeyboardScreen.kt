@@ -55,7 +55,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -69,11 +68,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.trimString
+import com.lukeneedham.stickerboard.utilities.StickerImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -464,17 +463,15 @@ private fun NavIconButton(
 	Box(
 		modifier
 			.size(dimensionResource(R.dimen.pack_dimens))
-			.clip(RoundedCornerShape(dimensionResource(R.dimen.nav_icon_corner)))
 			.background(if (selected) Color.White else Color.Transparent)
 			.clickable(onClick = onClick)
 			.padding(dimensionResource(R.dimen.nav_icon_padding)),
 		contentAlignment = Alignment.Center,
 	) {
 		if (thumbnail != null) {
-			AsyncImage(
-				model = thumbnail,
+			StickerImage(
+				file = thumbnail,
 				contentDescription = stringResource(R.string.pack_icon),
-				contentScale = ContentScale.Fit,
 				modifier = Modifier.fillMaxSize(),
 			)
 		} else {
@@ -610,10 +607,9 @@ private fun StickerCell(
 				onLongClick = onLongClick,
 			),
 	) {
-		AsyncImage(
-			model = file,
+		StickerImage(
+			file = file,
 			contentDescription = contentDescription,
-			contentScale = ContentScale.Fit,
 			modifier = Modifier.fillMaxSize(),
 		)
 	}
@@ -832,13 +828,11 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 				.weight(1f)
 				.fillMaxWidth()
 				.padding(top = dimensionResource(R.dimen.content_margin_top))
-				.clip(RoundedCornerShape(dimensionResource(R.dimen.corner)))
 				.clickable(onClick = onSend),
 		) {
-			AsyncImage(
-				model = sticker,
+			StickerImage(
+				file = sticker,
 				contentDescription = stringResource(R.string.send_sticker),
-				contentScale = ContentScale.Fit,
 				modifier = Modifier
 					.fillMaxSize()
 					.padding(dimensionResource(R.dimen.card_margin)),

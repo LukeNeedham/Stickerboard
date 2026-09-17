@@ -10,12 +10,10 @@
 	<string name="update_sticker_pack_heading">ステッカーパックを更新</string>
     <string name="update_sticker_pack_button">ステッカーソースディレクトリを選択</string>
     <string name="reload_sticker_pack_button">ステッカーを再読み込み</string>
-    <string name="update_sticker_pack_info">現在読み込まれているステッカーパック情報:</string>
     <string name="update_sticker_pack_info_path_lbl">- パス:</string>
     <string name="update_sticker_pack_info_path">未設定</string>
     <string name="update_sticker_pack_info_date_lbl">- 日付:</string>
     <string name="update_sticker_pack_info_date">なし</string>
-    <string name="update_sticker_pack_info_total_lbl">- 合計:</string>
     <!-- オプション -->
     <!-- 情報 -->
     <!-- 特徴 -->
@@ -23,10 +21,6 @@
     <!-- ライセンス -->
     <!-- リンク -->
     <!-- インタラクティブメッセージ -->
-    <string name="imported_010">インポートを開始しました。しばらく時間がかかることがあります！</string>
-    <string name="imported_020">%1$d ステッカーをインポートしました。新しいステッカーを表示するにはキーボードを再読み込みしてください</string>
-    <string name="imported_034">E034: ステッカーの再読み込みに失敗しました。ステッカーソースディレクトリを選択してみてください</string>
-    <string name="fallback_041">E041: ステッカーを変換する際に予期しないIOExceptionが発生しました</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s（パック: %2$s）</string>
     <string name="imported_032">E032: %1$d のステッカーをパック (%2$s) 以上見つけました</string>
