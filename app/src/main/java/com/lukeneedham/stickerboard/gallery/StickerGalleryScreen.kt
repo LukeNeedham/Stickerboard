@@ -22,12 +22,14 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,7 +83,7 @@ private const val MAX_ICONS_PER_X = 6
  */
 @Composable
 fun StickerGalleryScreen(
-	items: List<BoardItem>,
+	items: List<BoardItem>?,
 	columns: Int,
 	vibrate: Boolean,
 	onBack: () -> Unit,
@@ -109,7 +111,14 @@ fun StickerGalleryScreen(
 			)
 		},
 	) { innerPadding ->
-		if (items.isEmpty()) {
+		if (items == null) {
+			Box(
+				modifier = Modifier.padding(innerPadding).fillMaxSize(),
+				contentAlignment = Alignment.Center,
+			) {
+				CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+			}
+		} else if (items.isEmpty()) {
 			Box(
 				modifier = Modifier.padding(innerPadding).fillMaxSize(),
 				contentAlignment = Alignment.Center,
@@ -335,8 +344,17 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 		return items
 	}
 
-	var boardItems by remember { mutableStateOf(computeBoardItems()) }
-	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { boardItems = computeBoardItems() }
+	// Starts null (loading) rather than computing synchronously: computeBoardItems() does disk I/O
+	// that's heavy enough to jank the nav-transition animation into this screen if run on the main
+	// thread during initial composition.
+	var boardItems by remember { mutableStateOf<List<BoardItem>?>(null) }
+
+	suspend fun refreshBoardItems() {
+		boardItems = withContext(Dispatchers.IO) { computeBoardItems() }
+	}
+
+	LaunchedEffect(Unit) { refreshBoardItems() }
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { refreshBoardItems() } }
 
 	/**
 	 * Best-effort copy of a just-added photo into the user's external sticker source directory, so
@@ -401,6 +419,8 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 				}
 			}
 
+			val refreshedBoardItems = if (addedCount > 0) computeBoardItems() else null
+
 			withContext(Dispatchers.Main) {
 				val displayName = prettifyPackName(packName)
 				if (addedCount > 0) {
@@ -411,7 +431,7 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 							sharedPreferences.getInt("numStickersImported", 0) + addedCount,
 						)
 						.apply()
-					boardItems = computeBoardItems()
+					boardItems = refreshedBoardItems
 				} else if (!skippedLimit) {
 					toaster.toast(context.getString(R.string.add_photo_051, displayName))
 				}
