@@ -29,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -349,12 +348,14 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 	// thread during initial composition.
 	var boardItems by remember { mutableStateOf<List<BoardItem>?>(null) }
 
-	suspend fun refreshBoardItems() {
-		boardItems = withContext(Dispatchers.IO) { computeBoardItems() }
+	// Lifecycle.addObserver() (which this is built on) replays the events needed to bring a new
+	// observer up to the current state, so this alone also covers the very first load - it fires
+	// immediately here, since the screen is only ever composed while already resumed. A separate
+	// LaunchedEffect(Unit) for that initial load would run concurrently with this and double the
+	// work every time the gallery opens.
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+		scope.launch { boardItems = withContext(Dispatchers.IO) { computeBoardItems() } }
 	}
-
-	LaunchedEffect(Unit) { refreshBoardItems() }
-	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { refreshBoardItems() } }
 
 	/**
 	 * Best-effort copy of a just-added photo into the user's external sticker source directory, so
