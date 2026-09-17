@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.documentfile.provider.DocumentFile
+import androidx.preference.PreferenceManager
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.R
 
@@ -16,12 +17,63 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 private const val MAX_FILES = 4096
 private const val MAX_PACK_SIZE = 128
 private const val BUFFER_SIZE = 64 * 1024 // 64 KB
+
+/** SharedPreferences key holding a fingerprint of the sticker source directory as of the most
+ * recent successful [StickerImporter.importStickers] call - see [hasStickerSourceChanged]. */
+private const val SOURCE_SIGNATURE_PREF_KEY = "stickerDirSignature"
+
+/**
+ * True if [stickerDirPath]'s contents differ from what was imported into internal storage last
+ * time [StickerImporter.importStickers] ran against it - e.g. stickers were added, removed, or
+ * replaced directly in that external folder since. Only walks the source tree's file metadata
+ * (name/size/modified time), so it's cheap enough to call before every reimport, such as from the
+ * keyboard's pull-to-refresh.
+ */
+fun hasStickerSourceChanged(context: Context, stickerDirPath: String): Boolean {
+	val leafNodes = walkLeafFiles(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
+	val lastSignature =
+		PreferenceManager.getDefaultSharedPreferences(context).getString(SOURCE_SIGNATURE_PREF_KEY, null)
+	return signatureOf(leafNodes) != lastSignature
+}
+
+/** An order-independent fingerprint of a set of source files, sensitive to any file being added,
+ * removed, resized, or having its modified time changed. */
+private fun signatureOf(leafNodes: Set<DocumentFile>): String {
+	val digest = MessageDigest.getInstance("SHA-256")
+	leafNodes
+		.map { "${it.parentFile?.name}/${it.name}:${it.length()}:${it.lastModified()}" }
+		.sorted()
+		.forEach { digest.update(it.toByteArray()) }
+	return digest.digest().joinToString("") { "%02x".format(it) }
+}
+
+/**
+ * Get a set of leaf (file, not directory) DocumentFiles under rootNode, capped at [MAX_FILES] + 1.
+ */
+private fun walkLeafFiles(rootNode: DocumentFile?): Set<DocumentFile> {
+	val leafNodes = mutableSetOf<DocumentFile>()
+	val stack = ArrayDeque<DocumentFile?>()
+	rootNode?.let { stack.addLast(it) }
+	while (stack.isNotEmpty() && leafNodes.size < MAX_FILES) {
+		val currentFile = stack.removeLast()
+		currentFile?.listFiles()?.forEach { file ->
+			if (file.isFile) {
+				leafNodes.add(file)
+				if (leafNodes.size > MAX_FILES) return leafNodes
+			} else if (file.isDirectory) {
+				stack.addLast(file)
+			}
+		}
+	}
+	return leafNodes
+}
 
 /**
  * The StickerImporter class includes a helper function to import stickers from a user-selected
@@ -31,26 +83,26 @@ private const val BUFFER_SIZE = 64 * 1024 // 64 KB
  * @property context: application baseContext
  * @property toaster: an instance of Toaster (used to store an error state for later reporting to the
  * user)
- * @property progressBar: LinearProgressIndicator that we update as we import stickers
+ * @property progressBar: LinearProgressIndicator that we update as we import stickers, or null
+ * when there's no such UI to drive (e.g. importing from the keyboard's pull-to-refresh)
  */
 class StickerImporter(
 	private val context: Context,
 	private val toaster: Toaster,
-	private val progressBar: LinearProgressIndicator,
+	private val progressBar: LinearProgressIndicator? = null,
 ) {
 	private val supportedMimes = Utils.getSupportedMimes()
 
 	// Written concurrently from multiple Dispatchers.IO threads (one per in-flight sticker import
 	// in importStickers), so plain mutable collections/counters aren't safe here
 	private val packSizes: MutableMap<String, Int> = ConcurrentHashMap()
-	private var detectedStickers = 0
 	private val totalStickers = AtomicInteger(0)
 
 	private val mainHandler = Handler(Looper.getMainLooper())
 
 	private fun updateProgressBar(currentProgress: Int, totalStickers: Int) {
 		val progressPercentage = (currentProgress.toFloat() / totalStickers.toFloat()) * 100
-		progressBar.progress = progressPercentage.toInt()
+		progressBar?.progress = progressPercentage.toInt()
 	}
 
 	/**
@@ -64,19 +116,22 @@ class StickerImporter(
 		XLog.i("Removing old stickers...")
 		File(context.filesDir, "stickers").deleteRecursively()
 		withContext(Dispatchers.Main) {
-			progressBar.visibility = View.VISIBLE
-			progressBar.isIndeterminate = true
+			progressBar?.visibility = View.VISIBLE
+			progressBar?.isIndeterminate = true
 		}
 
 		XLog.i("Walking $stickerDirPath...")
-		val leafNodes = fileWalk(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
+		val leafNodes = walkLeafFiles(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
 		if (leafNodes.size > MAX_FILES) {
 			XLog.w("Found more than $MAX_FILES stickers, notify user")
 			toaster.setMessage(context.getString(R.string.imported_031, MAX_FILES))
 		}
+		PreferenceManager.getDefaultSharedPreferences(context).edit()
+			.putString(SOURCE_SIGNATURE_PREF_KEY, signatureOf(leafNodes))
+			.apply()
 
 		withContext(Dispatchers.Main) {
-			progressBar.isIndeterminate = false
+			progressBar?.isIndeterminate = false
 		}
 
 		// Perform concurrent file copy operations
@@ -93,10 +148,10 @@ class StickerImporter(
 		}
 
 		withContext(Dispatchers.Main) {
-			progressBar.visibility = View.GONE
+			progressBar?.visibility = View.GONE
 		}
 
-		XLog.i("Copied ${totalStickers.get()} / $detectedStickers")
+		XLog.i("Copied ${totalStickers.get()} / ${leafNodes.size}")
 
 		return totalStickers.get()
 	}
@@ -153,37 +208,5 @@ class StickerImporter(
 			XLog.e("There was an IOException when copying '${parentDir}/${sticker.name}'!")
 			XLog.e(e)
 		}
-	}
-
-	/**
-	 * Get a MutableSet of DocumentFiles from a root node
-	 *
-	 * @param rootNode parent dir to get all files from
-	 * @return MutableSet<DocumentFile> set of files
-	 */
-	private fun fileWalk(rootNode: DocumentFile?): Set<DocumentFile> {
-		val leafNodes = mutableSetOf<DocumentFile>()
-		val stack = ArrayDeque<DocumentFile?>()
-
-		rootNode?.let { stack.addLast(it) }
-
-		while (stack.isNotEmpty() && leafNodes.size < MAX_FILES) {
-			val currentFile = stack.removeLast()
-
-			currentFile?.listFiles()?.forEach { file ->
-				if (file.isFile) {
-					leafNodes.add(file)
-					detectedStickers++
-
-					if (leafNodes.size > MAX_FILES + 1) {
-						XLog.w("Found more than ${MAX_FILES + 1} stickers, so returning early")
-						return leafNodes
-					}
-				} else if (file.isDirectory) {
-					stack.addLast(file)
-				}
-			}
-		}
-		return leafNodes
 	}
 }
