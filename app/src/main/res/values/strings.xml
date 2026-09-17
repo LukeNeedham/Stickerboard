@@ -25,6 +25,8 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="onboarding_finish_button">Get Started</string>
 	<string name="onboarding_keyboard_status_enabled">Keyboard enabled</string>
 	<string name="onboarding_keyboard_status_not_enabled">Keyboard not enabled yet</string>
+	<string name="onboarding_folder_loading">Loading stickers</string>
+	<string name="onboarding_folder_loaded">Loaded %1$d stickers</string>
 	<!-- Enable Keyboard -->
 	<string name="enable_keyboard_heading">Enable Keyboard</string>
 	<string name="enable_keyboard_button">Launch Settings</string>
