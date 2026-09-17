@@ -35,8 +35,10 @@ import com.lukeneedham.stickerboard.keyboard.PackNavIcon
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.utilities.Cache
+import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.StickerSender
 import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.hasStickerSourceChanged
 import com.lukeneedham.stickerboard.utilities.startLogger
 import java.io.File
 
@@ -420,7 +422,31 @@ class ImageKeyboard :
 		return names[(index + 1) % names.size]
 	}
 
-	override fun refreshStickers() = loadPacks()
+	override suspend fun refreshStickers() {
+		reimportFromSourceIfChanged()
+		loadPacks()
+	}
+
+	/**
+	 * If a sticker source directory is configured and its contents have changed since it was last
+	 * imported (e.g. the user added/removed stickers there outside the app), re-imports from it -
+	 * the same wipe-and-copy the settings screen's "Reload stickers" button performs - so the
+	 * rescan below picks the change up. A no-op when no source directory is set, or its contents
+	 * still match what's already imported.
+	 */
+	private suspend fun reimportFromSourceIfChanged() {
+		val stickerDirPath = this.sharedPreferences.getString("stickerDirPath", null) ?: return
+		val changed = try {
+			hasStickerSourceChanged(baseContext, stickerDirPath)
+		} catch (e: Exception) {
+			XLog.e("Failed to check the sticker source directory for changes")
+			XLog.e(e)
+			return
+		}
+		if (!changed) return
+		XLog.i("Sticker source directory changed, reimporting...")
+		StickerImporter(baseContext, this.toaster).importStickers(stickerDirPath)
+	}
 
 	override fun searchStickers(query: String): List<File> {
 		val queryTerms = splitNameIntoTerms(query)

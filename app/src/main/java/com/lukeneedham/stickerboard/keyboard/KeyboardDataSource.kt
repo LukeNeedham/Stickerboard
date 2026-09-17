@@ -23,8 +23,13 @@ interface KeyboardDataSource {
 	fun searchStickers(query: String): List<File>
 	fun changeIconsPerX(delta: Int): Int
 
-	/** Re-scan the sticker source directory from disk, picking up packs/stickers added since launch. */
-	fun refreshStickers()
+	/**
+	 * Re-scan stickers from disk, picking up packs/stickers added since launch. If a sticker source
+	 * directory is configured (Settings > Choose sticker source directory) and its contents have
+	 * changed since it was last imported, this first re-imports from it - mirroring the settings
+	 * screen's "Reload stickers" action - before rescanning.
+	 */
+	suspend fun refreshStickers()
 	fun onKeyboardHeightChanged(heightPx: Int)
 	fun onKeyboardHeightSettled(heightPx: Int)
 	fun onActivePackChanged(packName: String)
