@@ -34,19 +34,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -84,66 +78,40 @@ data class OnboardingUiState(
 /**
  * Walks first-time users through what StickerBoard is, how to enable it as a keyboard, and how to
  * choose a sticker source directory, before handing off to MainActivity. A page's "next" step is
- * blocked - by disabling the next/finish button, and bouncing back a swipe that tries to skip past
- * it - until that page's requirement (if any) is met.
+ * blocked - by disabling the next/finish button, and by simply not including the following page in
+ * the pager yet - until that page's requirement (if any) is met.
  */
 @Composable
 fun OnboardingScreen(
 	state: OnboardingUiState,
 	onEnableKeyboard: () -> Unit,
 	onChooseDir: () -> Unit,
-	onRequirementUnmet: (message: String) -> Unit,
 	onFinish: () -> Unit,
 	progressIndicator: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
-	val scope = rememberCoroutineScope()
-	val keyboardRequiredMessage = stringResource(R.string.onboarding_keyboard_required)
-	val folderRequiredMessage = stringResource(R.string.onboarding_folder_required)
-
 	fun isPageRequirementMet(page: Int): Boolean = when (page) {
 		PAGE_KEYBOARD -> state.keyboardEnabled
 		PAGE_FOLDER -> state.folderChosen
 		else -> true
 	}
 
-	fun requirementMessage(page: Int): String = when (page) {
-		PAGE_KEYBOARD -> keyboardRequiredMessage
-		PAGE_FOLDER -> folderRequiredMessage
-		else -> ""
+	// The earliest page whose requirement isn't met yet, capped at the last page - there's nothing
+	// beyond that left to protect. The pager's page count tracks this directly, so a page can't be
+	// swiped to before its predecessor's requirement is met: there's simply no further page yet for
+	// the gesture to move to.
+	fun firstUnmetPage(): Int {
+		for (page in PAGE_WELCOME until LAST_PAGE_INDEX) {
+			if (!isPageRequirementMet(page)) return page
+		}
+		return LAST_PAGE_INDEX
 	}
 
-	// Backstop for the nested-scroll block below: catches a page change that reaches the pager some
-	// other way (e.g. an accessibility scroll action), bouncing back a forward move past a page
-	// whose requirement isn't done yet.
-	LaunchedEffect(pagerState) {
-		var previousPage = pagerState.currentPage
-		snapshotFlow { pagerState.currentPage }.collect { page ->
-			if (page > previousPage && !isPageRequirementMet(previousPage)) {
-				onRequirementUnmet(requirementMessage(previousPage))
-				pagerState.animateScrollToPage(previousPage)
-			} else {
-				previousPage = page
-			}
-		}
-	}
-
-	// Swallows a forward swipe (finger dragging left, negative x) before the pager ever sees it,
-	// so a page whose requirement isn't met can't even be partially dragged away from - no swipe,
-	// snap back. A backward swipe (positive x) is left untouched.
-	val blockUnmetForwardSwipe = object : NestedScrollConnection {
-		override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-			if (isPageRequirementMet(pagerState.currentPage)) return Offset.Zero
-			return if (available.x < 0f) available else Offset.Zero
-		}
-	}
+	val pagerState = rememberPagerState(pageCount = { firstUnmetPage() + 1 })
+	val scope = rememberCoroutineScope()
 
 	Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-		HorizontalPager(
-			state = pagerState,
-			modifier = Modifier.weight(1f).fillMaxWidth().nestedScroll(blockUnmetForwardSwipe),
-		) { page ->
+		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
 			when (page) {
 				PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
 				PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, onChooseDir, progressIndicator)
@@ -372,7 +340,6 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 			}
 			chooseDirResultLauncher.launch(intent)
 		},
-		onRequirementUnmet = { message -> toaster.toast(message) },
 		onFinish = {
 			sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
 			onFinished()

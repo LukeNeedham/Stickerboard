@@ -23,8 +23,6 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="onboarding_next_button">Next</string>
 	<string name="onboarding_back_button">Back</string>
 	<string name="onboarding_finish_button">Get Started</string>
-	<string name="onboarding_keyboard_required">Please enable the StickerBoard keyboard to continue</string>
-	<string name="onboarding_folder_required">Please choose a sticker source directory to continue</string>
 	<string name="onboarding_keyboard_status_enabled">Keyboard enabled</string>
 	<string name="onboarding_keyboard_status_not_enabled">Keyboard not enabled yet</string>
 	<!-- Enable Keyboard -->
