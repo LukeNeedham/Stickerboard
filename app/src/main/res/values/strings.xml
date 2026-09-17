@@ -77,6 +77,9 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="debug_crashes_heading">Crashes</string>
 	<string name="debug_crashes_info">View the last crashes recorded by the app or the keyboard.</string>
 	<string name="debug_crashes_button">Crashes</string>
+	<string name="debug_onboarding_heading">Onboarding</string>
+	<string name="debug_onboarding_info">Re-run the onboarding flow without resetting the app, for testing.</string>
+	<string name="debug_onboarding_button">Open Onboarding</string>
 	<!-- Crashes -->
 	<string name="crashes_heading">Crashes</string>
 	<string name="crashes_empty">No crashes recorded yet.</string>

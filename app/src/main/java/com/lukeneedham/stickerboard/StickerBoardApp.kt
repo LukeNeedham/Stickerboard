@@ -76,6 +76,7 @@ fun StickerBoardApp() {
 					DebugRoute(
 						onBack = { backStack.removeLastOrNull() },
 						onOpenCrashes = { backStack.add(Route.Crashes) },
+						onOpenOnboarding = { backStack.add(Route.Onboarding) },
 					)
 				}
 				entry<Route.Crashes> {
