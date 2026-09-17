@@ -1,11 +1,19 @@
 package com.lukeneedham.stickerboard
 
 import android.content.Context
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.NavDisplay
 import androidx.preference.PreferenceManager
 import com.lukeneedham.stickerboard.crash.CrashDetailRoute
@@ -16,6 +24,16 @@ import com.lukeneedham.stickerboard.navigation.Route
 import com.lukeneedham.stickerboard.onboarding.OnboardingRoute
 import com.lukeneedham.stickerboard.settings.SettingsRoute
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+
+private val SLIDE_SPEC = tween<IntOffset>(durationMillis = 300)
+
+/** Incoming page slides in from the right, outgoing page slides out to the left. */
+private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideForward() =
+	slideInHorizontally(SLIDE_SPEC) { it } togetherWith slideOutHorizontally(SLIDE_SPEC) { -it }
+
+/** Incoming page slides in from the left, outgoing page slides out to the right. */
+private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideBackward() =
+	slideInHorizontally(SLIDE_SPEC) { -it } togetherWith slideOutHorizontally(SLIDE_SPEC) { it }
 
 /**
  * The single activity's nav host - decides whether to land on onboarding or settings, and wires
@@ -33,6 +51,9 @@ fun StickerBoardApp() {
 		NavDisplay(
 			backStack = backStack,
 			onBack = { backStack.removeLastOrNull() },
+			transitionSpec = { slideForward() },
+			popTransitionSpec = { slideBackward() },
+			predictivePopTransitionSpec = { slideBackward() },
 			entryProvider = entryProvider {
 				entry<Route.Onboarding> {
 					OnboardingRoute(

@@ -6,6 +6,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -14,19 +17,23 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -119,7 +127,7 @@ fun OnboardingScreen(
 	Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
 		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
 			when (page) {
-				PAGE_KEYBOARD -> OnboardingKeyboardPage(onEnableKeyboard)
+				PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
 				PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, onChooseDir, progressIndicator)
 				else -> OnboardingWelcomePage()
 			}
@@ -185,13 +193,34 @@ private fun OnboardingWelcomePage() {
 }
 
 @Composable
-private fun OnboardingKeyboardPage(onEnableKeyboard: () -> Unit) {
+private fun OnboardingKeyboardPage(keyboardEnabled: Boolean, onEnableKeyboard: () -> Unit) {
 	OnboardingPageContainer {
 		SettingsCard {
 			OnboardingHeading(stringResource(R.string.onboarding_keyboard_heading))
 			CardBody(stringResource(R.string.onboarding_keyboard_text))
 			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
+			KeyboardStatusIndicator(keyboardEnabled)
 		}
+	}
+}
+
+/** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
+@Composable
+private fun KeyboardStatusIndicator(enabled: Boolean) {
+	val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+	val label = stringResource(
+		if (enabled) {
+			R.string.onboarding_keyboard_status_enabled
+		} else {
+			R.string.onboarding_keyboard_status_not_enabled
+		},
+	)
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(8.dp),
+	) {
+		Box(Modifier.size(10.dp).background(color, CircleShape))
+		Text(text = label, style = MaterialTheme.typography.bodyMedium, color = color)
 	}
 }
 
@@ -258,6 +287,23 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 	}
 
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshRequirements() }
+
+	// Refreshes as soon as Android reports the enabled-keyboards list changed, rather than only on
+	// resume - the security-warning dialog on the keyboard settings screen means users can return
+	// via several back presses, and multi-window/split-screen users may never leave this app at all.
+	DisposableEffect(context) {
+		val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+			override fun onChange(selfChange: Boolean) {
+				refreshRequirements()
+			}
+		}
+		context.contentResolver.registerContentObserver(
+			Settings.Secure.getUriFor(Settings.Secure.ENABLED_INPUT_METHODS),
+			false,
+			observer,
+		)
+		onDispose { context.contentResolver.unregisterContentObserver(observer) }
+	}
 
 	fun importStickers(stickerDirPath: String) {
 		val bar = progressBar ?: return
