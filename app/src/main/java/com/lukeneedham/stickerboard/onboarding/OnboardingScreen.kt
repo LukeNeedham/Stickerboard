@@ -30,6 +30,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,8 +72,9 @@ private const val LAST_PAGE_INDEX = PAGE_FOLDER
 /** Everything the onboarding screen needs to render - plain state, matching the rest of the app. */
 data class OnboardingUiState(
 	val keyboardEnabled: Boolean,
-	val folderChosen: Boolean,
 	val isImporting: Boolean,
+	// Null until stickers have been successfully loaded at least once this session.
+	val loadedStickerCount: Int?,
 )
 
 /**
@@ -87,12 +89,11 @@ fun OnboardingScreen(
 	onEnableKeyboard: () -> Unit,
 	onChooseDir: () -> Unit,
 	onFinish: () -> Unit,
-	progressIndicator: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	fun isPageRequirementMet(page: Int): Boolean = when (page) {
 		PAGE_KEYBOARD -> state.keyboardEnabled
-		PAGE_FOLDER -> state.folderChosen
+		PAGE_FOLDER -> state.loadedStickerCount != null
 		else -> true
 	}
 
@@ -114,7 +115,7 @@ fun OnboardingScreen(
 		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
 			when (page) {
 				PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
-				PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, onChooseDir, progressIndicator)
+				PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, state.loadedStickerCount, onChooseDir)
 				else -> OnboardingWelcomePage()
 			}
 		}
@@ -213,8 +214,8 @@ private fun KeyboardStatusIndicator(enabled: Boolean) {
 @Composable
 private fun OnboardingFolderPage(
 	isImporting: Boolean,
+	loadedStickerCount: Int?,
 	onChooseDir: () -> Unit,
-	progressIndicator: @Composable () -> Unit,
 ) {
 	OnboardingPageContainer {
 		SettingsCard {
@@ -225,9 +226,29 @@ private fun OnboardingFolderPage(
 				onChooseDir,
 				enabled = !isImporting,
 			)
-			// Always present (not gated on isImporting): StickerImporter toggles its visibility
-			// directly on the underlying View as it works, the same way MainActivity's does.
-			progressIndicator()
+			if (isImporting) {
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.spacedBy(8.dp),
+				) {
+					CircularProgressIndicator(
+						modifier = Modifier.size(20.dp),
+						strokeWidth = 2.dp,
+						color = MaterialTheme.colorScheme.primary,
+					)
+					Text(
+						text = stringResource(R.string.onboarding_folder_loading),
+						style = MaterialTheme.typography.bodyMedium,
+						color = MaterialTheme.colorScheme.onSurfaceVariant,
+					)
+				}
+			} else if (loadedStickerCount != null) {
+				Text(
+					text = stringResource(R.string.onboarding_folder_loaded, loadedStickerCount),
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.primary,
+				)
+			}
 		}
 	}
 }
@@ -259,17 +280,18 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 		mutableStateOf(
 			OnboardingUiState(
 				keyboardEnabled = isKeyboardEnabled(context),
-				folderChosen = hasChosenStickerDir(sharedPreferences),
 				isImporting = false,
+				loadedStickerCount = if (hasChosenStickerDir(sharedPreferences)) {
+					sharedPreferences.getInt("numStickersImported", 0)
+				} else {
+					null
+				},
 			),
 		)
 	}
 
 	fun refreshRequirements() {
-		uiState = uiState.copy(
-			keyboardEnabled = isKeyboardEnabled(context),
-			folderChosen = hasChosenStickerDir(sharedPreferences),
-		)
+		uiState = uiState.copy(keyboardEnabled = isKeyboardEnabled(context))
 	}
 
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshRequirements() }
@@ -291,20 +313,17 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 		onDispose { context.contentResolver.unregisterContentObserver(observer) }
 	}
 
+	// No toasts here by design - progress is shown inline on the page itself (spinner while
+	// isImporting, then the loaded count), and the finish button stays disabled until
+	// loadedStickerCount is set.
 	fun importStickers(stickerDirPath: String) {
 		val bar = progressBar ?: return
-		toaster.toast(context.getString(R.string.imported_010))
-		uiState = uiState.copy(isImporting = true)
+		uiState = uiState.copy(isImporting = true, loadedStickerCount = null)
 		scope.launch(Dispatchers.IO) {
 			val totalStickers = StickerImporter(context, toaster, bar).importStickers(stickerDirPath)
 			withContext(Dispatchers.Main) {
-				if (toaster.messages.size > 0) {
-					toaster.toastOnMessages()
-				} else {
-					toaster.toast(context.getString(R.string.imported_020, totalStickers))
-				}
 				sharedPreferences.edit().putInt("numStickersImported", totalStickers).apply()
-				uiState = uiState.copy(isImporting = false)
+				uiState = uiState.copy(isImporting = false, loadedStickerCount = totalStickers)
 			}
 		}
 	}
@@ -330,23 +349,28 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 		}
 	}
 
-	OnboardingScreen(
-		state = uiState,
-		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
-		onChooseDir = {
-			val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-				addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-			}
-			chooseDirResultLauncher.launch(intent)
-		},
-		onFinish = {
-			sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
-			onFinished()
-		},
-		progressIndicator = {
+	Box(modifier) {
+		OnboardingScreen(
+			state = uiState,
+			onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
+			onChooseDir = {
+				val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+					addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+					addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+				}
+				chooseDirResultLauncher.launch(intent)
+			},
+			onFinish = {
+				sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
+				onFinished()
+			},
+		)
+
+		// Never shown - StickerImporter is shared with SettingsScreen and expects a
+		// LinearProgressIndicator to report progress on, but onboarding's own loading
+		// spinner/text (driven by uiState above) is what the user actually sees.
+		Box(Modifier.size(0.dp)) {
 			AndroidView(
-				modifier = Modifier.fillMaxWidth(),
 				factory = { c ->
 					LinearProgressIndicator(c).apply {
 						visibility = View.GONE
@@ -354,9 +378,8 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 					}
 				},
 			)
-		},
-		modifier = modifier,
-	)
+		}
+	}
 }
 
 /** Whether the StickerBoard keyboard is enabled in the system's input method settings. */

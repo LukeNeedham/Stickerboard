@@ -21,7 +21,12 @@ import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
 /** Debug-only tools screen, reachable from the settings screen only in debug builds. */
 @Composable
-fun DebugScreen(onBack: () -> Unit, onOpenCrashes: () -> Unit, modifier: Modifier = Modifier) {
+fun DebugScreen(
+	onBack: () -> Unit,
+	onOpenCrashes: () -> Unit,
+	onOpenOnboarding: () -> Unit,
+	modifier: Modifier = Modifier,
+) {
 	Scaffold(
 		modifier = modifier,
 		containerColor = MaterialTheme.colorScheme.background,
@@ -39,6 +44,11 @@ fun DebugScreen(onBack: () -> Unit, onOpenCrashes: () -> Unit, modifier: Modifie
 				CardBody(stringResource(R.string.debug_crashes_info))
 				FilledActionButton(stringResource(R.string.debug_crashes_button), onOpenCrashes)
 			}
+			SettingsCard {
+				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_onboarding_heading))
+				CardBody(stringResource(R.string.debug_onboarding_info))
+				FilledActionButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding)
+			}
 		}
 	}
 }
@@ -48,10 +58,20 @@ fun DebugScreen(onBack: () -> Unit, onOpenCrashes: () -> Unit, modifier: Modifie
  * DebugActivity, which bailed out the same way in case it was ever reachable in a release build.
  */
 @Composable
-fun DebugRoute(onBack: () -> Unit, onOpenCrashes: () -> Unit, modifier: Modifier = Modifier) {
+fun DebugRoute(
+	onBack: () -> Unit,
+	onOpenCrashes: () -> Unit,
+	onOpenOnboarding: () -> Unit,
+	modifier: Modifier = Modifier,
+) {
 	if (!BuildConfig.DEBUG) {
 		LaunchedEffect(Unit) { onBack() }
 		return
 	}
-	DebugScreen(onBack = onBack, onOpenCrashes = onOpenCrashes, modifier = modifier)
+	DebugScreen(
+		onBack = onBack,
+		onOpenCrashes = onOpenCrashes,
+		onOpenOnboarding = onOpenOnboarding,
+		modifier = modifier,
+	)
 }
