@@ -43,6 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -110,8 +114,9 @@ fun OnboardingScreen(
 		else -> ""
 	}
 
-	// Blocks swiping onto a page whose predecessor's required step isn't done yet - mirrors
-	// ViewPager2's onPageSelected check, but only ever bounces back a forward swipe.
+	// Backstop for the nested-scroll block below: catches a page change that reaches the pager some
+	// other way (e.g. an accessibility scroll action), bouncing back a forward move past a page
+	// whose requirement isn't done yet.
 	LaunchedEffect(pagerState) {
 		var previousPage = pagerState.currentPage
 		snapshotFlow { pagerState.currentPage }.collect { page ->
@@ -124,8 +129,21 @@ fun OnboardingScreen(
 		}
 	}
 
+	// Swallows a forward swipe (finger dragging left, negative x) before the pager ever sees it,
+	// so a page whose requirement isn't met can't even be partially dragged away from - no swipe,
+	// snap back. A backward swipe (positive x) is left untouched.
+	val blockUnmetForwardSwipe = object : NestedScrollConnection {
+		override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+			if (isPageRequirementMet(pagerState.currentPage)) return Offset.Zero
+			return if (available.x < 0f) available else Offset.Zero
+		}
+	}
+
 	Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
+		HorizontalPager(
+			state = pagerState,
+			modifier = Modifier.weight(1f).fillMaxWidth().nestedScroll(blockUnmetForwardSwipe),
+		) { page ->
 			when (page) {
 				PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
 				PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, onChooseDir, progressIndicator)
