@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -81,7 +82,7 @@ private const val MAX_ICONS_PER_X = 6
  */
 @Composable
 fun StickerGalleryScreen(
-	items: List<BoardItem>,
+	items: List<BoardItem>?,
 	columns: Int,
 	vibrate: Boolean,
 	onBack: () -> Unit,
@@ -109,7 +110,14 @@ fun StickerGalleryScreen(
 			)
 		},
 	) { innerPadding ->
-		if (items.isEmpty()) {
+		if (items == null) {
+			Box(
+				modifier = Modifier.padding(innerPadding).fillMaxSize(),
+				contentAlignment = Alignment.Center,
+			) {
+				CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+			}
+		} else if (items.isEmpty()) {
 			Box(
 				modifier = Modifier.padding(innerPadding).fillMaxSize(),
 				contentAlignment = Alignment.Center,
@@ -335,8 +343,19 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 		return items
 	}
 
-	var boardItems by remember { mutableStateOf(computeBoardItems()) }
-	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { boardItems = computeBoardItems() }
+	// Starts null (loading) rather than computing synchronously: computeBoardItems() does disk I/O
+	// that's heavy enough to jank the nav-transition animation into this screen if run on the main
+	// thread during initial composition.
+	var boardItems by remember { mutableStateOf<List<BoardItem>?>(null) }
+
+	// Lifecycle.addObserver() (which this is built on) replays the events needed to bring a new
+	// observer up to the current state, so this alone also covers the very first load - it fires
+	// immediately here, since the screen is only ever composed while already resumed. A separate
+	// LaunchedEffect(Unit) for that initial load would run concurrently with this and double the
+	// work every time the gallery opens.
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+		scope.launch { boardItems = withContext(Dispatchers.IO) { computeBoardItems() } }
+	}
 
 	/**
 	 * Best-effort copy of a just-added photo into the user's external sticker source directory, so
@@ -401,6 +420,8 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 				}
 			}
 
+			val refreshedBoardItems = if (addedCount > 0) computeBoardItems() else null
+
 			withContext(Dispatchers.Main) {
 				val displayName = prettifyPackName(packName)
 				if (addedCount > 0) {
@@ -411,7 +432,7 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 							sharedPreferences.getInt("numStickersImported", 0) + addedCount,
 						)
 						.apply()
-					boardItems = computeBoardItems()
+					boardItems = refreshedBoardItems
 				} else if (!skippedLimit) {
 					toaster.toast(context.getString(R.string.add_photo_051, displayName))
 				}

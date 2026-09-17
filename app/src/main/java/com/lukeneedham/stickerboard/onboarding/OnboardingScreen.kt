@@ -6,6 +6,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -14,26 +17,29 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -72,54 +78,42 @@ data class OnboardingUiState(
 /**
  * Walks first-time users through what StickerBoard is, how to enable it as a keyboard, and how to
  * choose a sticker source directory, before handing off to MainActivity. A page's "next" step is
- * blocked - by disabling the next/finish button, and bouncing back a swipe that tries to skip past
- * it - until that page's requirement (if any) is met.
+ * blocked - by disabling the next/finish button, and by simply not including the following page in
+ * the pager yet - until that page's requirement (if any) is met.
  */
 @Composable
 fun OnboardingScreen(
 	state: OnboardingUiState,
 	onEnableKeyboard: () -> Unit,
 	onChooseDir: () -> Unit,
-	onRequirementUnmet: (message: String) -> Unit,
 	onFinish: () -> Unit,
 	progressIndicator: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
-	val scope = rememberCoroutineScope()
-	val keyboardRequiredMessage = stringResource(R.string.onboarding_keyboard_required)
-	val folderRequiredMessage = stringResource(R.string.onboarding_folder_required)
-
 	fun isPageRequirementMet(page: Int): Boolean = when (page) {
 		PAGE_KEYBOARD -> state.keyboardEnabled
 		PAGE_FOLDER -> state.folderChosen
 		else -> true
 	}
 
-	fun requirementMessage(page: Int): String = when (page) {
-		PAGE_KEYBOARD -> keyboardRequiredMessage
-		PAGE_FOLDER -> folderRequiredMessage
-		else -> ""
+	// The earliest page whose requirement isn't met yet, capped at the last page - there's nothing
+	// beyond that left to protect. The pager's page count tracks this directly, so a page can't be
+	// swiped to before its predecessor's requirement is met: there's simply no further page yet for
+	// the gesture to move to.
+	fun firstUnmetPage(): Int {
+		for (page in PAGE_WELCOME until LAST_PAGE_INDEX) {
+			if (!isPageRequirementMet(page)) return page
+		}
+		return LAST_PAGE_INDEX
 	}
 
-	// Blocks swiping onto a page whose predecessor's required step isn't done yet - mirrors
-	// ViewPager2's onPageSelected check, but only ever bounces back a forward swipe.
-	LaunchedEffect(pagerState) {
-		var previousPage = pagerState.currentPage
-		snapshotFlow { pagerState.currentPage }.collect { page ->
-			if (page > previousPage && !isPageRequirementMet(previousPage)) {
-				onRequirementUnmet(requirementMessage(previousPage))
-				pagerState.animateScrollToPage(previousPage)
-			} else {
-				previousPage = page
-			}
-		}
-	}
+	val pagerState = rememberPagerState(pageCount = { firstUnmetPage() + 1 })
+	val scope = rememberCoroutineScope()
 
 	Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
 		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
 			when (page) {
-				PAGE_KEYBOARD -> OnboardingKeyboardPage(onEnableKeyboard)
+				PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
 				PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, onChooseDir, progressIndicator)
 				else -> OnboardingWelcomePage()
 			}
@@ -185,13 +179,34 @@ private fun OnboardingWelcomePage() {
 }
 
 @Composable
-private fun OnboardingKeyboardPage(onEnableKeyboard: () -> Unit) {
+private fun OnboardingKeyboardPage(keyboardEnabled: Boolean, onEnableKeyboard: () -> Unit) {
 	OnboardingPageContainer {
 		SettingsCard {
 			OnboardingHeading(stringResource(R.string.onboarding_keyboard_heading))
 			CardBody(stringResource(R.string.onboarding_keyboard_text))
 			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
+			KeyboardStatusIndicator(keyboardEnabled)
 		}
+	}
+}
+
+/** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
+@Composable
+private fun KeyboardStatusIndicator(enabled: Boolean) {
+	val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+	val label = stringResource(
+		if (enabled) {
+			R.string.onboarding_keyboard_status_enabled
+		} else {
+			R.string.onboarding_keyboard_status_not_enabled
+		},
+	)
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(8.dp),
+	) {
+		Box(Modifier.size(10.dp).background(color, CircleShape))
+		Text(text = label, style = MaterialTheme.typography.bodyMedium, color = color)
 	}
 }
 
@@ -259,6 +274,23 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshRequirements() }
 
+	// Refreshes as soon as Android reports the enabled-keyboards list changed, rather than only on
+	// resume - the security-warning dialog on the keyboard settings screen means users can return
+	// via several back presses, and multi-window/split-screen users may never leave this app at all.
+	DisposableEffect(context) {
+		val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+			override fun onChange(selfChange: Boolean) {
+				refreshRequirements()
+			}
+		}
+		context.contentResolver.registerContentObserver(
+			Settings.Secure.getUriFor(Settings.Secure.ENABLED_INPUT_METHODS),
+			false,
+			observer,
+		)
+		onDispose { context.contentResolver.unregisterContentObserver(observer) }
+	}
+
 	fun importStickers(stickerDirPath: String) {
 		val bar = progressBar ?: return
 		toaster.toast(context.getString(R.string.imported_010))
@@ -308,7 +340,6 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 			}
 			chooseDirResultLauncher.launch(intent)
 		},
-		onRequirementUnmet = { message -> toaster.toast(message) },
 		onFinish = {
 			sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
 			onFinished()
