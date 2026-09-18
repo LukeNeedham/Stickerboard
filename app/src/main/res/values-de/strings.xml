@@ -8,12 +8,9 @@
 	<string name="enable_keyboard_heading">Tastatur aktivieren</string>
     <string name="enable_keyboard_button">Einstellungen öffnen</string>
     <!-- Sticker-Pack aktualisieren -->
-	<string name="update_sticker_pack_heading">Sticker-Pack aktualisieren</string>
     <string name="update_sticker_pack_button">Sticker-Quellverzeichnis auswählen</string>
     <string name="reload_sticker_pack_button">Sticker neu laden</string>
-    <string name="update_sticker_pack_info_path_lbl">- Pfad:</string>
     <string name="update_sticker_pack_info_path">Nicht festgelegt</string>
-    <string name="update_sticker_pack_info_date_lbl">- Datum:</string>
     <string name="update_sticker_pack_info_date">Nie</string>
     <!-- Optionen -->
     <!-- Informationen -->

@@ -8,12 +8,9 @@
 	<string name="enable_keyboard_heading">Activar teclado</string>
     <string name="enable_keyboard_button">Ajustes de inicio</string>
     <!-- Update Sticker Pack -->
-	<string name="update_sticker_pack_heading">Actualizar el paquete de Sticker</string>
     <string name="update_sticker_pack_button">Elija el directorio de origen de los stickers</string>
     <string name="reload_sticker_pack_button">Recargar stickers</string>
-    <string name="update_sticker_pack_info_path_lbl">- Ruta:</string>
     <string name="update_sticker_pack_info_path">No establecido</string>
-    <string name="update_sticker_pack_info_date_lbl">- Fecha:</string>
     <string name="update_sticker_pack_info_date">Nunca</string>
     <!-- Options -->
     <!-- Info -->

@@ -7,12 +7,9 @@
 	<string name="enable_keyboard_heading">Habilitar Teclado</string>
     <string name="enable_keyboard_button">Abrir Configurações</string>
     <!-- Atualizar Pacote de Adesivos -->
-	<string name="update_sticker_pack_heading">Atualizar Pacote de Adesivos</string>
     <string name="update_sticker_pack_button">Escolher diretório de origem dos adesivos</string>
     <string name="reload_sticker_pack_button">Recarregar adesivos</string>
-    <string name="update_sticker_pack_info_path_lbl">- Diretório:</string>
     <string name="update_sticker_pack_info_path">Não definido</string>
-    <string name="update_sticker_pack_info_date_lbl">- Data:</string>
     <string name="update_sticker_pack_info_date">Nunca</string>
     <!-- Opções -->
     <!-- Informações -->

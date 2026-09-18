@@ -8,12 +8,9 @@
 	<string name="enable_keyboard_heading">啟用鍵盤</string>
     <string name="enable_keyboard_button">啟動設定</string>
     <!-- 更新貼圖包 -->
-	<string name="update_sticker_pack_heading">更新貼圖包</string>
     <string name="update_sticker_pack_button">選擇貼圖來源目錄</string>
     <string name="reload_sticker_pack_button">重新載入貼圖</string>
-    <string name="update_sticker_pack_info_path_lbl">- 路徑：</string>
     <string name="update_sticker_pack_info_path">未設定</string>
-    <string name="update_sticker_pack_info_date_lbl">- 日期：</string>
     <string name="update_sticker_pack_info_date">永不</string>
     <!-- 選項 -->
     <!-- 資訊 -->

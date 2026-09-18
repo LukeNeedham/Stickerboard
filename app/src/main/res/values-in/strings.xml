@@ -8,12 +8,9 @@
     <string name="enable_keyboard_heading">Aktifkan Keyboard</string>
     <string name="enable_keyboard_button">Buka Pengaturan</string>
     <!-- Perbarui Paket Stiker -->
-    <string name="update_sticker_pack_heading">Perbarui Paket Stiker</string>
     <string name="update_sticker_pack_button">Pilih direktori sumber stiker</string>
     <string name="reload_sticker_pack_button">Muat ulang stiker</string>
-    <string name="update_sticker_pack_info_path_lbl">- jalur:</string>
     <string name="update_sticker_pack_info_path">Belum Diatur</string>
-    <string name="update_sticker_pack_info_date_lbl">- Tanggal:</string>
     <string name="update_sticker_pack_info_date">Tidak Pernah</string>
     <!-- Opsi -->
     <!-- Informasi -->

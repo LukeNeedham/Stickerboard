@@ -7,12 +7,9 @@
 	<string name="enable_keyboard_heading">Включить клавиатуру</string>
     <string name="enable_keyboard_button">Запустить настройки</string>
     <!-- Обновить пакет стикеров -->
-	<string name="update_sticker_pack_heading">Обновить пакет стикеров</string>
     <string name="update_sticker_pack_button">Выбрать каталог источника стикеров</string>
     <string name="reload_sticker_pack_button">Перезагрузить стикеры</string>
-    <string name="update_sticker_pack_info_path_lbl">- Путь:</string>
     <string name="update_sticker_pack_info_path">Не установлен</string>
-    <string name="update_sticker_pack_info_date_lbl">- Дата:</string>
     <string name="update_sticker_pack_info_date">Никогда</string>
     <!-- Опции -->
     <!-- Информация -->

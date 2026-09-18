@@ -8,12 +8,9 @@
 	<string name="enable_keyboard_heading">키보드 활성화</string>
     <string name="enable_keyboard_button">설정 시작</string>
     <!-- 스티커 팩 업데이트 -->
-	<string name="update_sticker_pack_heading">스티커 팩 업데이트</string>
     <string name="update_sticker_pack_button">스티커 소스 디렉터리 선택</string>
     <string name="reload_sticker_pack_button">스티커 다시 불러오기</string>
-    <string name="update_sticker_pack_info_path_lbl">- 경로:</string>
     <string name="update_sticker_pack_info_path">설정되지 않음</string>
-    <string name="update_sticker_pack_info_date_lbl">- 날짜:</string>
     <string name="update_sticker_pack_info_date">없음</string>
     <!-- 옵션 -->
     <!-- 정보 -->

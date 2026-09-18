@@ -8,12 +8,9 @@
 	<string name="enable_keyboard_heading">کی بورڈ فعال کریں</string>
     <string name="enable_keyboard_button">سیٹنگز شروع کریں</string>
     <!-- اپ ڈیٹ اسٹکر پیک -->
-	<string name="update_sticker_pack_heading">اپ ڈیٹ اسٹکر پیک</string>
     <string name="update_sticker_pack_button">اسٹکر سورس ڈائریکٹری منتخب کریں</string>
     <string name="reload_sticker_pack_button">اسٹکر دوبارہ لوڈ کریں</string>
-    <string name="update_sticker_pack_info_path_lbl">- راہ:</string>
     <string name="update_sticker_pack_info_path">مقرر نہیں</string>
-    <string name="update_sticker_pack_info_date_lbl">- تاریخ:</string>
     <string name="update_sticker_pack_info_date">کبھی نہیں</string>
     <!-- اختیارات -->
     <!-- معلومات -->

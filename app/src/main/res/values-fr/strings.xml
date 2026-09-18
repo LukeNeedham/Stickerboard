@@ -5,12 +5,9 @@
     <string name="close_sticker_preview">[appuyer pour fermer l\'aperçu de l\'autocollant]</string>
     <string name="enable_keyboard_heading">Activer le clavier</string>
     <string name="enable_keyboard_button">Réglages de lancement</string>
-    <string name="update_sticker_pack_heading">Mettre à jour le paquet d’autocollant</string>
     <string name="update_sticker_pack_button">Choisissez le répertoire source d’autocollants</string>
     <string name="reload_sticker_pack_button">Recharger les autocollants</string>
-    <string name="update_sticker_pack_info_path_lbl">- Chemin:</string>
     <string name="update_sticker_pack_info_path">Non défini</string>
-    <string name="update_sticker_pack_info_date_lbl">- Date:</string>
     <string name="update_sticker_pack_info_date">Jamais</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pack : %2$s)</string>

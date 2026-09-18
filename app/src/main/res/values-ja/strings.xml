@@ -7,12 +7,9 @@
 	<string name="enable_keyboard_heading">キーボードを有効にする</string>
     <string name="enable_keyboard_button">設定を起動</string>
     <!-- ステッカーパックを更新 -->
-	<string name="update_sticker_pack_heading">ステッカーパックを更新</string>
     <string name="update_sticker_pack_button">ステッカーソースディレクトリを選択</string>
     <string name="reload_sticker_pack_button">ステッカーを再読み込み</string>
-    <string name="update_sticker_pack_info_path_lbl">- パス:</string>
     <string name="update_sticker_pack_info_path">未設定</string>
-    <string name="update_sticker_pack_info_date_lbl">- 日付:</string>
     <string name="update_sticker_pack_info_date">なし</string>
     <!-- オプション -->
     <!-- 情報 -->

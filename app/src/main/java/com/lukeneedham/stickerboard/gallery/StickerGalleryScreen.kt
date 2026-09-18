@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.lukeneedham.stickerboard.gallery
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -24,11 +27,15 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,7 +66,7 @@ import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.settings.CardHeading
-import com.lukeneedham.stickerboard.settings.InfoRow
+import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import com.lukeneedham.stickerboard.settings.TonalActionButton
@@ -67,12 +74,15 @@ import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.Calendar
+import kotlin.system.measureTimeMillis
 
 /** Maximum number of stickers allowed in a single pack, mirrors StickerImporter's limit. */
 private const val MAX_PACK_SIZE = 128
@@ -82,22 +92,32 @@ private const val MIN_ICONS_PER_X = 2
 private const val MAX_ICONS_PER_X = 6
 
 /**
+ * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
+ * [com.lukeneedham.stickerboard.keyboard.KeyboardScreen]'s BoardGrid: without this floor, a
+ * refresh that finishes within a single frame can flip true then false before PullToRefreshBox
+ * observes a transition to animate, leaving the indicator stuck wherever the pull released it.
+ */
+private const val MIN_REFRESH_INDICATOR_MS = 500L
+
+/**
  * Shows every sticker pack using the same section/grid board layout as the keyboard's own board,
  * with an extra "add photo" cell at the end of each pack's section. Tapping a sticker opens a
  * read-only enlarged preview; tapping the add-photo cell opens the device's photo picker. A card
- * above the grid shows where the stickers are sourced from and lets the user open that folder or
- * re-import from it.
+ * above the grid shows where the stickers are sourced from and lets the user change or open that
+ * folder or re-import from it - it scrolls with the rest of the page, and pulling down anywhere
+ * re-imports from disk the same way the keyboard's own pull-to-refresh does.
  */
 @Composable
 fun StickerGalleryScreen(
 	items: List<BoardItem>?,
 	columns: Int,
 	vibrate: Boolean,
-	stickerDirPath: String,
+	stickerDirDisplayName: String,
 	lastUpdateDate: String,
 	isRefreshing: Boolean,
 	onBack: () -> Unit,
 	onOpenFolder: () -> Unit,
+	onChangeDirectory: () -> Unit,
 	onRefresh: () -> Unit,
 	onAddPhotoClick: (packName: String) -> Unit,
 	modifier: Modifier = Modifier,
@@ -114,67 +134,77 @@ fun StickerGalleryScreen(
 			)
 		},
 	) { innerPadding ->
-		Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-			StickerSourceCard(
-				stickerDirPath = stickerDirPath,
-				lastUpdateDate = lastUpdateDate,
-				totalStickers = items?.count { it is BoardItem.Sticker } ?: 0,
-				totalPacks = items?.count { it is BoardItem.Header } ?: 0,
-				isRefreshing = isRefreshing,
-				onOpenFolder = onOpenFolder,
-				onRefresh = onRefresh,
-				modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-			)
-			Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+		PullToRefreshBox(
+			isRefreshing = isRefreshing,
+			onRefresh = onRefresh,
+			modifier = Modifier.padding(innerPadding).fillMaxSize(),
+		) {
+			LazyVerticalGrid(
+				columns = GridCells.Fixed(columns),
+				modifier = Modifier.fillMaxSize(),
+				contentPadding = PaddingValues(bottom = 20.dp),
+			) {
+				item(span = { GridItemSpan(maxLineSpan) }) {
+					StickerSourceCard(
+						stickerDirDisplayName = stickerDirDisplayName,
+						lastUpdateDate = lastUpdateDate,
+						totalStickers = items?.count { it is BoardItem.Sticker } ?: 0,
+						totalPacks = items?.count { it is BoardItem.Header } ?: 0,
+						isRefreshing = isRefreshing,
+						onOpenFolder = onOpenFolder,
+						onChangeDirectory = onChangeDirectory,
+						onRefresh = onRefresh,
+						modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+					)
+				}
 				if (items == null) {
-					Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-						CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+					item(span = { GridItemSpan(maxLineSpan) }) {
+						Box(
+							modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+							contentAlignment = Alignment.Center,
+						) {
+							CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+						}
 					}
 				} else if (items.isEmpty()) {
-					Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+					item(span = { GridItemSpan(maxLineSpan) }) {
 						Text(
 							text = stringResource(R.string.view_stickers_empty),
 							color = MaterialTheme.colorScheme.onSurfaceVariant,
 							textAlign = TextAlign.Center,
-							modifier = Modifier.padding(32.dp),
+							modifier = Modifier.fillMaxWidth().padding(32.dp),
 						)
 					}
 				} else {
-					LazyVerticalGrid(
-						columns = GridCells.Fixed(columns),
-						modifier = Modifier.fillMaxSize(),
-						contentPadding = PaddingValues(bottom = 20.dp),
-					) {
-						items(
-							count = items.size,
-							key = { index ->
-								when (val item = items[index]) {
-									is BoardItem.Header -> "header:${item.packName}"
-									is BoardItem.EmptyMessage -> "empty:${item.packName}"
-									is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
-									is BoardItem.AddPhoto -> "add:${item.packName}"
-								}
-							},
-							span = { index ->
-								when (items[index]) {
-									is BoardItem.Header, is BoardItem.EmptyMessage -> GridItemSpan(maxLineSpan)
-									else -> GridItemSpan(1)
-								}
-							},
-						) { index ->
+					items(
+						count = items.size,
+						key = { index ->
 							when (val item = items[index]) {
-								is BoardItem.Header -> GallerySectionHeader(item.displayName)
-								is BoardItem.EmptyMessage -> GallerySectionEmptyMessage(item.message)
-								is BoardItem.Sticker -> GalleryStickerCell(
-									file = item.file,
-									vibrate = vibrate,
-									onClick = { previewSticker = item.file },
-								)
-								is BoardItem.AddPhoto -> GalleryAddPhotoCell(
-									vibrate = vibrate,
-									onClick = { onAddPhotoClick(item.packName) },
-								)
+								is BoardItem.Header -> "header:${item.packName}"
+								is BoardItem.EmptyMessage -> "empty:${item.packName}"
+								is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
+								is BoardItem.AddPhoto -> "add:${item.packName}"
 							}
+						},
+						span = { index ->
+							when (items[index]) {
+								is BoardItem.Header, is BoardItem.EmptyMessage -> GridItemSpan(maxLineSpan)
+								else -> GridItemSpan(1)
+							}
+						},
+					) { index ->
+						when (val item = items[index]) {
+							is BoardItem.Header -> GallerySectionHeader(item.displayName)
+							is BoardItem.EmptyMessage -> GallerySectionEmptyMessage(item.message)
+							is BoardItem.Sticker -> GalleryStickerCell(
+								file = item.file,
+								vibrate = vibrate,
+								onClick = { previewSticker = item.file },
+							)
+							is BoardItem.AddPhoto -> GalleryAddPhotoCell(
+								vibrate = vibrate,
+								onClick = { onAddPhotoClick(item.packName) },
+							)
 						}
 					}
 				}
@@ -189,29 +219,79 @@ fun StickerGalleryScreen(
 
 /**
  * Shows where the loaded stickers came from, how many there are, and when they were last
- * refreshed - plus buttons to open that folder in the system file browser and to re-import from
- * it. [isRefreshing] swaps the refresh button for a spinner rather than the app showing any toast.
+ * refreshed - plus buttons to open that folder in the system file browser, to change it, and to
+ * re-import from it. [isRefreshing] swaps the refresh button for an inline spinner rather than
+ * the app showing any toast.
  */
 @Composable
 private fun StickerSourceCard(
-	stickerDirPath: String,
+	stickerDirDisplayName: String,
 	lastUpdateDate: String,
 	totalStickers: Int,
 	totalPacks: Int,
 	isRefreshing: Boolean,
 	onOpenFolder: () -> Unit,
+	onChangeDirectory: () -> Unit,
 	onRefresh: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	SettingsCard(modifier) {
 		CardHeading(R.drawable.ic_folder, stringResource(R.string.sticker_source_heading))
-		InfoRow(stringResource(R.string.update_sticker_pack_info_path_lbl), stickerDirPath)
-		InfoRow(stringResource(R.string.sticker_source_total_stickers_lbl), totalStickers.toString())
-		InfoRow(stringResource(R.string.sticker_source_total_packs_lbl), totalPacks.toString())
-		InfoRow(stringResource(R.string.update_sticker_pack_info_date_lbl), lastUpdateDate)
+
+		Row(verticalAlignment = Alignment.CenterVertically) {
+			Icon(
+				painter = painterResource(R.drawable.ic_folder),
+				contentDescription = null,
+				tint = MaterialTheme.colorScheme.onSurfaceVariant,
+				modifier = Modifier.size(16.dp),
+			)
+			Text(
+				text = stickerDirDisplayName,
+				style = MaterialTheme.typography.bodyMedium,
+				fontWeight = FontWeight.SemiBold,
+				color = MaterialTheme.colorScheme.onSurface,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+				modifier = Modifier.padding(start = 8.dp),
+			)
+		}
+
 		Row(
-			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			StatTile(
+				value = totalStickers,
+				label = stringResource(R.string.sticker_source_total_stickers_lbl),
+				modifier = Modifier.weight(1f),
+			)
+			StatTile(
+				value = totalPacks,
+				label = stringResource(R.string.sticker_source_total_packs_lbl),
+				modifier = Modifier.weight(1f),
+			)
+		}
+
+		Row(verticalAlignment = Alignment.CenterVertically) {
+			Icon(
+				painter = painterResource(R.drawable.ic_recent),
+				contentDescription = null,
+				tint = MaterialTheme.colorScheme.onSurfaceVariant,
+				modifier = Modifier.size(16.dp),
+			)
+			Text(
+				text = stringResource(R.string.sticker_source_last_refreshed, lastUpdateDate),
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				modifier = Modifier.padding(start = 8.dp),
+			)
+		}
+
+		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+		Row(
+			horizontalArrangement = Arrangement.spacedBy(12.dp),
+			modifier = Modifier.fillMaxWidth(),
 		) {
 			TonalActionButton(
 				text = stringResource(R.string.open_folder_button),
@@ -219,25 +299,62 @@ private fun StickerSourceCard(
 				enabled = !isRefreshing,
 				modifier = Modifier.weight(1f),
 			)
-			if (isRefreshing) {
-				Box(
-					modifier = Modifier.weight(1f).height(40.dp),
-					contentAlignment = Alignment.Center,
-				) {
-					CircularProgressIndicator(
-						modifier = Modifier.size(20.dp),
-						strokeWidth = 2.dp,
-						color = MaterialTheme.colorScheme.primary,
-					)
-				}
-			} else {
-				TonalActionButton(
-					text = stringResource(R.string.reload_sticker_pack_button),
-					onClick = onRefresh,
-					modifier = Modifier.weight(1f),
+			TonalActionButton(
+				text = stringResource(R.string.update_sticker_pack_button),
+				onClick = onChangeDirectory,
+				enabled = !isRefreshing,
+				modifier = Modifier.weight(1f),
+			)
+		}
+		if (isRefreshing) {
+			Row(
+				modifier = Modifier.fillMaxWidth().height(40.dp),
+				horizontalArrangement = Arrangement.Center,
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				CircularProgressIndicator(
+					modifier = Modifier.size(18.dp),
+					strokeWidth = 2.dp,
+					color = MaterialTheme.colorScheme.primary,
+				)
+				Text(
+					text = stringResource(R.string.sticker_source_refreshing),
+					style = MaterialTheme.typography.bodyMedium,
+					color = MaterialTheme.colorScheme.onSurfaceVariant,
+					modifier = Modifier.padding(start = 10.dp),
 				)
 			}
+		} else {
+			FilledActionButton(
+				text = stringResource(R.string.reload_sticker_pack_button),
+				onClick = onRefresh,
+			)
 		}
+	}
+}
+
+/** A rounded tonal tile showing one big number over a small label - used for the sticker/pack
+ * counts, so they read as at-a-glance stats rather than another line of label/value text. */
+@Composable
+private fun StatTile(value: Int, label: String, modifier: Modifier = Modifier) {
+	Column(
+		modifier = modifier
+			.clip(RoundedCornerShape(16.dp))
+			.background(MaterialTheme.colorScheme.surfaceVariant)
+			.padding(vertical = 12.dp),
+		horizontalAlignment = Alignment.CenterHorizontally,
+	) {
+		Text(
+			text = value.toString(),
+			style = MaterialTheme.typography.titleLarge,
+			fontWeight = FontWeight.Bold,
+			color = MaterialTheme.colorScheme.onSurface,
+		)
+		Text(
+			text = label,
+			style = MaterialTheme.typography.labelMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+		)
 	}
 }
 
@@ -364,7 +481,9 @@ private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit) {
 
 /**
  * Wires [StickerGalleryScreen] up with its real dependencies (prefs, the internal sticker dir, the
- * photo picker) - the nav-host destination that used to be StickerGalleryActivity.
+ * photo picker, the sticker source directory picker) - the nav-host destination that used to be
+ * StickerGalleryActivity, and now also owns choosing/reloading the sticker source directory that
+ * used to live on the settings screen.
  */
 @Composable
 fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -383,17 +502,26 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 	val insensitiveSort = remember { backupSharedPreferences.getBoolean("insensitiveSort", false) }
 	val vibrate = remember { backupSharedPreferences.getBoolean("vibrate", true) }
 
-	fun currentStickerDirPath(): String {
-		val default = context.getString(R.string.update_sticker_pack_info_path)
-		return sharedPreferences.getString("stickerDirPath", default) ?: default
-	}
-
 	fun currentLastUpdateDate(): String {
 		val default = context.getString(R.string.update_sticker_pack_info_date)
 		return sharedPreferences.getString("lastUpdateDate", default) ?: default
 	}
 
-	var stickerDirPath by remember { mutableStateOf(currentStickerDirPath()) }
+	/** The chosen source folder's own display name (e.g. "Stickers"), not its raw content:// URI -
+	 * falling back to that raw path if the folder can no longer be resolved. */
+	fun currentStickerDirDisplayName(): String {
+		val path = sharedPreferences.getString("stickerDirPath", null)
+			?: return context.getString(R.string.update_sticker_pack_info_path)
+		return try {
+			DocumentFile.fromTreeUri(context, Uri.parse(path))?.name ?: path
+		} catch (e: Exception) {
+			XLog.e("Failed to resolve a friendly name for the sticker source directory")
+			XLog.e(e)
+			path
+		}
+	}
+
+	var stickerDirDisplayName by remember { mutableStateOf(currentStickerDirDisplayName()) }
 	var lastUpdateDate by remember { mutableStateOf(currentLastUpdateDate()) }
 	var isRefreshing by remember { mutableStateOf(false) }
 
@@ -441,7 +569,13 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 	// LaunchedEffect(Unit) for that initial load would run concurrently with this and double the
 	// work every time the gallery opens.
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-		scope.launch { boardItems = withContext(Dispatchers.IO) { computeBoardItems() } }
+		scope.launch {
+			val (items, dirName) = withContext(Dispatchers.IO) {
+				computeBoardItems() to currentStickerDirDisplayName()
+			}
+			boardItems = items
+			stickerDirDisplayName = dirName
+		}
 	}
 
 	/**
@@ -548,23 +682,58 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 	}
 
 	/**
-	 * Re-imports every sticker from the configured source directory, then rescans internal storage
-	 * and updates the last-refreshed time - all reflected in [StickerSourceCard] (a spinner in place
-	 * of its refresh button while this runs), never a toast.
+	 * Runs [reimport] (which does the actual disk work, off the main thread) then rescans internal
+	 * storage and refreshes everything [StickerSourceCard] shows - all under the same isRefreshing
+	 * spinner, held for at least [MIN_REFRESH_INDICATOR_MS] so the pull-to-refresh indicator always
+	 * gets a visible transition to animate away, never a toast either way.
 	 */
-	fun refreshStickers() {
+	fun runRefresh(reimport: suspend () -> Unit) {
 		if (isRefreshing) return
-		val path = sharedPreferences.getString("stickerDirPath", null) ?: return
 		isRefreshing = true
 		scope.launch {
-			withContext(Dispatchers.IO) { StickerImporter(context, toaster).importStickers(path) }
-			val refreshedBoardItems = withContext(Dispatchers.IO) { computeBoardItems() }
+			val (items, dirName) = withContext(Dispatchers.IO) {
+				val elapsedMs = measureTimeMillis { reimport() }
+				delay((MIN_REFRESH_INDICATOR_MS - elapsedMs).coerceAtLeast(0))
+				computeBoardItems() to currentStickerDirDisplayName()
+			}
 			sharedPreferences.edit()
 				.putString("lastUpdateDate", Calendar.getInstance().time.toString())
 				.apply()
 			lastUpdateDate = currentLastUpdateDate()
-			boardItems = refreshedBoardItems
+			stickerDirDisplayName = dirName
+			boardItems = items
 			isRefreshing = false
+		}
+	}
+
+	/** Re-imports from the current source directory only if its contents actually changed - the
+	 * same reload the keyboard's own pull-to-refresh performs - then rescans internal storage. */
+	fun refreshStickers() {
+		val path = sharedPreferences.getString("stickerDirPath", null) ?: return
+		runRefresh { reimportStickersIfChanged(context, toaster, path) }
+	}
+
+	/** Switches the sticker source to [path] and does a full (re)import from it, since it's new. */
+	fun changeStickerDirectory(path: String) {
+		runRefresh { StickerImporter(context, toaster).importStickers(path) }
+	}
+
+	val chooseDirLauncher = rememberLauncherForActivityResult(
+		ActivityResultContracts.StartActivityForResult(),
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			val uri = result.data?.data
+			val stickerDirPath = result.data?.data.toString()
+			if (uri != null) {
+				val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+				context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+			}
+			sharedPreferences.edit()
+				.putString("stickerDirPath", stickerDirPath)
+				.putString("recentCache", "")
+				.putString("compatCache", "")
+				.apply()
+			changeStickerDirectory(stickerDirPath)
 		}
 	}
 
@@ -582,11 +751,18 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 		items = boardItems,
 		columns = iconsPerX,
 		vibrate = vibrate,
-		stickerDirPath = stickerDirPath,
+		stickerDirDisplayName = stickerDirDisplayName,
 		lastUpdateDate = lastUpdateDate,
 		isRefreshing = isRefreshing,
 		onBack = onBack,
 		onOpenFolder = { openStickerFolder() },
+		onChangeDirectory = {
+			val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+			}
+			chooseDirLauncher.launch(intent)
+		},
 		onRefresh = { refreshStickers() },
 		onAddPhotoClick = { packName ->
 			pendingPackName = packName

@@ -8,12 +8,9 @@
 	<string name="enable_keyboard_heading">تمكين لوحة المفاتيح</string>
     <string name="enable_keyboard_button">شغل الإعدادات</string>
     <!-- تحديث حزمة الملصقات -->
-	<string name="update_sticker_pack_heading">تحديث حزمة الملصقات</string>
     <string name="update_sticker_pack_button">اختر مجلد مصدر الملصقات</string>
     <string name="reload_sticker_pack_button">إعادة تحميل الملصقات</string>
-    <string name="update_sticker_pack_info_path_lbl">- المسار:</string>
     <string name="update_sticker_pack_info_path">لم يتم تحديده</string>
-    <string name="update_sticker_pack_info_date_lbl">- التاريخ:</string>
     <string name="update_sticker_pack_info_date">أبدًا</string>
     <!-- الخيارات -->
     <!-- المعلومات -->

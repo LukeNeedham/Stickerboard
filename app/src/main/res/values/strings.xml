@@ -37,18 +37,16 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="try_it_out_image_content_description">Sticker sent from the try-it-out field</string>
 	<string name="open_settings_button">Open StickerBoard settings</string>
 	<!-- Update Sticker Pack -->
-	<string name="update_sticker_pack_heading">Update Sticker Pack</string>
-	<string name="update_sticker_pack_info">Choose the folder your sticker packs are stored in.</string>
 	<string name="update_sticker_pack_button">Choose sticker source directory</string>
 	<string name="reload_sticker_pack_button">Reload stickers</string>
-	<string name="update_sticker_pack_info_path_lbl">- Path: </string>
 	<string name="update_sticker_pack_info_path">Not Set</string>
-	<string name="update_sticker_pack_info_date_lbl">- Date: </string>
 	<string name="update_sticker_pack_info_date">Never</string>
 	<!-- Sticker Source (Stickers page) -->
 	<string name="sticker_source_heading">Sticker source</string>
-	<string name="sticker_source_total_stickers_lbl">- Stickers: </string>
-	<string name="sticker_source_total_packs_lbl">- Packs: </string>
+	<string name="sticker_source_total_stickers_lbl">Stickers</string>
+	<string name="sticker_source_total_packs_lbl">Packs</string>
+	<string name="sticker_source_last_refreshed">Last refreshed: %1$s</string>
+	<string name="sticker_source_refreshing">Refreshing…</string>
 	<!-- View Stickers -->
 	<string name="view_stickers_heading">Stickers</string>
 	<string name="view_stickers_info">Browse your sticker packs, and add photos from your device\'s photo gallery to any of them.</string>

@@ -7,12 +7,9 @@
 	<string name="enable_keyboard_heading">कीबोर्ड सक्षम करें</string>
     <string name="enable_keyboard_button">सेटिंग्स लॉन्च करें</string>
     <!-- Update Sticker Pack -->
-	<string name="update_sticker_pack_heading">स्टिकर पैक अपडेट करें</string>
     <string name="update_sticker_pack_button">स्टिकर स्रोत निर्दिष्ट करें</string>
     <string name="reload_sticker_pack_button">स्टिकर्स को पुनः लोड करें</string>
-    <string name="update_sticker_pack_info_path_lbl">- पथ:</string>
     <string name="update_sticker_pack_info_path">सेट नहीं हुआ</string>
-    <string name="update_sticker_pack_info_date_lbl">- तारीख:</string>
     <string name="update_sticker_pack_info_date">कभी नहीं</string>
     <!-- Options -->
     <!-- Info -->

@@ -8,12 +8,9 @@
 	<string name="enable_keyboard_heading">কীবোর্ড সক্রিয় করুন</string>
     <string name="enable_keyboard_button">সেটিংস চালান</string>
     <!-- স্টিকার প্যাক আপডেট করুন -->
-	<string name="update_sticker_pack_heading">স্টিকার প্যাক আপডেট করুন</string>
     <string name="update_sticker_pack_button">স্টিকার শোর্স ডিরেক্টরি চয়ন করুন</string>
     <string name="reload_sticker_pack_button">স্টিকার পুনরায় লোড করুন</string>
-    <string name="update_sticker_pack_info_path_lbl">- পথ:</string>
     <string name="update_sticker_pack_info_path">সেট করা হয়নি</string>
-    <string name="update_sticker_pack_info_date_lbl">- তারিখ:</string>
     <string name="update_sticker_pack_info_date">কখনো না</string>
     <!-- বিকল্পসমূহ -->
     <!-- তথ্য -->
