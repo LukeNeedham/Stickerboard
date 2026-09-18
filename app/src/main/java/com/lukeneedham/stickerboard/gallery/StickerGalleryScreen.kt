@@ -300,32 +300,26 @@ private fun StickerSourceCard(
 
 		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.spacedBy(12.dp),
+		Text(
+			text = stickerDirDisplayName,
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			maxLines = 1,
+			overflow = TextOverflow.Ellipsis,
 			modifier = Modifier.fillMaxWidth(),
-		) {
-			Text(
-				text = stickerDirDisplayName,
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-				modifier = Modifier.weight(1f),
-			)
-			TonalActionButton(
-				text = stringResource(R.string.open_folder_button),
-				onClick = onOpenFolder,
-				enabled = !isRefreshing,
-				fillMaxWidth = false,
-			)
-		}
+		)
 
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 			modifier = Modifier.fillMaxWidth(),
 		) {
+			TonalActionButton(
+				text = stringResource(R.string.open_folder_button),
+				onClick = onOpenFolder,
+				enabled = !isRefreshing,
+				modifier = Modifier.weight(1f),
+			)
 			TonalActionButton(
 				text = stringResource(R.string.sticker_source_change_button),
 				onClick = onChangeDirectory,
@@ -528,15 +522,17 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 		return formatLastRefreshed(epochMillis)
 	}
 
-	/** The chosen source folder's own display name (e.g. "Stickers"), not its raw content:// URI -
-	 * falling back to that raw path if the folder can no longer be resolved. */
+	/** The chosen source folder's path relative to its storage volume's own root (e.g.
+	 * "/Pictures/Stickers"), not its raw content:// tree URI or the volume's absolute filesystem
+	 * prefix (e.g. "/storage/emulated/0") - falling back to that raw URI if it can't be resolved. */
 	fun currentStickerDirDisplayName(): String {
 		val path = sharedPreferences.getString("stickerDirPath", null)
 			?: return context.getString(R.string.update_sticker_pack_info_path)
 		return try {
-			DocumentFile.fromTreeUri(context, Uri.parse(path))?.name ?: path
+			val documentId = DocumentsContract.getTreeDocumentId(Uri.parse(path))
+			"/" + documentId.substringAfter(':', missingDelimiterValue = documentId)
 		} catch (e: Exception) {
-			XLog.e("Failed to resolve a friendly name for the sticker source directory")
+			XLog.e("Failed to resolve a friendly path for the sticker source directory")
 			XLog.e(e)
 			path
 		}
