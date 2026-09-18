@@ -8,15 +8,10 @@
 	<string name="enable_keyboard_heading">Activar teclado</string>
     <string name="enable_keyboard_button">Ajustes de inicio</string>
     <!-- Update Sticker Pack -->
-	<string name="update_sticker_pack_heading">Actualizar el paquete de Sticker</string>
     <string name="update_sticker_pack_button">Elija el directorio de origen de los stickers</string>
-    <string name="update_sticker_pack_info">Información actual sobre los paquetes de stickers cargados:</string>
     <string name="reload_sticker_pack_button">Recargar stickers</string>
-    <string name="update_sticker_pack_info_path_lbl">- Ruta:</string>
     <string name="update_sticker_pack_info_path">No establecido</string>
-    <string name="update_sticker_pack_info_date_lbl">- Fecha:</string>
     <string name="update_sticker_pack_info_date">Nunca</string>
-    <string name="update_sticker_pack_info_total_lbl">- Total:</string>
     <!-- Options -->
     <!-- Info -->
     <!-- Features -->
@@ -24,10 +19,6 @@
     <!-- Licencia -->
     <!-- Enlaces -->
     <!-- Interactive Messages -->
-    <string name="imported_010">Comenzando la importación. ¡Esto puede llevar algún tiempo!</string>
-    <string name="imported_020">Importado %1$d stickers. Recargar el teclado para que se muestren los nuevos stickers</string>
-    <string name="imported_034">E034: Falló la recarga de stickers, intente elegir un directorio de origen de los stickers</string>
-    <string name="fallback_041">E041: IOException inesperado al convertir el sticker</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Paquete: %2$s)</string>
     <string name="imported_032">E032: Encontradas más de %1$d pegatinas en pack (%2$s)</string>

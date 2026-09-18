@@ -8,15 +8,10 @@
 	<string name="enable_keyboard_heading">تمكين لوحة المفاتيح</string>
     <string name="enable_keyboard_button">شغل الإعدادات</string>
     <!-- تحديث حزمة الملصقات -->
-	<string name="update_sticker_pack_heading">تحديث حزمة الملصقات</string>
     <string name="update_sticker_pack_button">اختر مجلد مصدر الملصقات</string>
     <string name="reload_sticker_pack_button">إعادة تحميل الملصقات</string>
-    <string name="update_sticker_pack_info">معلومات حزم الملصقات المحمَّلة حاليًا:</string>
-    <string name="update_sticker_pack_info_path_lbl">- المسار:</string>
     <string name="update_sticker_pack_info_path">لم يتم تحديده</string>
-    <string name="update_sticker_pack_info_date_lbl">- التاريخ:</string>
     <string name="update_sticker_pack_info_date">أبدًا</string>
-    <string name="update_sticker_pack_info_total_lbl">- الإجمالي:</string>
     <!-- الخيارات -->
     <!-- المعلومات -->
     <!-- الميزات -->
@@ -24,10 +19,6 @@
     <!-- الترخيص -->
     <!-- الروابط -->
     <!-- الرسائل التفاعلية -->
-    <string name="imported_010">بدء عملية الاستيراد. قد يستغرق ذلك بعض الوقت!</string>
-    <string name="imported_020">تم استيراد %1$d ملصق. أعد تحميل لوحة المفاتيح لعرض الملصقات الجديدة</string>
-    <string name="imported_034">E034: فشلت عملية إعادة تحميل الملصقات، حاول اختيار مجلد مصدر الملصقات</string>
-    <string name="fallback_041">E041: حدث استثناء غير متوقع أثناء تحويل الملصق</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (حزمة: %2$s)</string>
     <string name="imported_032">E032: found more than %1$d stickers inpack (%2$s)</string>

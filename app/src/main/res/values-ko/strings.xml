@@ -8,15 +8,10 @@
 	<string name="enable_keyboard_heading">키보드 활성화</string>
     <string name="enable_keyboard_button">설정 시작</string>
     <!-- 스티커 팩 업데이트 -->
-	<string name="update_sticker_pack_heading">스티커 팩 업데이트</string>
     <string name="update_sticker_pack_button">스티커 소스 디렉터리 선택</string>
     <string name="reload_sticker_pack_button">스티커 다시 불러오기</string>
-    <string name="update_sticker_pack_info">현재 로드된 스티커 팩 정보:</string>
-    <string name="update_sticker_pack_info_path_lbl">- 경로:</string>
     <string name="update_sticker_pack_info_path">설정되지 않음</string>
-    <string name="update_sticker_pack_info_date_lbl">- 날짜:</string>
     <string name="update_sticker_pack_info_date">없음</string>
-    <string name="update_sticker_pack_info_total_lbl">- 전체:</string>
     <!-- 옵션 -->
     <!-- 정보 -->
     <!-- 특징 -->
@@ -24,10 +19,6 @@
     <!-- 라이선스 -->
     <!-- 링크 -->
     <!-- 대화식 메시지 -->
-    <string name="imported_010">가져오기 시작. 시간이 걸릴 수 있습니다!</string>
-    <string name="imported_020">%1$d개의 스티커를 가져왔습니다. 새 스티커를 표시하려면 키보드를 다시 불러오세요</string>
-    <string name="imported_034">E034: 스티커 다시 불러오기 실패. 스티커 소스 디렉터리를 선택해보세요</string>
-    <string name="fallback_041">E041: 스티커 변환 중 예기치 않은 IOException 발생</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (팩: %2$s)</string>
     <string name="imported_032">E032: 이상 발견 %1$d 스티커 팩 (%2$s)</string>

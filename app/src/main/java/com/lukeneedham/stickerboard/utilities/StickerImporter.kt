@@ -43,6 +43,25 @@ fun hasStickerSourceChanged(context: Context, stickerDirPath: String): Boolean {
 	return signatureOf(leafNodes) != lastSignature
 }
 
+/**
+ * Re-imports from [stickerDirPath] only if [hasStickerSourceChanged] - the "pull to refresh"
+ * reload shared by the keyboard's own pull-to-refresh and the Stickers page's refresh action, so
+ * both mean exactly the same thing. A no-op when the source's contents already match what's
+ * imported, so a refresh with nothing new to pick up doesn't pay for a full wipe-and-copy.
+ */
+suspend fun reimportStickersIfChanged(context: Context, toaster: Toaster, stickerDirPath: String) {
+	val changed = try {
+		hasStickerSourceChanged(context, stickerDirPath)
+	} catch (e: Exception) {
+		XLog.e("Failed to check the sticker source directory for changes")
+		XLog.e(e)
+		return
+	}
+	if (!changed) return
+	XLog.i("Sticker source directory changed, reimporting...")
+	StickerImporter(context, toaster).importStickers(stickerDirPath)
+}
+
 /** An order-independent fingerprint of a set of source files, sensitive to any file being added,
  * removed, resized, or having its modified time changed. */
 private fun signatureOf(leafNodes: Set<DocumentFile>): String {

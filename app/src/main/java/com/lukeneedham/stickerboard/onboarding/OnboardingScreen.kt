@@ -273,7 +273,7 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 	val context = LocalContext.current
 	val scope = rememberCoroutineScope()
 	val sharedPreferences = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-	val toaster = remember { Toaster(context) }
+	val toaster = remember { Toaster() }
 	var progressBar by remember { mutableStateOf<LinearProgressIndicator?>(null) }
 
 	var uiState by remember {

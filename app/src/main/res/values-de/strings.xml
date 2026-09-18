@@ -8,15 +8,10 @@
 	<string name="enable_keyboard_heading">Tastatur aktivieren</string>
     <string name="enable_keyboard_button">Einstellungen öffnen</string>
     <!-- Sticker-Pack aktualisieren -->
-	<string name="update_sticker_pack_heading">Sticker-Pack aktualisieren</string>
     <string name="update_sticker_pack_button">Sticker-Quellverzeichnis auswählen</string>
     <string name="reload_sticker_pack_button">Sticker neu laden</string>
-    <string name="update_sticker_pack_info">Aktuelle Informationen zu geladenen Sticker-Packs:</string>
-    <string name="update_sticker_pack_info_path_lbl">- Pfad:</string>
     <string name="update_sticker_pack_info_path">Nicht festgelegt</string>
-    <string name="update_sticker_pack_info_date_lbl">- Datum:</string>
     <string name="update_sticker_pack_info_date">Nie</string>
-    <string name="update_sticker_pack_info_total_lbl">- Gesamt:</string>
     <!-- Optionen -->
     <!-- Informationen -->
     <!-- Eigenschaften -->
@@ -24,10 +19,6 @@
     <!-- Lizenz -->
     <!-- Links -->
     <!-- Interaktive Nachrichten -->
-    <string name="imported_010">Import wird gestartet. Dies könnte einige Zeit dauern!</string>
-    <string name="imported_020">%1$d Sticker importiert. Lade die Tastatur neu, um neue Sticker anzuzeigen</string>
-    <string name="imported_034">E034: Neuladen der Sticker fehlgeschlagen, versuche ein Sticker-Quellverzeichnis auszuwählen</string>
-    <string name="fallback_041">E041: Unerwarteter IOException beim Konvertieren des Stickers</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Paket: %2$s)</string>
     <string name="imported_032">E032: Mehr als %1$d Aufkleber in Pack gefunden (%2$s)</string>

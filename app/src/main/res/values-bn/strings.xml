@@ -8,25 +8,16 @@
 	<string name="enable_keyboard_heading">কীবোর্ড সক্রিয় করুন</string>
     <string name="enable_keyboard_button">সেটিংস চালান</string>
     <!-- স্টিকার প্যাক আপডেট করুন -->
-	<string name="update_sticker_pack_heading">স্টিকার প্যাক আপডেট করুন</string>
     <string name="update_sticker_pack_button">স্টিকার শোর্স ডিরেক্টরি চয়ন করুন</string>
     <string name="reload_sticker_pack_button">স্টিকার পুনরায় লোড করুন</string>
-    <string name="update_sticker_pack_info">বর্তমান লোড করা স্টিকার প্যাকের তথ্য:</string>
-    <string name="update_sticker_pack_info_path_lbl">- পথ:</string>
     <string name="update_sticker_pack_info_path">সেট করা হয়নি</string>
-    <string name="update_sticker_pack_info_date_lbl">- তারিখ:</string>
     <string name="update_sticker_pack_info_date">কখনো না</string>
-    <string name="update_sticker_pack_info_total_lbl">- মোট:</string>
     <!-- বিকল্পসমূহ -->
     <!-- তথ্য -->
     <!-- বৈশিষ্ট্যসমূহ -->
     <!-- কীভাবে ব্যবহার করবেন -->
     <!-- লাইসেন্স -->
     <!-- লিঙ্ক -->
-    <string name="imported_010">আমদানি শুরু হয়েছে। এটি কিছু সময় নিতে পারে!</string>
-    <string name="imported_020">%1$d টি স্টিকার আমদানি করা হয়েছে। নতুন স্টিকার দেখানোর জন্য কীবোর্ড পুনরায় লোড করুন</string>
-    <string name="imported_034">E034: স্টিকার পুনরায় লোড করা যায়নি, স্টিকার শোর্স ডিরেক্টরি চয়ন করার চেষ্টা করুন</string>
-    <string name="fallback_041">E041: অপ্রত্যাশিত IOException যখন স্টিকার রুপান্তর করা হয়</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (প্যাক: %2$s)</string>
     <string name="imported_032">E032: কিছু স্টিকার আমদানি করা হয়নি (%1$d টি আমদানি করা হয়েছে)। সর্বমোট প্যাক সাইজ পৌঁছানো হয়েছে</string>

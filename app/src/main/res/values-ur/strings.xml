@@ -8,25 +8,16 @@
 	<string name="enable_keyboard_heading">کی بورڈ فعال کریں</string>
     <string name="enable_keyboard_button">سیٹنگز شروع کریں</string>
     <!-- اپ ڈیٹ اسٹکر پیک -->
-	<string name="update_sticker_pack_heading">اپ ڈیٹ اسٹکر پیک</string>
     <string name="update_sticker_pack_button">اسٹکر سورس ڈائریکٹری منتخب کریں</string>
     <string name="reload_sticker_pack_button">اسٹکر دوبارہ لوڈ کریں</string>
-    <string name="update_sticker_pack_info">موجودہ لوڈ شدہ اسٹکر پیک کی معلومات:</string>
-    <string name="update_sticker_pack_info_path_lbl">- راہ:</string>
     <string name="update_sticker_pack_info_path">مقرر نہیں</string>
-    <string name="update_sticker_pack_info_date_lbl">- تاریخ:</string>
     <string name="update_sticker_pack_info_date">کبھی نہیں</string>
-    <string name="update_sticker_pack_info_total_lbl">- کل:</string>
     <!-- اختیارات -->
     <!-- معلومات -->
     <!-- خصوصیات -->
     <!-- استعمال کرنے کا طریقہ -->
     <!-- لائسنس -->
     <!-- لنکس -->
-    <string name="imported_010">شروع کریں منتقلی. اس میں کچھ وقت لگ سکتا ہے!</string>
-    <string name="imported_020">%1$d اسٹکر منتقل کر لئے گئے ہیں. نئے اسٹکرز دکھانے کے لئے کی بورڈ دوبارہ لوڈ کریں</string>
-    <string name="imported_034">E034: اسٹکرز دوبارہ لوڈ کرنے میں ناکامی. ایک اسٹکر سورس ڈائریکٹری منتخب کرنے کا کوشش کریں</string>
-    <string name="fallback_041">E041: اسٹکر کو تبدیل کرنے کے دوران غیر متوقع IOException کا اعلان</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (پیک: %2$s)</string>
     <string name="imported_032">E032: کچھ اسٹکر منتقل کرنے میں ناکامی (%1$d منتقل کیے گئے). زیادہ سے زیادہ پیک سائز پہنچ گیا</string>

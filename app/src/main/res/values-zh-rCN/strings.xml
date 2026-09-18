@@ -8,15 +8,10 @@
 	<string name="enable_keyboard_heading">启用键盘</string>
     <string name="enable_keyboard_button">启动设置</string>
     <!-- 更新贴纸包 -->
-	<string name="update_sticker_pack_heading">更新贴纸包</string>
     <string name="update_sticker_pack_button">选择贴纸源目录</string>
     <string name="reload_sticker_pack_button">重新加载贴纸</string>
-    <string name="update_sticker_pack_info">当前已加载的贴纸包信息:</string>
-    <string name="update_sticker_pack_info_path_lbl">- 路径:</string>
     <string name="update_sticker_pack_info_path">未设置</string>
-    <string name="update_sticker_pack_info_date_lbl">- 日期:</string>
     <string name="update_sticker_pack_info_date">从不</string>
-    <string name="update_sticker_pack_info_total_lbl">- 总数:</string>
     <!-- 选项 -->
     <!-- 信息 -->
     <!-- 特性 -->
@@ -24,10 +19,6 @@
     <!-- 许可证 -->
     <!-- 链接 -->
     <!-- 交互消息 -->
-    <string name="imported_010">开始导入。这可能需要一些时间！</string>
-    <string name="imported_020">已导入 %1$d 个贴纸。重新加载键盘以显示新贴纸</string>
-    <string name="imported_034">E034: 重新加载贴纸失败，请尝试选择贴纸源目录</string>
-    <string name="fallback_041">E041: 在转换贴纸时发生意外的 IOException</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s（包: %2$s）</string>
     <string name="imported_032">E032:在包装(%2$s)中封顶超过%1$d的 stick子</string>

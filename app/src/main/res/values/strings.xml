@@ -37,15 +37,16 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="try_it_out_image_content_description">Sticker sent from the try-it-out field</string>
 	<string name="open_settings_button">Open StickerBoard settings</string>
 	<!-- Update Sticker Pack -->
-	<string name="update_sticker_pack_heading">Update Sticker Pack</string>
 	<string name="update_sticker_pack_button">Choose sticker source directory</string>
 	<string name="reload_sticker_pack_button">Reload stickers</string>
-	<string name="update_sticker_pack_info">Current loaded sticker packs information: </string>
-	<string name="update_sticker_pack_info_path_lbl">- Path: </string>
 	<string name="update_sticker_pack_info_path">Not Set</string>
-	<string name="update_sticker_pack_info_date_lbl">- Date: </string>
 	<string name="update_sticker_pack_info_date">Never</string>
-	<string name="update_sticker_pack_info_total_lbl">- Total: </string>
+	<!-- Sticker Source (Stickers page) -->
+	<string name="sticker_source_heading">Sticker source</string>
+	<string name="sticker_source_total_stickers_lbl">Stickers</string>
+	<string name="sticker_source_total_packs_lbl">Packs</string>
+	<string name="sticker_source_last_refreshed">Last refreshed: %1$s</string>
+	<string name="sticker_source_refreshing">Refreshing…</string>
 	<!-- View Stickers -->
 	<string name="view_stickers_heading">Stickers</string>
 	<string name="view_stickers_info">Browse your sticker packs, and add photos from your device\'s photo gallery to any of them.</string>
@@ -53,18 +54,10 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="view_stickers_empty">No sticker packs yet. Choose a sticker source directory above to get started.</string>
 	<string name="add_photo_content_description">Add photo</string>
 	<string name="open_folder_button">Open sticker folder</string>
-	<string name="open_folder_missing_dir">Choose a sticker source directory first</string>
 	<!-- Interactive Messages -->
-	<string name="imported_010">Starting import. This might take some time!</string>
-	<string name="imported_020">Imported %1$d stickers. Reload the keyboard for new stickers to show</string>
 	<string name="imported_031">E031: Found more than %1$d stickers in total</string>
 	<string name="imported_032">E032: Found more than %1$d stickers in pack (%2$s)</string>
 	<string name="imported_033">E033: Unsupported format found (%1$s, file: %2$s/%3$s)</string>
-	<string name="imported_034">E034: Reloading stickers failed, try choosing a sticker source directory</string>
-	<string name="fallback_041">E041: Unexpected IOException when converting sticker</string>
-	<string name="add_photo_050">Added %1$d photo(s) to \'%2$s\'. Reload the keyboard for new stickers to show</string>
-	<string name="add_photo_051">E051: Failed to add photo(s) to \'%1$s\'</string>
-	<string name="open_folder_052">E052: Couldn\'t find an app to open the sticker folder</string>
 	<!-- Keyboard -->
 	<string name="recent_heading">Recently used</string>
 	<string name="recent_empty">No stickers used yet</string>

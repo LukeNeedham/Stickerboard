@@ -2,15 +2,11 @@
 
 package com.lukeneedham.stickerboard.settings
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.provider.Settings
-import android.view.View
 import android.widget.EditText
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,44 +54,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
-import androidx.preference.PreferenceManager
 import coil.compose.AsyncImage
-import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
-import com.lukeneedham.stickerboard.utilities.StickerImporter
-import com.lukeneedham.stickerboard.utilities.Toaster
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.Calendar
 
 /** Everything the settings screen needs to render - plain state, matching the rest of the app. */
 data class SettingsUiState(
-	val stickerDirPath: String,
-	val lastUpdateDate: String,
-	val numStickersImported: Int,
-	val isImporting: Boolean,
 	val tryItOutMedia: List<Uri> = emptyList(),
 	val showDebugCard: Boolean = false,
 )
 
 /**
- * The settings app's root screen: the same enable-keyboard, try-it-out, update-sticker-pack,
- * view-stickers and (debug-only) debug tools that MainActivity's old XML layout offered, rebuilt
- * in Compose with a modern Material 3 look. [progressIndicator] is supplied by the caller as a
- * slot so MainActivity can keep handing StickerImporter the real progress View it mutates directly.
+ * The settings app's root screen: the same enable-keyboard, try-it-out, view-stickers and
+ * (debug-only) debug tools that MainActivity's old XML layout offered, rebuilt in Compose with a
+ * modern Material 3 look. Choosing/reloading the sticker source directory lives entirely on the
+ * Stickers page now, alongside its path, sticker/pack counts and last-refreshed time.
  */
 @Composable
 fun SettingsScreen(
 	state: SettingsUiState,
 	onEnableKeyboard: () -> Unit,
 	onTryItOutMediaReceived: (Uri) -> Unit,
-	onChooseDir: () -> Unit,
-	onReloadStickers: () -> Unit,
 	onViewStickers: () -> Unit,
 	onOpenDebug: () -> Unit,
-	progressIndicator: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	Scaffold(
@@ -127,7 +107,6 @@ fun SettingsScreen(
 		) {
 			EnableKeyboardCard(onEnableKeyboard)
 			TryItOutCard(state.tryItOutMedia, onTryItOutMediaReceived)
-			UpdateStickerPackCard(state, onChooseDir, onReloadStickers, progressIndicator)
 			ViewStickersCard(onViewStickers)
 			if (state.showDebugCard) {
 				DebugCard(onOpenDebug)
@@ -252,55 +231,6 @@ private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun UpdateStickerPackCard(
-	state: SettingsUiState,
-	onChooseDir: () -> Unit,
-	onReloadStickers: () -> Unit,
-	progressIndicator: @Composable () -> Unit,
-) {
-	SettingsCard {
-		CardHeading(R.drawable.ic_folder, stringResource(R.string.update_sticker_pack_heading))
-		CardBody(stringResource(R.string.update_sticker_pack_info))
-		InfoRow(stringResource(R.string.update_sticker_pack_info_path_lbl), state.stickerDirPath)
-		InfoRow(stringResource(R.string.update_sticker_pack_info_date_lbl), state.lastUpdateDate)
-		InfoRow(
-			stringResource(R.string.update_sticker_pack_info_total_lbl),
-			state.numStickersImported.toString(),
-		)
-		FilledActionButton(
-			stringResource(R.string.update_sticker_pack_button),
-			onChooseDir,
-			enabled = !state.isImporting,
-		)
-		TonalActionButton(
-			stringResource(R.string.reload_sticker_pack_button),
-			onReloadStickers,
-			enabled = !state.isImporting,
-		)
-		// Always present (not gated on isImporting): StickerImporter toggles its visibility
-		// directly on the underlying View as it works, the same way it always has.
-		progressIndicator()
-	}
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-	Row {
-		Text(
-			text = label,
-			style = MaterialTheme.typography.bodyMedium,
-			fontWeight = FontWeight.SemiBold,
-			color = MaterialTheme.colorScheme.onSurfaceVariant,
-		)
-		Text(
-			text = value,
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-	}
-}
-
-@Composable
 private fun ViewStickersCard(onViewStickers: () -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_recent, stringResource(R.string.view_stickers_heading))
@@ -353,9 +283,8 @@ internal fun TonalActionButton(
 }
 
 /**
- * Wires [SettingsScreen] up with its real dependencies (prefs, the sticker importer, the
- * enable-keyboard/choose-dir system intents) - the nav-host destination that used to be
- * MainActivity itself.
+ * Wires [SettingsScreen] up with its real dependencies (the enable-keyboard system intent) - the
+ * nav-host destination that used to be MainActivity itself.
  */
 @Composable
 fun SettingsRoute(
@@ -364,79 +293,13 @@ fun SettingsRoute(
 	modifier: Modifier = Modifier,
 ) {
 	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-	val sharedPreferences = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-	val toaster = remember { Toaster(context) }
-	var progressBar by remember { mutableStateOf<LinearProgressIndicator?>(null) }
-
-	fun currentStickerDirPath(): String {
-		val default = context.getString(R.string.update_sticker_pack_info_path)
-		return sharedPreferences.getString("stickerDirPath", default) ?: default
-	}
-
-	fun currentLastUpdateDate(): String {
-		val default = context.getString(R.string.update_sticker_pack_info_date)
-		return sharedPreferences.getString("lastUpdateDate", default) ?: default
-	}
 
 	var uiState by remember {
 		mutableStateOf(
 			SettingsUiState(
-				stickerDirPath = currentStickerDirPath(),
-				lastUpdateDate = currentLastUpdateDate(),
-				numStickersImported = sharedPreferences.getInt("numStickersImported", 0),
-				isImporting = false,
 				showDebugCard = BuildConfig.DEBUG,
 			),
 		)
-	}
-
-	fun refreshStickerDirPath() {
-		uiState = uiState.copy(
-			stickerDirPath = currentStickerDirPath(),
-			lastUpdateDate = currentLastUpdateDate(),
-			numStickersImported = sharedPreferences.getInt("numStickersImported", 0),
-		)
-	}
-
-	fun importStickers(stickerDirPath: String) {
-		val bar = progressBar ?: return
-		toaster.toast(context.getString(R.string.imported_010))
-		uiState = uiState.copy(isImporting = true)
-		scope.launch(Dispatchers.IO) {
-			val totalStickers = StickerImporter(context, toaster, bar).importStickers(stickerDirPath)
-			withContext(Dispatchers.Main) {
-				if (toaster.messages.size > 0) {
-					toaster.toastOnMessages()
-				} else {
-					toaster.toast(context.getString(R.string.imported_020, totalStickers))
-				}
-				sharedPreferences.edit().putInt("numStickersImported", totalStickers).apply()
-				refreshStickerDirPath()
-				uiState = uiState.copy(isImporting = false)
-			}
-		}
-	}
-
-	val chooseDirResultLauncher = rememberLauncherForActivityResult(
-		ActivityResultContracts.StartActivityForResult(),
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			val uri = result.data?.data
-			val stickerDirPath = result.data?.data.toString()
-			if (uri != null) {
-				val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-				context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-			}
-			sharedPreferences.edit()
-				.putString("stickerDirPath", stickerDirPath)
-				.putString("lastUpdateDate", Calendar.getInstance().time.toString())
-				.putString("recentCache", "")
-				.putString("compatCache", "")
-				.apply()
-			refreshStickerDirPath()
-			importStickers(stickerDirPath)
-		}
 	}
 
 	SettingsScreen(
@@ -445,34 +308,8 @@ fun SettingsRoute(
 		onTryItOutMediaReceived = { uri ->
 			uiState = uiState.copy(tryItOutMedia = listOf(uri) + uiState.tryItOutMedia)
 		},
-		onChooseDir = {
-			val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-				addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-			}
-			chooseDirResultLauncher.launch(intent)
-		},
-		onReloadStickers = {
-			val stickerDirPath = sharedPreferences.getString("stickerDirPath", null)
-			if (stickerDirPath != null) {
-				importStickers(stickerDirPath)
-			} else {
-				toaster.toast(context.getString(R.string.imported_034))
-			}
-		},
 		onViewStickers = onViewStickers,
 		onOpenDebug = onOpenDebug,
-		progressIndicator = {
-			AndroidView(
-				modifier = Modifier.fillMaxWidth(),
-				factory = { c ->
-					LinearProgressIndicator(c).apply {
-						visibility = View.GONE
-						progressBar = this
-					}
-				},
-			)
-		},
 		modifier = modifier,
 	)
 }

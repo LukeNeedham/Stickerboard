@@ -5,19 +5,10 @@
     <string name="close_sticker_preview">[appuyer pour fermer l\'aperçu de l\'autocollant]</string>
     <string name="enable_keyboard_heading">Activer le clavier</string>
     <string name="enable_keyboard_button">Réglages de lancement</string>
-    <string name="update_sticker_pack_heading">Mettre à jour le paquet d’autocollant</string>
     <string name="update_sticker_pack_button">Choisissez le répertoire source d’autocollants</string>
     <string name="reload_sticker_pack_button">Recharger les autocollants</string>
-    <string name="update_sticker_pack_info_path_lbl">- Chemin:</string>
-    <string name="imported_034">E034: Impossible de recharger les autocollants, essayez de choisir un répertoire source d’autocollants</string>
-    <string name="fallback_041">E041: IOException inattendue lors de la conversion de l’autocollant</string>
-    <string name="update_sticker_pack_info">Informations actuelles sur les autocollants chargés:</string>
     <string name="update_sticker_pack_info_path">Non défini</string>
-    <string name="update_sticker_pack_info_date_lbl">- Date:</string>
     <string name="update_sticker_pack_info_date">Jamais</string>
-    <string name="update_sticker_pack_info_total_lbl">- Total:</string>
-    <string name="imported_010">Démarrage de l’importation. Ceci va prendre du temps!</string>
-    <string name="imported_020">Autocollants importés %1$d. Recharger le clavier pour afficher les nouveaux autocollants</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s (Pack : %2$s)</string>
     <string name="imported_032">E032: Trouvé plus de stickers %1$d en paquet (%2$s)</string>

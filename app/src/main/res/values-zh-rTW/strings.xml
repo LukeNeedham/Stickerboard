@@ -8,15 +8,10 @@
 	<string name="enable_keyboard_heading">啟用鍵盤</string>
     <string name="enable_keyboard_button">啟動設定</string>
     <!-- 更新貼圖包 -->
-	<string name="update_sticker_pack_heading">更新貼圖包</string>
     <string name="update_sticker_pack_button">選擇貼圖來源目錄</string>
     <string name="reload_sticker_pack_button">重新載入貼圖</string>
-    <string name="update_sticker_pack_info">目前已載入的貼圖包資訊：</string>
-    <string name="update_sticker_pack_info_path_lbl">- 路徑：</string>
     <string name="update_sticker_pack_info_path">未設定</string>
-    <string name="update_sticker_pack_info_date_lbl">- 日期：</string>
     <string name="update_sticker_pack_info_date">永不</string>
-    <string name="update_sticker_pack_info_total_lbl">- 總數：</string>
     <!-- 選項 -->
     <!-- 資訊 -->
     <!-- 特性 -->
@@ -24,10 +19,6 @@
     <!-- 許可證 -->
     <!-- 鏈接 -->
     <!-- 交互消息 -->
-    <string name="imported_010">正在開始匯入。這可能需要一些時間！</string>
-    <string name="imported_020">已匯入 %1$d 個貼圖。重新載入鍵盤以顯示新貼圖</string>
-    <string name="imported_034">E034：重新載入貼圖失敗，請嘗試選擇貼圖來源目錄</string>
-    <string name="fallback_041">E041：在轉換貼圖時發生意外的 IOException</string>
     <!-- Keyboard -->
 	<string name="sticker_pack_info">%1$s（包：%2$s）</string>
     <string name="imported_032">E032：部分貼圖匯入失敗（已匯入 %1$d 個）。已達到最大貼圖包大小</string>
