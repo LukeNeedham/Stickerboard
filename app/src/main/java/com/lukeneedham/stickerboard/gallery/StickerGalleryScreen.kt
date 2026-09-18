@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.text.format.DateFormat as AndroidDateFormat
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,7 +21,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -32,6 +32,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -81,7 +82,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlin.system.measureTimeMillis
 
 /** Maximum number of stickers allowed in a single pack, mirrors StickerImporter's limit. */
@@ -90,6 +94,31 @@ private const val MAX_PACK_SIZE = 128
 /** Bounds for iconsPerX, matching the settings screen's SeekBar range. */
 private const val MIN_ICONS_PER_X = 2
 private const val MAX_ICONS_PER_X = 6
+
+/**
+ * Formats [epochMillis] as a short, always-local time - just hours and minutes, with the date
+ * prepended only if it isn't today, and the year only added to that date if it isn't this year.
+ * Uses [AndroidDateFormat.getBestDateTimePattern] so the result still respects the user's own
+ * locale (e.g. 12h vs 24h clock, day/month order) despite dropping seconds and the full date.
+ */
+private fun formatLastRefreshed(epochMillis: Long): String {
+	val locale = Locale.getDefault()
+	val then = Calendar.getInstance().apply { timeInMillis = epochMillis }
+	val now = Calendar.getInstance()
+
+	val timePattern = AndroidDateFormat.getBestDateTimePattern(locale, "Hm")
+	val timeText = SimpleDateFormat(timePattern, locale).format(Date(epochMillis))
+
+	val sameDay = then.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+		then.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
+	if (sameDay) return timeText
+
+	val sameYear = then.get(Calendar.YEAR) == now.get(Calendar.YEAR)
+	val dateSkeleton = if (sameYear) "MMMd" else "yMMMd"
+	val datePattern = AndroidDateFormat.getBestDateTimePattern(locale, dateSkeleton)
+	val dateText = SimpleDateFormat(datePattern, locale).format(Date(epochMillis))
+	return "$dateText $timeText"
+}
 
 /**
  * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
@@ -238,24 +267,6 @@ private fun StickerSourceCard(
 	SettingsCard(modifier) {
 		CardHeading(R.drawable.ic_folder, stringResource(R.string.sticker_source_heading))
 
-		Row(verticalAlignment = Alignment.CenterVertically) {
-			Icon(
-				painter = painterResource(R.drawable.ic_folder),
-				contentDescription = null,
-				tint = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.size(16.dp),
-			)
-			Text(
-				text = stickerDirDisplayName,
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.SemiBold,
-				color = MaterialTheme.colorScheme.onSurface,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-				modifier = Modifier.padding(start = 8.dp),
-			)
-		}
-
 		Row(
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 			modifier = Modifier.fillMaxWidth(),
@@ -290,45 +301,54 @@ private fun StickerSourceCard(
 		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
 		Row(
+			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 			modifier = Modifier.fillMaxWidth(),
 		) {
+			Text(
+				text = stickerDirDisplayName,
+				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+				modifier = Modifier.weight(1f),
+			)
 			TonalActionButton(
 				text = stringResource(R.string.open_folder_button),
 				onClick = onOpenFolder,
 				enabled = !isRefreshing,
-				modifier = Modifier.weight(1f),
+				fillMaxWidth = false,
 			)
+		}
+
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.spacedBy(12.dp),
+			modifier = Modifier.fillMaxWidth(),
+		) {
 			TonalActionButton(
-				text = stringResource(R.string.update_sticker_pack_button),
+				text = stringResource(R.string.sticker_source_change_button),
 				onClick = onChangeDirectory,
 				enabled = !isRefreshing,
 				modifier = Modifier.weight(1f),
 			)
-		}
-		if (isRefreshing) {
-			Row(
-				modifier = Modifier.fillMaxWidth().height(40.dp),
-				horizontalArrangement = Arrangement.Center,
-				verticalAlignment = Alignment.CenterVertically,
-			) {
-				CircularProgressIndicator(
-					modifier = Modifier.size(18.dp),
-					strokeWidth = 2.dp,
-					color = MaterialTheme.colorScheme.primary,
-				)
-				Text(
-					text = stringResource(R.string.sticker_source_refreshing),
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurfaceVariant,
-					modifier = Modifier.padding(start = 10.dp),
-				)
+			if (isRefreshing) {
+				Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+					CircularProgressIndicator(
+						modifier = Modifier.size(18.dp),
+						strokeWidth = 2.dp,
+						color = MaterialTheme.colorScheme.primary,
+					)
+				}
+			} else {
+				IconButton(onClick = onRefresh) {
+					Icon(
+						painter = painterResource(R.drawable.ic_refresh),
+						contentDescription = stringResource(R.string.reload_sticker_pack_button),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
+					)
+				}
 			}
-		} else {
-			FilledActionButton(
-				text = stringResource(R.string.reload_sticker_pack_button),
-				onClick = onRefresh,
-			)
 		}
 	}
 }
@@ -503,8 +523,9 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 	val vibrate = remember { backupSharedPreferences.getBoolean("vibrate", true) }
 
 	fun currentLastUpdateDate(): String {
-		val default = context.getString(R.string.update_sticker_pack_info_date)
-		return sharedPreferences.getString("lastUpdateDate", default) ?: default
+		val epochMillis = sharedPreferences.getLong("lastUpdateEpochMillis", -1L)
+		if (epochMillis < 0) return context.getString(R.string.update_sticker_pack_info_date)
+		return formatLastRefreshed(epochMillis)
 	}
 
 	/** The chosen source folder's own display name (e.g. "Stickers"), not its raw content:// URI -
@@ -697,7 +718,7 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 				computeBoardItems() to currentStickerDirDisplayName()
 			}
 			sharedPreferences.edit()
-				.putString("lastUpdateDate", Calendar.getInstance().time.toString())
+				.putLong("lastUpdateEpochMillis", System.currentTimeMillis())
 				.apply()
 			lastUpdateDate = currentLastUpdateDate()
 			stickerDirDisplayName = dirName

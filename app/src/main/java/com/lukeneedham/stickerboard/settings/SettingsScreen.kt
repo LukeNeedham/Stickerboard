@@ -253,13 +253,14 @@ internal fun FilledActionButton(
 	text: String,
 	onClick: () -> Unit,
 	enabled: Boolean = true,
+	fillMaxWidth: Boolean = true,
 	modifier: Modifier = Modifier,
 ) {
 	Button(
 		onClick = onClick,
 		enabled = enabled,
 		shape = RoundedCornerShape(16.dp),
-		modifier = modifier.fillMaxWidth(),
+		modifier = if (fillMaxWidth) modifier.fillMaxWidth() else modifier,
 	) {
 		Text(text)
 	}
@@ -270,13 +271,14 @@ internal fun TonalActionButton(
 	text: String,
 	onClick: () -> Unit,
 	enabled: Boolean = true,
+	fillMaxWidth: Boolean = true,
 	modifier: Modifier = Modifier,
 ) {
 	FilledTonalButton(
 		onClick = onClick,
 		enabled = enabled,
 		shape = RoundedCornerShape(16.dp),
-		modifier = modifier.fillMaxWidth(),
+		modifier = if (fillMaxWidth) modifier.fillMaxWidth() else modifier,
 	) {
 		Text(text)
 	}

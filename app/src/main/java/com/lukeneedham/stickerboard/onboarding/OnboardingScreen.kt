@@ -61,7 +61,6 @@ import com.lukeneedham.stickerboard.utilities.Toaster
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Calendar
 
 private const val PAGE_WELCOME = 0
 private const val PAGE_KEYBOARD = 1
@@ -340,7 +339,7 @@ fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
 			}
 			sharedPreferences.edit()
 				.putString("stickerDirPath", stickerDirPath)
-				.putString("lastUpdateDate", Calendar.getInstance().time.toString())
+				.putLong("lastUpdateEpochMillis", System.currentTimeMillis())
 				.putString("recentCache", "")
 				.putString("compatCache", "")
 				.apply()
