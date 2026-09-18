@@ -11,7 +11,9 @@
 <!-- omit in toc -->
 # StickerBoard
 
-StickerBoard is an Android sticker keyboard application, specifically designed for sharing a wide variety of custom stickers in supported messaging apps. This project is a fork of [EweSticker](https://github.com/FredHappyface/Android.EweSticker), which itself draws inspiration from the uSticker project and is a fork of the woosticker repository.
+StickerBoard is an Android sticker keyboard application, specifically designed for sharing a wide
+variety of custom stickers in supported messaging apps. It started life as a fork of
+[EweSticker](https://github.com/FredHappyface/Android.EweSticker).
 
 - [Features](#features)
 - [Dark Theme](#dark-theme)
@@ -21,8 +23,10 @@ StickerBoard is an Android sticker keyboard application, specifically designed f
 - [Application compatibility](#application-compatibility)
 	- [Working](#working)
 	- [Known Issues/ Workarounds](#known-issues-workarounds)
-- [Gradle tasks](#gradle-tasks)
-- [Kotlin and Android Version](#kotlin-and-android-version)
+- [Development](#development)
+	- [Kotlin and Android Version](#kotlin-and-android-version)
+	- [Gradle tasks](#gradle-tasks)
+	- [Code style](#code-style)
 - [Building From Source](#building-from-source)
 	- [Git Clone](#git-clone)
 		- [Using The Command Line](#using-the-command-line)
@@ -30,7 +34,6 @@ StickerBoard is an Android sticker keyboard application, specifically designed f
 	- [(or) Download Zip File](#or-download-zip-file)
 	- [Download Android Studio](#download-android-studio)
 - [License](#license)
-- [Credits](#credits)
 
 ## Features
 
@@ -77,7 +80,7 @@ A high-level overview of how the documentation is organized will help you know
 where to look for certain things:
 
 - [Tutorials](/documentation/tutorials) take you by the hand through a series of steps to get
-  started using the software. Start here if you’re new.
+  started using the software. Start here if you're new.
 - The [Help](/documentation/help) guide provides a starting point and outlines common issues that you
   may have.
 
@@ -118,21 +121,28 @@ compatible with other applications as well.
 | Reddit      | com.reddit.frontpage                      | Displays the share sheet, added to a new post          |
 | Google Docs | com.google.android.apps.docs.editors.docs | Displays the share sheet, cannot add to google docs :( |
 
-<!-- omit in toc -->
-### Build from Source
+## Development
 
-Follow the steps in the [Building from Source](#building-from-source) section.
+### Kotlin and Android Version
 
-## Gradle tasks
+This app has been written in Kotlin 2.1 with the Android Studio IDE, using Jetpack Compose for
+the UI.
 
-- ktlintCheck (`gradlew ktlintCheck`): run ktlint over the codebase
-
-## Kotlin and Android Version
-
-This app has been written in Kotlin 2.1 with the Android Studio IDE.
-
-- The target SDK version is 35 (Android 15)
+- The target SDK version is 36 (Android 16)
 - The minimum SDK version is 26 (Android 8 Oreo)
+
+### Gradle tasks
+
+- `./gradlew assembleDebug`: build a debug APK
+- `./gradlew ktlintCheck`: run ktlint over the codebase
+- `./gradlew ktlintFormat`: auto-format the codebase with ktlint
+
+### Code style
+
+Code style is enforced with [ktlint](https://github.com/JLLeitschuh/ktlint-gradle), and
+[pre-commit](https://pre-commit.com/) hooks are configured in `.pre-commit-config.yaml` to catch
+common issues (trailing whitespace, oversized images, merge conflict markers, etc.) before a
+commit is made.
 
 ## Building From Source
 
@@ -185,9 +195,3 @@ Android SDK. Additional information can be found at
 
 MIT License
 (See the [LICENSE](/LICENSE.md) for more information.)
-
-## Credits
-
-StickerBoard is a fork of [EweSticker](https://github.com/FredHappyface/Android.EweSticker) by
-FredHappyface, which draws inspiration from the uSticker project and is itself a fork of the
-woosticker repository by Randy Zhou.
