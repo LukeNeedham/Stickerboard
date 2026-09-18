@@ -10,8 +10,7 @@ for why you are getting a certain error code.
 	- [E031](#e031)
 	- [E032](#e032)
 	- [E033](#e033)
-	- [E034](#e034)
-	- [E041](#e041)
+- [Sticker won't send](#sticker-wont-send)
 - [Reach out](#reach-out)
 
 ## Error Codes
@@ -43,16 +42,15 @@ This could be for a few reasons, perhaps you have a non sticker file in the stic
 as a document in the wrong place. Alternatively this may result in a seemingly valid sticker not being
 imported. Chances are that the sticker is not in a [supported format](/README.md#features).
 
-### E034
+## Sticker won't send
 
-Reloading stickers failed, try choosing a sticker source directory
-
-### E041
-Unexpected IOException when converting sticker
-
-This is an unexpected error and happens when creating a compat-sticker to send to the application.
-Please open an issue and provide as much information as you can. E.g. Android Version, phone
-manufacturer, app you are trying to send the sticker in
+If StickerBoard shows a "Cannot send image" message on the keyboard itself when you tap a
+sticker, it means the app you're sending to doesn't accept the sticker directly, a PNG fallback,
+or a share-sheet fallback. This is a limitation of the receiving app rather than something you can
+fix from StickerBoard's side - see [Application compatibility](/README.md#application-compatibility)
+for apps this is known to affect. If it happens in an app not listed there, please open an issue
+and provide as much information as you can. E.g. Android version, phone manufacturer, and the app
+you're trying to send the sticker in.
 
 ## Reach out
 

@@ -1,20 +1,21 @@
-StickerBoard is an Android sticker keyboard application, specifically designed for sharing a wide variety of custom stickers in supported messaging apps. This project draws inspiration from the uSticker project and is a fork of the woosticker repository.
+StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any app, built from a folder of images you choose yourself.
 
 <b>Features:</b>
 
-The StickerBoard Android app offers the following key features to enhance your messaging experience:
-
 <ul>
-<li><b>Wide Range of Custom Stickers Supported</b>: StickerBoard supports a diverse set of sticker formats, ensuring that users can share their creativity in various ways. Supported formats include image/gif, image/png, image/webp, image/jpeg, image/heif, video/3gpp, video/mp4, video/x-matroska, and video/webm. </li>
-<li><b>Seamless Sticker Sharing</b>: Easily send stickers within messaging apps that support custom media sharing using image/png as a fallback. </li>
-<li><b>Customizable Scrolling</b>: Use either vertical or horizontal scrolling to navigate through your sticker collection. </li>
-<li><b>Display Options</b>: adjust the number of rows and the sticker preview size, tailoring the viewing experience to your liking and device screen dimensions. </li>
-<li><b>Search your Sticker library</b>: Use a qwerty keyboard to search stickers by file name to ease discovery </li>
-<li><b>Integration with System Theme</b>: StickerBoard seamlessly integrates with the system’s theme, ensuring that the app’s appearance aligns with your device-wide design choices. </li>
-<li><b>Sticker Preview on Long Press</b>: To facilitate sticker selection, you can long-press on a sticker to reveal a preview to help you quickly decide which sticker to share without the need to open the sticker collection separately. </li>
+<li><b>Send stickers anywhere</b>: works as a normal Android keyboard, with an automatic PNG then share-sheet fallback for apps that don't support stickers directly. </li>
+<li><b>Wide format support</b>: gif, png, webp, jpeg, heif and svg images, plus 3gpp, mp4, mkv and webm video. </li>
+<li><b>Your own sticker folder</b>: point StickerBoard at any folder on your device and every sub-folder becomes a sticker pack, up to 4096 stickers in total. </li>
+<li><b>Stays in sync</b>: pull down on the keyboard or the in-app Stickers page to re-scan your folder for changes. </li>
+<li><b>Sticker gallery</b>: browse every pack, see stats on your collection, and add photos straight from your device's gallery into any pack. </li>
+<li><b>Recently used</b>: stickers you've sent recently surface automatically at the top of the keyboard. </li>
+<li><b>Built-in search</b>: a dedicated search view finds stickers by file or pack name as you type. </li>
+<li><b>Pinch to zoom</b>: pinch or spread on the keyboard to change how many stickers show per row. </li>
+<li><b>Resizable keyboard</b>: drag the handle at the top of the keyboard to resize it - your preferred height is remembered. </li>
+<li><b>Long-press preview</b>: long-press any sticker for an enlarged preview before sending it. </li>
+<li><b>Guided first-run setup</b>: a short onboarding flow gets your keyboard enabled and your sticker folder chosen with live progress feedback. </li>
+<li><b>Follows your system theme</b>: a Material 3 UI that adapts to your device's light or dark theme. </li>
 </ul>
-
-StickerBoard brings a wide range of customization options, diverse format support, and integration with messaging apps. Whether users are sharing static images, animated GIFs, or even short videos, the app aims to provide an engaging and expressive way to communicate using custom stickers.
 
 <b>Links:</b>
 
