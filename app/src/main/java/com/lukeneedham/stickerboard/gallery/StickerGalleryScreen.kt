@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.text.format.DateFormat as AndroidDateFormat
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,7 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -30,8 +31,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -65,11 +66,8 @@ import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
-import com.lukeneedham.stickerboard.settings.CardHeading
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
-import com.lukeneedham.stickerboard.settings.TonalActionButton
 import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
 import com.lukeneedham.stickerboard.utilities.StickerImporter
@@ -81,7 +79,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlin.system.measureTimeMillis
 
 /** Maximum number of stickers allowed in a single pack, mirrors StickerImporter's limit. */
@@ -90,6 +91,31 @@ private const val MAX_PACK_SIZE = 128
 /** Bounds for iconsPerX, matching the settings screen's SeekBar range. */
 private const val MIN_ICONS_PER_X = 2
 private const val MAX_ICONS_PER_X = 6
+
+/**
+ * Formats [epochMillis] as a short, always-local time - just hours and minutes, with the date
+ * prepended only if it isn't today, and the year only added to that date if it isn't this year.
+ * Uses [AndroidDateFormat.getBestDateTimePattern] so the result still respects the user's own
+ * locale (e.g. 12h vs 24h clock, day/month order) despite dropping seconds and the full date.
+ */
+private fun formatLastRefreshed(epochMillis: Long): String {
+	val locale = Locale.getDefault()
+	val then = Calendar.getInstance().apply { timeInMillis = epochMillis }
+	val now = Calendar.getInstance()
+
+	val timePattern = AndroidDateFormat.getBestDateTimePattern(locale, "Hm")
+	val timeText = SimpleDateFormat(timePattern, locale).format(Date(epochMillis))
+
+	val sameDay = then.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+		then.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
+	if (sameDay) return timeText
+
+	val sameYear = then.get(Calendar.YEAR) == now.get(Calendar.YEAR)
+	val dateSkeleton = if (sameYear) "MMMd" else "yMMMd"
+	val datePattern = AndroidDateFormat.getBestDateTimePattern(locale, dateSkeleton)
+	val dateText = SimpleDateFormat(datePattern, locale).format(Date(epochMillis))
+	return "$dateText $timeText"
+}
 
 /**
  * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
@@ -219,9 +245,9 @@ fun StickerGalleryScreen(
 
 /**
  * Shows where the loaded stickers came from, how many there are, and when they were last
- * refreshed - plus buttons to open that folder in the system file browser, to change it, and to
- * re-import from it. [isRefreshing] swaps the refresh button for an inline spinner rather than
- * the app showing any toast.
+ * refreshed. The path itself (with a trailing chevron) opens that folder in the system file
+ * browser; the pencil button next to it lets the user pick a different one. [isRefreshing] swaps
+ * the trailing refresh button for an inline spinner rather than the app showing any toast.
  */
 @Composable
 private fun StickerSourceCard(
@@ -236,24 +262,47 @@ private fun StickerSourceCard(
 	modifier: Modifier = Modifier,
 ) {
 	SettingsCard(modifier) {
-		CardHeading(R.drawable.ic_folder, stringResource(R.string.sticker_source_heading))
-
-		Row(verticalAlignment = Alignment.CenterVertically) {
-			Icon(
-				painter = painterResource(R.drawable.ic_folder),
-				contentDescription = null,
-				tint = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.size(16.dp),
-			)
-			Text(
-				text = stickerDirDisplayName,
-				style = MaterialTheme.typography.bodyMedium,
-				fontWeight = FontWeight.SemiBold,
-				color = MaterialTheme.colorScheme.onSurface,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-				modifier = Modifier.padding(start = 8.dp),
-			)
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.SpaceBetween,
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier
+					.weight(1f, fill = false)
+					.heightIn(min = 48.dp)
+					.clickable(enabled = !isRefreshing, onClick = onOpenFolder),
+			) {
+				Icon(
+					painter = painterResource(R.drawable.ic_folder),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.primary,
+					modifier = Modifier.size(22.dp),
+				)
+				Text(
+					text = stickerDirDisplayName,
+					style = MaterialTheme.typography.titleMedium,
+					color = MaterialTheme.colorScheme.onSurface,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+					modifier = Modifier.weight(1f, fill = false).padding(start = 10.dp),
+				)
+				Icon(
+					painter = painterResource(R.drawable.ic_chevron_right),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onSurfaceVariant,
+					modifier = Modifier.padding(start = 4.dp).size(18.dp),
+				)
+			}
+			IconButton(onClick = onChangeDirectory, enabled = !isRefreshing) {
+				Icon(
+					painter = painterResource(R.drawable.ic_edit),
+					contentDescription = stringResource(R.string.sticker_source_change_button),
+					tint = MaterialTheme.colorScheme.onSurfaceVariant,
+					modifier = Modifier.size(20.dp),
+				)
+			}
 		}
 
 		Row(
@@ -272,63 +321,36 @@ private fun StickerSourceCard(
 			)
 		}
 
-		Row(verticalAlignment = Alignment.CenterVertically) {
+		Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
 			Icon(
 				painter = painterResource(R.drawable.ic_recent),
 				contentDescription = null,
 				tint = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.size(16.dp),
+				modifier = Modifier.size(20.dp),
 			)
 			Text(
 				text = stringResource(R.string.sticker_source_last_refreshed, lastUpdateDate),
-				style = MaterialTheme.typography.bodySmall,
+				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.padding(start = 8.dp),
+				modifier = Modifier.weight(1f).padding(start = 8.dp),
 			)
-		}
-
-		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-		Row(
-			horizontalArrangement = Arrangement.spacedBy(12.dp),
-			modifier = Modifier.fillMaxWidth(),
-		) {
-			TonalActionButton(
-				text = stringResource(R.string.open_folder_button),
-				onClick = onOpenFolder,
-				enabled = !isRefreshing,
-				modifier = Modifier.weight(1f),
-			)
-			TonalActionButton(
-				text = stringResource(R.string.update_sticker_pack_button),
-				onClick = onChangeDirectory,
-				enabled = !isRefreshing,
-				modifier = Modifier.weight(1f),
-			)
-		}
-		if (isRefreshing) {
-			Row(
-				modifier = Modifier.fillMaxWidth().height(40.dp),
-				horizontalArrangement = Arrangement.Center,
-				verticalAlignment = Alignment.CenterVertically,
-			) {
-				CircularProgressIndicator(
-					modifier = Modifier.size(18.dp),
-					strokeWidth = 2.dp,
-					color = MaterialTheme.colorScheme.primary,
-				)
-				Text(
-					text = stringResource(R.string.sticker_source_refreshing),
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurfaceVariant,
-					modifier = Modifier.padding(start = 10.dp),
-				)
+			if (isRefreshing) {
+				Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+					CircularProgressIndicator(
+						modifier = Modifier.size(18.dp),
+						strokeWidth = 2.dp,
+						color = MaterialTheme.colorScheme.primary,
+					)
+				}
+			} else {
+				IconButton(onClick = onRefresh) {
+					Icon(
+						painter = painterResource(R.drawable.ic_refresh),
+						contentDescription = stringResource(R.string.reload_sticker_pack_button),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
+					)
+				}
 			}
-		} else {
-			FilledActionButton(
-				text = stringResource(R.string.reload_sticker_pack_button),
-				onClick = onRefresh,
-			)
 		}
 	}
 }
@@ -503,19 +525,22 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 	val vibrate = remember { backupSharedPreferences.getBoolean("vibrate", true) }
 
 	fun currentLastUpdateDate(): String {
-		val default = context.getString(R.string.update_sticker_pack_info_date)
-		return sharedPreferences.getString("lastUpdateDate", default) ?: default
+		val epochMillis = sharedPreferences.getLong("lastUpdateEpochMillis", -1L)
+		if (epochMillis < 0) return context.getString(R.string.update_sticker_pack_info_date)
+		return formatLastRefreshed(epochMillis)
 	}
 
-	/** The chosen source folder's own display name (e.g. "Stickers"), not its raw content:// URI -
-	 * falling back to that raw path if the folder can no longer be resolved. */
+	/** The chosen source folder's path relative to its storage volume's own root (e.g.
+	 * "/Pictures/Stickers"), not its raw content:// tree URI or the volume's absolute filesystem
+	 * prefix (e.g. "/storage/emulated/0") - falling back to that raw URI if it can't be resolved. */
 	fun currentStickerDirDisplayName(): String {
 		val path = sharedPreferences.getString("stickerDirPath", null)
 			?: return context.getString(R.string.update_sticker_pack_info_path)
 		return try {
-			DocumentFile.fromTreeUri(context, Uri.parse(path))?.name ?: path
+			val documentId = DocumentsContract.getTreeDocumentId(Uri.parse(path))
+			"/" + documentId.substringAfter(':', missingDelimiterValue = documentId)
 		} catch (e: Exception) {
-			XLog.e("Failed to resolve a friendly name for the sticker source directory")
+			XLog.e("Failed to resolve a friendly path for the sticker source directory")
 			XLog.e(e)
 			path
 		}
@@ -697,7 +722,7 @@ fun GalleryRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
 				computeBoardItems() to currentStickerDirDisplayName()
 			}
 			sharedPreferences.edit()
-				.putString("lastUpdateDate", Calendar.getInstance().time.toString())
+				.putLong("lastUpdateEpochMillis", System.currentTimeMillis())
 				.apply()
 			lastUpdateDate = currentLastUpdateDate()
 			stickerDirDisplayName = dirName
