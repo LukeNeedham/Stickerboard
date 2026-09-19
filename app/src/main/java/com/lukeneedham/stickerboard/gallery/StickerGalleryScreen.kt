@@ -66,11 +66,8 @@ import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
-import com.lukeneedham.stickerboard.settings.CardHeading
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
-import com.lukeneedham.stickerboard.settings.TonalActionButton
 import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
 import com.lukeneedham.stickerboard.utilities.StickerImporter
@@ -248,9 +245,9 @@ fun StickerGalleryScreen(
 
 /**
  * Shows where the loaded stickers came from, how many there are, and when they were last
- * refreshed - plus buttons to open that folder in the system file browser, to change it, and to
- * re-import from it. [isRefreshing] swaps the refresh button for an inline spinner rather than
- * the app showing any toast.
+ * refreshed. The path itself (with a trailing chevron) opens that folder in the system file
+ * browser; the pencil button next to it lets the user pick a different one. [isRefreshing] swaps
+ * the trailing refresh button for an inline spinner rather than the app showing any toast.
  */
 @Composable
 private fun StickerSourceCard(
@@ -265,7 +262,42 @@ private fun StickerSourceCard(
 	modifier: Modifier = Modifier,
 ) {
 	SettingsCard(modifier) {
-		CardHeading(R.drawable.ic_folder, stringResource(R.string.sticker_source_heading))
+		Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier
+					.weight(1f)
+					.clickable(enabled = !isRefreshing, onClick = onOpenFolder),
+			) {
+				Icon(
+					painter = painterResource(R.drawable.ic_folder),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.primary,
+					modifier = Modifier.size(22.dp),
+				)
+				Text(
+					text = stickerDirDisplayName,
+					style = MaterialTheme.typography.titleMedium,
+					color = MaterialTheme.colorScheme.onSurface,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+					modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
+				)
+				Icon(
+					painter = painterResource(R.drawable.ic_chevron_right),
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onSurfaceVariant,
+					modifier = Modifier.size(18.dp),
+				)
+			}
+			IconButton(onClick = onChangeDirectory, enabled = !isRefreshing) {
+				Icon(
+					painter = painterResource(R.drawable.ic_edit),
+					contentDescription = stringResource(R.string.sticker_source_change_button),
+					tint = MaterialTheme.colorScheme.onSurfaceVariant,
+				)
+			}
+		}
 
 		Row(
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -283,7 +315,9 @@ private fun StickerSourceCard(
 			)
 		}
 
-		Row(verticalAlignment = Alignment.CenterVertically) {
+		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+		Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
 			Icon(
 				painter = painterResource(R.drawable.ic_recent),
 				contentDescription = null,
@@ -294,37 +328,7 @@ private fun StickerSourceCard(
 				text = stringResource(R.string.sticker_source_last_refreshed, lastUpdateDate),
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.padding(start = 8.dp),
-			)
-		}
-
-		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-		Text(
-			text = stickerDirDisplayName,
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurfaceVariant,
-			maxLines = 1,
-			overflow = TextOverflow.Ellipsis,
-			modifier = Modifier.fillMaxWidth(),
-		)
-
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.spacedBy(12.dp),
-			modifier = Modifier.fillMaxWidth(),
-		) {
-			TonalActionButton(
-				text = stringResource(R.string.open_folder_button),
-				onClick = onOpenFolder,
-				enabled = !isRefreshing,
-				modifier = Modifier.weight(1f),
-			)
-			TonalActionButton(
-				text = stringResource(R.string.sticker_source_change_button),
-				onClick = onChangeDirectory,
-				enabled = !isRefreshing,
-				modifier = Modifier.weight(1f),
+				modifier = Modifier.weight(1f).padding(start = 8.dp),
 			)
 			if (isRefreshing) {
 				Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {

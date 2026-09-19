@@ -42,7 +42,6 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="update_sticker_pack_info_path">Not Set</string>
 	<string name="update_sticker_pack_info_date">Never</string>
 	<!-- Sticker Source (Stickers page) -->
-	<string name="sticker_source_heading">Sticker source</string>
 	<string name="sticker_source_total_stickers_lbl">Stickers</string>
 	<string name="sticker_source_total_packs_lbl">Packs</string>
 	<string name="sticker_source_last_refreshed">Last refreshed: %1$s</string>
@@ -53,7 +52,6 @@ Tap the button below to pick that folder. StickerBoard will copy the files in so
 	<string name="view_stickers_button">View Stickers</string>
 	<string name="view_stickers_empty">No sticker packs yet. Choose a sticker source directory above to get started.</string>
 	<string name="add_photo_content_description">Add photo</string>
-	<string name="open_folder_button">Open</string>
 	<!-- Interactive Messages -->
 	<string name="imported_031">E031: Found more than %1$d stickers in total</string>
 	<string name="imported_032">E032: Found more than %1$d stickers in pack (%2$s)</string>
