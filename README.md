@@ -1,6 +1,4 @@
 
-<img src="metadata/en-US/images/featureGraphic.png" alt="Feature Graphic" width="">
-
 [![GitHub top language](https://img.shields.io/github/languages/top/LukeNeedham/Stickerboard.svg?style=for-the-badge&cacheSeconds=28800)](../../)
 [![Issues](https://img.shields.io/github/issues/LukeNeedham/Stickerboard.svg?style=for-the-badge&cacheSeconds=28800)](../../issues)
 [![License](https://img.shields.io/github/license/LukeNeedham/Stickerboard.svg?style=for-the-badge&cacheSeconds=28800)](/LICENSE.md)
@@ -11,18 +9,20 @@
 <!-- omit in toc -->
 # StickerBoard
 
-StickerBoard is an Android sticker keyboard application, specifically designed for sharing a wide variety of custom stickers in supported messaging apps. This project is a fork of [EweSticker](https://github.com/FredHappyface/Android.EweSticker), which itself draws inspiration from the uSticker project and is a fork of the woosticker repository.
+StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any
+app - built from a folder of images you choose yourself. It started life as a fork of
+[EweSticker](https://github.com/FredHappyface/Android.EweSticker).
 
 - [Features](#features)
-- [Dark Theme](#dark-theme)
-- [Light Theme](#light-theme)
 - [Documentation](#documentation)
 - [Installation](#installation)
 - [Application compatibility](#application-compatibility)
 	- [Working](#working)
 	- [Known Issues/ Workarounds](#known-issues-workarounds)
-- [Gradle tasks](#gradle-tasks)
-- [Kotlin and Android Version](#kotlin-and-android-version)
+- [Development](#development)
+	- [Kotlin and Android Version](#kotlin-and-android-version)
+	- [Gradle tasks](#gradle-tasks)
+	- [Code style](#code-style)
 - [Building From Source](#building-from-source)
 	- [Git Clone](#git-clone)
 		- [Using The Command Line](#using-the-command-line)
@@ -30,46 +30,36 @@ StickerBoard is an Android sticker keyboard application, specifically designed f
 	- [(or) Download Zip File](#or-download-zip-file)
 	- [Download Android Studio](#download-android-studio)
 - [License](#license)
-- [Credits](#credits)
 
 ## Features
 
-The StickerBoard Android app offers the following key features to enhance your messaging experience:
+- **Send stickers anywhere**: StickerBoard works as a normal Android keyboard, so it can send stickers directly into any app's text field. Where an app doesn't support that directly, it automatically falls back to sending a PNG version, then to the system share sheet, so a sticker almost always gets through.
 
-- **Wide Range of Custom Stickers Supported**: StickerBoard supports a diverse set of sticker formats, ensuring that users can share their creativity in various ways. Supported formats include image/gif, image/png, image/webp, image/jpeg, image/heif, video/3gpp, video/mp4, video/x-matroska, and video/webm.
+- **Wide format support**: gif, png, webp, jpeg, heif and svg images, plus 3gpp, mp4, mkv and webm video.
 
-- **Seamless Sticker Sharing**: Easily send stickers within messaging apps that support custom media sharing using image/png as a fallback.
+- **Your own sticker folder**: point StickerBoard at any folder on your device (chosen with the system folder picker) and it copies the contents in, with every sub-folder becoming a sticker pack. Supports up to 4096 stickers in total, 128 per pack.
 
-- **Customizable Scrolling**: Use either vertical or horizontal scrolling to navigate through your sticker collection.
+- **Stays in sync with your folder**: pull down on the keyboard, or on the in-app Stickers page, to re-scan your source folder for changes - only what's actually changed gets re-copied.
 
-- **Display Options**: adjust the number of rows and the sticker preview size, tailoring the viewing experience to your liking and device screen dimensions.
+- **Sticker gallery**: a dedicated screen in the app to browse every pack, see stats on your sticker collection, jump to or change your source folder, and add photos straight from your device's gallery into any pack.
 
-- **Search your Sticker library**: Use a qwerty keyboard to search stickers by file name to ease discovery.
+- **Recently used**: stickers you've sent recently automatically appear in their own section at the top of the keyboard.
 
-- **Integration with System Theme**: StickerBoard seamlessly integrates with the system's theme, ensuring that the app's appearance aligns with your device-wide design choices.
+- **Built-in search**: switch to a dedicated search view, with its own compact keyboard, to find stickers by file or pack name as you type.
 
-- **Sticker Preview on Long Press**: To facilitate sticker selection, you can long-press on a sticker to reveal a preview to help you quickly decide which sticker to share without the need to open the sticker collection separately.
+- **Pinch to zoom**: pinch or spread on the keyboard to change how many stickers are shown per row.
 
-StickerBoard brings a wide range of customization options, diverse format support, and integration with messaging apps. Whether users are sharing static images, animated GIFs, or even short videos, the app aims to provide an engaging and expressive way to communicate using custom stickers.
+- **Resizable keyboard**: drag the handle at the top of the keyboard to make it taller or shorter - your preferred height is remembered.
 
-## Dark Theme
+- **Long-press preview**: long-press any sticker to see an enlarged preview before sending it.
 
-<p>
-<img src="metadata/en-US/images/phoneScreenshots/dark-1.png" alt="Dark 1" width="200">
-<img src="metadata/en-US/images/phoneScreenshots/dark-2.png" alt="Dark 2" width="200">
-<img src="metadata/en-US/images/phoneScreenshots/dark-3.png" alt="Dark 3" width="200">
-<img src="metadata/en-US/images/phoneScreenshots/dark-4.png" alt="Dark 4" width="200">
-<img src="metadata/en-US/images/phoneScreenshots/dark-5.png" alt="Dark 5" width="200">
-<img src="metadata/en-US/images/phoneScreenshots/dark-6.png" alt="Dark 6" width="200">
-</p>
+- **Guided first-run setup**: a short onboarding flow walks new users through enabling the keyboard and choosing a sticker folder, with live progress feedback at every step.
 
-## Light Theme
+- **Try it out**: a test field on the Settings screen lets you send a sticker and see the result immediately, without needing to leave the app or find another text field.
 
-<p>
-<img src="metadata/en-US/images/phoneScreenshots/light-1.png" alt="Light 1" width="200">
-<img src="metadata/en-US/images/phoneScreenshots/light-2.png" alt="Light 2" width="200">
-<img src="metadata/en-US/images/phoneScreenshots/light-3.png" alt="Light 3" width="200">
-</p>
+- **Translated UI**: available in Arabic, Bengali, German, Spanish, French, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Urdu, and both Simplified and Traditional Chinese, alongside English.
+
+- **Follows your system theme**: a Material 3 UI that adapts to your device's light or dark theme.
 
 ## Documentation
 
@@ -77,7 +67,7 @@ A high-level overview of how the documentation is organized will help you know
 where to look for certain things:
 
 - [Tutorials](/documentation/tutorials) take you by the hand through a series of steps to get
-  started using the software. Start here if you’re new.
+  started using the software. Start here if you're new.
 - The [Help](/documentation/help) guide provides a starting point and outlines common issues that you
   may have.
 
@@ -118,21 +108,28 @@ compatible with other applications as well.
 | Reddit      | com.reddit.frontpage                      | Displays the share sheet, added to a new post          |
 | Google Docs | com.google.android.apps.docs.editors.docs | Displays the share sheet, cannot add to google docs :( |
 
-<!-- omit in toc -->
-### Build from Source
+## Development
 
-Follow the steps in the [Building from Source](#building-from-source) section.
+### Kotlin and Android Version
 
-## Gradle tasks
+This app has been written in Kotlin 2.1 with the Android Studio IDE, using Jetpack Compose for
+the UI.
 
-- ktlintCheck (`gradlew ktlintCheck`): run ktlint over the codebase
-
-## Kotlin and Android Version
-
-This app has been written in Kotlin 2.1 with the Android Studio IDE.
-
-- The target SDK version is 35 (Android 15)
+- The target SDK version is 36 (Android 16)
 - The minimum SDK version is 26 (Android 8 Oreo)
+
+### Gradle tasks
+
+- `./gradlew assembleDebug`: build a debug APK
+- `./gradlew ktlintCheck`: run ktlint over the codebase
+- `./gradlew ktlintFormat`: auto-format the codebase with ktlint
+
+### Code style
+
+Code style is enforced with [ktlint](https://github.com/JLLeitschuh/ktlint-gradle), and
+[pre-commit](https://pre-commit.com/) hooks are configured in `.pre-commit-config.yaml` to catch
+common issues (trailing whitespace, oversized images, merge conflict markers, etc.) before a
+commit is made.
 
 ## Building From Source
 
@@ -185,9 +182,3 @@ Android SDK. Additional information can be found at
 
 MIT License
 (See the [LICENSE](/LICENSE.md) for more information.)
-
-## Credits
-
-StickerBoard is a fork of [EweSticker](https://github.com/FredHappyface/Android.EweSticker) by
-FredHappyface, which draws inspiration from the uSticker project and is itself a fork of the
-woosticker repository by Randy Zhou.
