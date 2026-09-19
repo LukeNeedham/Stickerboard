@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -30,7 +31,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -262,11 +262,16 @@ private fun StickerSourceCard(
 	modifier: Modifier = Modifier,
 ) {
 	SettingsCard(modifier) {
-		Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+		Row(
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.SpaceBetween,
+			modifier = Modifier.fillMaxWidth(),
+		) {
 			Row(
 				verticalAlignment = Alignment.CenterVertically,
 				modifier = Modifier
-					.weight(1f)
+					.weight(1f, fill = false)
+					.heightIn(min = 48.dp)
 					.clickable(enabled = !isRefreshing, onClick = onOpenFolder),
 			) {
 				Icon(
@@ -281,13 +286,13 @@ private fun StickerSourceCard(
 					color = MaterialTheme.colorScheme.onSurface,
 					maxLines = 1,
 					overflow = TextOverflow.Ellipsis,
-					modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
+					modifier = Modifier.weight(1f, fill = false).padding(start = 10.dp),
 				)
 				Icon(
 					painter = painterResource(R.drawable.ic_chevron_right),
 					contentDescription = null,
 					tint = MaterialTheme.colorScheme.onSurfaceVariant,
-					modifier = Modifier.size(18.dp),
+					modifier = Modifier.padding(start = 4.dp).size(18.dp),
 				)
 			}
 			IconButton(onClick = onChangeDirectory, enabled = !isRefreshing) {
@@ -295,6 +300,7 @@ private fun StickerSourceCard(
 					painter = painterResource(R.drawable.ic_edit),
 					contentDescription = stringResource(R.string.sticker_source_change_button),
 					tint = MaterialTheme.colorScheme.onSurfaceVariant,
+					modifier = Modifier.size(20.dp),
 				)
 			}
 		}
@@ -315,18 +321,16 @@ private fun StickerSourceCard(
 			)
 		}
 
-		HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
 		Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
 			Icon(
 				painter = painterResource(R.drawable.ic_recent),
 				contentDescription = null,
 				tint = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.size(16.dp),
+				modifier = Modifier.size(20.dp),
 			)
 			Text(
 				text = stringResource(R.string.sticker_source_last_refreshed, lastUpdateDate),
-				style = MaterialTheme.typography.bodySmall,
+				style = MaterialTheme.typography.bodyMedium,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				modifier = Modifier.weight(1f).padding(start = 8.dp),
 			)
