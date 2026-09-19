@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-	<!-- Include specific files or directories -->
-	<include domain="sharedpref" path="backup_prefs.xml"/>
+	<!-- Include the "display" DataStore file (see AppPreferences.kt) -->
+	<include domain="file" path="datastore/display_prefs.preferences_pb"/>
 
 </full-backup-content>

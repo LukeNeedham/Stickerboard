@@ -172,10 +172,10 @@ class KeyboardController :
 					minKeyboardHeightPx = MIN_KEYBOARD_HEIGHT_PX,
 					maxKeyboardHeightPx = maxKeyboardHeightPx,
 					initialActivePack = initialSection,
-					showCloseButton = model.showCloseButton,
-					showSearchButton = model.showSearchButton,
-					vibrate = model.vibrate,
-					swipeEnabled = model.scroll,
+					showCloseButton = true,
+					showSearchButton = true,
+					vibrate = true,
+					swipeEnabled = false,
 				)
 			}
 		}
@@ -236,7 +236,7 @@ class KeyboardController :
 			this.currentInputEditorInfo,
 			model.compatCache,
 			this.imageLoader,
-			model.isPngFallback,
+			isPngFallback = true,
 			onCannotSend = { showStatusMessage(getString(R.string.cannot_send_sticker)) },
 		)
 	}
@@ -253,9 +253,6 @@ class KeyboardController :
 	override fun onFinishInput() {
 		model.persistSessionState()
 		super.onFinishInput()
-		if (model.restoreOnClose) {
-			closeKeyboard()
-		}
 	}
 
 	override fun boardItems(): List<BoardItem> = model.boardItems()

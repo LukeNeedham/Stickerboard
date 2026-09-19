@@ -484,7 +484,7 @@ fun GalleryRoute(
 	StickerGalleryPage(
 		items = uiState.items,
 		columns = viewModel.columns,
-		vibrate = viewModel.vibrate,
+		vibrate = true,
 		stickerDirDisplayName = uiState.stickerDirDisplayName,
 		lastUpdateDate = uiState.lastUpdateDate,
 		isRefreshing = uiState.isRefreshing,

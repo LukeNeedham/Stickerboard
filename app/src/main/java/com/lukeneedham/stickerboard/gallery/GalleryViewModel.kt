@@ -1,7 +1,6 @@
 package com.lukeneedham.stickerboard.gallery
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -9,9 +8,9 @@ import android.webkit.MimeTypeMap
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.preference.PreferenceManager
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
@@ -51,7 +50,7 @@ private const val MAX_ICONS_PER_X = 6
 private const val MIN_REFRESH_INDICATOR_MS = 500L
 
 /** Everything [StickerGalleryPage] needs to render, besides the fixed [GalleryViewModel.columns]
- * and [GalleryViewModel.vibrate] settings, which don't change within the page's lifetime. */
+ * setting, which doesn't change within the page's lifetime. */
 data class GalleryUiState(
 	val items: List<BoardItem>? = null,
 	val stickerDirDisplayName: String = "",
@@ -65,19 +64,14 @@ data class GalleryUiState(
  * newly-added gallery photos into a pack (and best-effort into that external source directory).
  */
 class GalleryViewModel(application: Application) : AndroidViewModel(application) {
-	private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
-	private val backupSharedPreferences =
-		application.getSharedPreferences("backup_prefs", Context.MODE_PRIVATE)
+	private val prefs = AppPreferences(application)
 
 	// Only ever passed through to StickerImporter, which logs warnings on it as it works - never
 	// toasted, so re-importing here never pops up any message of its own (see refreshStickers below).
 	private val toaster = Toaster()
 	private val internalDir = File(application.filesDir, "stickers")
 
-	val columns =
-		backupSharedPreferences.getInt("iconsPerX", 4).coerceIn(MIN_ICONS_PER_X, MAX_ICONS_PER_X)
-	val vibrate = backupSharedPreferences.getBoolean("vibrate", true)
-	private val insensitiveSort = backupSharedPreferences.getBoolean("insensitiveSort", false)
+	val columns = prefs.iconsPerX.coerceIn(MIN_ICONS_PER_X, MAX_ICONS_PER_X)
 
 	private val _uiState = MutableStateFlow(
 		GalleryUiState(
@@ -88,7 +82,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	val uiState: StateFlow<GalleryUiState> = _uiState.asStateFlow()
 
 	private fun currentLastUpdateDate(): String {
-		val epochMillis = sharedPreferences.getLong("lastUpdateEpochMillis", -1L)
+		val epochMillis = prefs.lastUpdateEpochMillis
 		if (epochMillis < 0) {
 			return getApplication<Application>().getString(R.string.update_sticker_pack_info_date)
 		}
@@ -99,7 +93,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 * "/Pictures/Stickers"), not its raw content:// tree URI or the volume's absolute filesystem
 	 * prefix (e.g. "/storage/emulated/0") - falling back to that raw URI if it can't be resolved. */
 	private fun currentStickerDirDisplayName(): String {
-		val path = sharedPreferences.getString("stickerDirPath", null)
+		val path = prefs.stickerDirPath
 			?: return getApplication<Application>().getString(R.string.update_sticker_pack_info_path)
 		return try {
 			val documentId = DocumentsContract.getTreeDocumentId(Uri.parse(path))
@@ -112,11 +106,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	}
 
 	private fun sortedPackNames(loadedPacks: Map<String, StickerPack>): List<String> =
-		if (insensitiveSort) {
-			loadedPacks.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
-		} else {
-			loadedPacks.keys.sorted()
-		}
+		loadedPacks.keys.sorted()
 
 	private fun computeBoardItems(): List<BoardItem> {
 		val packs =
@@ -167,7 +157,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 */
 	private fun copyToExternalSourceDir(packName: String, fileName: String, bytes: ByteArray) {
 		val context = getApplication<Application>()
-		val path = sharedPreferences.getString("stickerDirPath", null) ?: return
+		val path = prefs.stickerDirPath ?: return
 		try {
 			val rootDir = DocumentFile.fromTreeUri(context, Uri.parse(path)) ?: return
 			val packDocDir = rootDir.findFile(packName) ?: rootDir.createDirectory(packName) ?: return
@@ -226,12 +216,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 			val refreshedBoardItems = computeBoardItems()
 
 			withContext(Dispatchers.Main) {
-				sharedPreferences.edit()
-					.putInt(
-						"numStickersImported",
-						sharedPreferences.getInt("numStickersImported", 0) + addedCount,
-					)
-					.apply()
+				prefs.numStickersImported += addedCount
 				_uiState.update { it.copy(items = refreshedBoardItems) }
 			}
 		}
@@ -244,7 +229,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 * rather than something to show the user a message about.
 	 */
 	fun openStickerFolderIntent(): Intent? {
-		val path = sharedPreferences.getString("stickerDirPath", null) ?: return null
+		val path = prefs.stickerDirPath ?: return null
 		return try {
 			val treeUri = Uri.parse(path)
 			val docUri =
@@ -278,9 +263,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 				delay((MIN_REFRESH_INDICATOR_MS - elapsedMs).coerceAtLeast(0))
 				computeBoardItems() to currentStickerDirDisplayName()
 			}
-			sharedPreferences.edit()
-				.putLong("lastUpdateEpochMillis", System.currentTimeMillis())
-				.apply()
+			prefs.lastUpdateEpochMillis = System.currentTimeMillis()
 			_uiState.update {
 				it.copy(
 					items = items,
@@ -295,7 +278,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	/** Re-imports from the current source directory only if its contents actually changed - the
 	 * same reload the keyboard's own pull-to-refresh performs - then rescans internal storage. */
 	fun refreshStickers() {
-		val path = sharedPreferences.getString("stickerDirPath", null) ?: return
+		val path = prefs.stickerDirPath ?: return
 		runRefresh { reimportStickersIfChanged(getApplication(), toaster, path) }
 	}
 
@@ -317,11 +300,9 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 			context.contentResolver.takePersistableUriPermission(uri, takeFlags)
 		}
 		val stickerDirPath = uri.toString()
-		sharedPreferences.edit()
-			.putString("stickerDirPath", stickerDirPath)
-			.putString("recentCache", "")
-			.putString("compatCache", "")
-			.apply()
+		prefs.stickerDirPath = stickerDirPath
+		prefs.recentCache = ""
+		prefs.compatCache = ""
 		changeStickerDirectory(stickerDirPath)
 	}
 }

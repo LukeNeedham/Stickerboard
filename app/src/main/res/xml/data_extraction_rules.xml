@@ -5,12 +5,12 @@
 -->
 <data-extraction-rules>\
 	<cloud-backup>
-		<!-- Include the backup SharedPreferences file -->
-		<include domain="sharedpref" path="backup_prefs.xml"/>
+		<!-- Include the "display" DataStore file (see AppPreferences.kt) -->
+		<include domain="file" path="datastore/display_prefs.preferences_pb"/>
 	</cloud-backup>
 	<device-transfer>
-		<!-- Include the backup SharedPreferences file for device transfer -->
-		<include domain="sharedpref" path="backup_prefs.xml"/>
+		<!-- Include the "display" DataStore file for device transfer (see AppPreferences.kt) -->
+		<include domain="file" path="datastore/display_prefs.preferences_pb"/>
 	</device-transfer>
 	<!--
 	<cloud-backup>

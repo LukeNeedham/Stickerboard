@@ -1,9 +1,9 @@
 package com.lukeneedham.stickerboard.keyboard
 
 import android.content.Context
-import androidx.preference.PreferenceManager
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
@@ -31,30 +31,20 @@ private const val SEARCH_RESULT_LIMIT = 128
  * for why MVC rather than a ViewModel): every piece of data the keyboard shows - loaded packs,
  * the recent/compat caches, and the persisted display prefs - plus the business logic that reads
  * and updates it. Framework-independent aside from taking a [Context] (for `filesDir`, string
- * resources, and SharedPreferences), exactly like a Repository would in an app with a full
+ * resources, and [AppPreferences]), exactly like a Repository would in an app with a full
  * ViewModel layer; it has no dependency on the [android.inputmethodservice.InputMethodService]
  * that owns it.
  */
 class KeyboardModel(context: Context) {
 	private val appContext = context.applicationContext
 	private val internalDir = File(appContext.filesDir, "stickers")
-	private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(appContext)
-	private val backupSharedPreferences =
-		appContext.getSharedPreferences("backup_prefs", Context.MODE_PRIVATE)
+	private val prefs = AppPreferences(appContext)
 	private val toaster = Toaster()
 
-	val restoreOnClose = backupSharedPreferences.getBoolean("restoreOnClose", false)
-	val scroll = backupSharedPreferences.getBoolean("scroll", false)
-	val vibrate = backupSharedPreferences.getBoolean("vibrate", true)
-	val insensitiveSort = backupSharedPreferences.getBoolean("insensitiveSort", false)
-	val isPngFallback = backupSharedPreferences.getBoolean("isPngFallback", true)
-	val showCloseButton = backupSharedPreferences.getBoolean("showBackButton", true)
-	val showSearchButton = backupSharedPreferences.getBoolean("showSearchButton", true)
-
-	var iconsPerX = backupSharedPreferences.getInt("iconsPerX", 4)
+	var iconsPerX = prefs.iconsPerX
 		private set
 
-	var activePack: String = sharedPreferences.getString("activePack", "").orEmpty()
+	var activePack: String = prefs.activePack
 		private set
 
 	val internalStickerDir: File get() = internalDir
@@ -69,17 +59,16 @@ class KeyboardModel(context: Context) {
 	private var headerPositions: LinkedHashMap<String, Int> = LinkedHashMap()
 
 	init {
-		sharedPreferences.getString("recentCache", "")?.let(recentCache::fromSharedPref)
-		sharedPreferences.getString("compatCache", "")?.let(compatCache::fromSharedPref)
+		recentCache.fromSharedPref(prefs.recentCache)
+		compatCache.fromSharedPref(prefs.compatCache)
 		loadPacks()
 	}
 
 	/** The height (in px) the keyboard was last dragged to, or [default] if none was saved yet. */
-	fun savedKeyboardHeightPx(default: Int): Int =
-		backupSharedPreferences.getInt("keyboardHeight", default)
+	fun savedKeyboardHeightPx(default: Int): Int = prefs.keyboardHeightPx(default)
 
 	fun saveKeyboardHeight(heightPx: Int) {
-		backupSharedPreferences.edit().putInt("keyboardHeight", heightPx).apply()
+		prefs.saveKeyboardHeight(heightPx)
 	}
 
 	fun hasRecentStickers(): Boolean = recentCache.toFiles().isNotEmpty()
@@ -117,13 +106,8 @@ class KeyboardModel(context: Context) {
 		XLog.i("Loaded all packs: [${loadedPacks.keys.joinToString(", ")}]")
 	}
 
-	/** Pack names in nav-bar/board order, respecting the case-insensitive-sort preference. */
-	private fun sortedPackNames(): List<String> =
-		if (insensitiveSort) {
-			loadedPacks.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
-		} else {
-			loadedPacks.keys.sorted()
-		}
+	/** Pack names in nav-bar/board order. */
+	private fun sortedPackNames(): List<String> = loadedPacks.keys.sorted()
 
 	/**
 	 * Compute the flattened list of board items (recent section, always first, followed by every
@@ -195,7 +179,7 @@ class KeyboardModel(context: Context) {
 	// logic - so both mean exactly the same thing. A no-op when no source directory is set, or its
 	// contents still match what's already imported.
 	suspend fun refreshStickers() {
-		val stickerDirPath = sharedPreferences.getString("stickerDirPath", null)
+		val stickerDirPath = prefs.stickerDirPath
 		if (stickerDirPath != null) {
 			reimportStickersIfChanged(appContext, toaster, stickerDirPath)
 		}
@@ -225,7 +209,7 @@ class KeyboardModel(context: Context) {
 		val newIconsPerX = (iconsPerX + delta).coerceIn(MIN_ICONS_PER_X, MAX_ICONS_PER_X)
 		if (newIconsPerX != iconsPerX) {
 			iconsPerX = newIconsPerX
-			backupSharedPreferences.edit().putInt("iconsPerX", newIconsPerX).apply()
+			prefs.iconsPerX = newIconsPerX
 		}
 		return iconsPerX
 	}
@@ -236,12 +220,8 @@ class KeyboardModel(context: Context) {
 
 	/** Persists everything that needs to survive to the next [android.view.inputmethod.InputConnection]. */
 	fun persistSessionState() {
-		XLog.i("Updating sharedPreferences based on use, and closing...")
-		sharedPreferences.edit()
-			.putString("recentCache", recentCache.toSharedPref())
-			.putString("compatCache", compatCache.toSharedPref())
-			.putString("activePack", activePack)
-			.apply()
+		XLog.i("Persisting preferences based on use, and closing...")
+		prefs.persistSessionState(recentCache.toSharedPref(), compatCache.toSharedPref(), activePack)
 	}
 }
 

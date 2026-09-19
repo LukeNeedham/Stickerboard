@@ -71,7 +71,7 @@ dependencies {
 	implementation("androidx.core:core-ktx:1.15.0")
 	implementation("androidx.appcompat:appcompat:1.7.0")
 	implementation("com.google.android.material:material:1.12.0")
-	implementation("androidx.preference:preference-ktx:1.2.1")
+	implementation("androidx.datastore:datastore-preferences:1.2.1")
 	implementation("io.coil-kt:coil:2.7.0")
 	implementation("io.coil-kt:coil-gif:2.7.0")
 	implementation("io.coil-kt:coil-video:2.7.0")
