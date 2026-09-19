@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Owns [CrashesScreen]'s data - the list of every crash recorded in [CrashStore]. */
+/** Owns [CrashesPage]'s data - the list of every crash recorded in [CrashStore]. */
 class CrashesViewModel(application: Application) : AndroidViewModel(application) {
 	private val crashStore = CrashStore(application)
 

@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Owns [OnboardingScreen]'s state and every side effect it triggers - checking/watching whether
+ * Owns [OnboardingPage]'s state and every side effect it triggers - checking/watching whether
  * the keyboard is enabled, and importing stickers from a chosen source directory.
  */
 class OnboardingViewModel(application: Application) : AndroidViewModel(application) {

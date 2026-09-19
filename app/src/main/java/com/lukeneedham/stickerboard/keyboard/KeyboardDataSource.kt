@@ -8,8 +8,8 @@ import java.io.File
 data class PackNavIcon(val packName: String, val thumbnail: File?)
 
 /**
- * Bridges the Compose "View" ([KeyboardScreen]) to the "Controller"
- * ([com.lukeneedham.stickerboard.ImageKeyboard]), which implements this interface by reading from
+ * Bridges the Compose "View" ([KeyboardView]) to the "Controller"
+ * ([com.lukeneedham.stickerboard.KeyboardController]), which implements this interface by reading from
  * and delegating to [KeyboardModel] (the "Model") and its own InputMethodService-only side effects
  * (sending a sticker, closing the keyboard). The View owns ephemeral view state of its own (current
  * mode, search text, scroll position); this interface is the boundary for everything backed by
@@ -38,7 +38,7 @@ interface KeyboardDataSource {
 	fun onStickerSend(sticker: File)
 	fun onClose()
 
-	/** Open the app's settings screen, e.g. from a button in the keyboard's pull bar. */
+	/** Open the app's settings page, e.g. from a button in the keyboard's pull bar. */
 	fun onOpenSettings()
 
 	/**

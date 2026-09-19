@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
-* A modern Material 3 tonal palette for the settings app (MainActivity and the screens it opens),
+* A modern Material 3 tonal palette for the settings app (MainActivity and the pages it opens),
 * seeded from the app's teal brand color but kept independent of the raw color/dimen resources the
 * keyboard IME itself reads (color/accent, color/bg, color/fg, color/onAccent, dimen/corner) so
 * restyling the settings UI can never change how the keyboard looks.

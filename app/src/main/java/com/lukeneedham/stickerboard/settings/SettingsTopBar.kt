@@ -17,7 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.lukeneedham.stickerboard.R
 
-/** The back-button top bar shared by every non-root screen in the settings app. */
+/** The back-button top bar shared by every non-root page in the settings app. */
 @Composable
 fun SettingsTopBar(
 	title: String,

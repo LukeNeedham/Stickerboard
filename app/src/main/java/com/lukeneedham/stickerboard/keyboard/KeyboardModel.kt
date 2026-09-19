@@ -13,7 +13,7 @@ import com.lukeneedham.stickerboard.utilities.Toaster
 import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import java.io.File
 
-/** Bounds for [KeyboardModel.iconsPerX], matching the settings screen's SeekBar range. */
+/** Bounds for [KeyboardModel.iconsPerX], matching the settings page's SeekBar range. */
 private const val MIN_ICONS_PER_X = 2
 private const val MAX_ICONS_PER_X = 6
 
@@ -27,7 +27,7 @@ private const val RECENT_ROW_LIMIT = 2
 private const val SEARCH_RESULT_LIMIT = 128
 
 /**
- * The "Model" in the keyboard screen's MVC split (see [com.lukeneedham.stickerboard.ImageKeyboard]
+ * The "Model" in the keyboard's MVC split (see [com.lukeneedham.stickerboard.KeyboardController]
  * for why MVC rather than a ViewModel): every piece of data the keyboard shows - loaded packs,
  * the recent/compat caches, and the persisted display prefs - plus the business logic that reads
  * and updates it. Framework-independent aside from taking a [Context] (for `filesDir`, string

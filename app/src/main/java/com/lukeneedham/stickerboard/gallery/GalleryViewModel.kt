@@ -38,20 +38,20 @@ import android.text.format.DateFormat as AndroidDateFormat
 /** Maximum number of stickers allowed in a single pack, mirrors StickerImporter's limit. */
 private const val MAX_PACK_SIZE = 128
 
-/** Bounds for iconsPerX, matching the settings screen's SeekBar range. */
+/** Bounds for iconsPerX, matching the settings page's SeekBar range. */
 private const val MIN_ICONS_PER_X = 2
 private const val MAX_ICONS_PER_X = 6
 
 /**
  * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
- * [com.lukeneedham.stickerboard.keyboard.KeyboardScreen]'s BoardGrid: without this floor, a
+ * [com.lukeneedham.stickerboard.keyboard.KeyboardView]'s BoardGrid: without this floor, a
  * refresh that finishes within a single frame can flip true then false before PullToRefreshBox
  * observes a transition to animate, leaving the indicator stuck wherever the pull released it.
  */
 private const val MIN_REFRESH_INDICATOR_MS = 500L
 
-/** Everything [StickerGalleryScreen] needs to render, besides the fixed [GalleryViewModel.columns]
- * and [GalleryViewModel.vibrate] settings, which don't change within the screen's lifetime. */
+/** Everything [StickerGalleryPage] needs to render, besides the fixed [GalleryViewModel.columns]
+ * and [GalleryViewModel.vibrate] settings, which don't change within the page's lifetime. */
 data class GalleryUiState(
 	val items: List<BoardItem>? = null,
 	val stickerDirDisplayName: String = "",
@@ -60,7 +60,7 @@ data class GalleryUiState(
 )
 
 /**
- * Owns [StickerGalleryScreen]'s data and every side effect it triggers: scanning internal storage
+ * Owns [StickerGalleryPage]'s data and every side effect it triggers: scanning internal storage
  * for packs/stickers, choosing/reloading the external sticker source directory, and copying
  * newly-added gallery photos into a pack (and best-effort into that external source directory).
  */
@@ -145,7 +145,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	}
 
 	/**
-	 * Re-scans internal storage and refreshes everything [StickerGalleryScreen] shows. Lifecycle
+	 * Re-scans internal storage and refreshes everything [StickerGalleryPage] shows. Lifecycle
 	 * .Event.ON_RESUME (which this is driven by) replays for a brand new observer, so this alone
 	 * also covers the very first load.
 	 */
@@ -240,7 +240,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	/**
 	 * An intent that opens the user's chosen external sticker source directory in their device's
 	 * file browser app, or null if none is configured. Onboarding requires a sticker source
-	 * directory to be chosen before this screen is reachable, so a null path here would be a bug
+	 * directory to be chosen before this page is reachable, so a null path here would be a bug
 	 * rather than something to show the user a message about.
 	 */
 	fun openStickerFolderIntent(): Intent? {
@@ -265,7 +265,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
 	/**
 	 * Runs [reimport] (which does the actual disk work, off the main thread) then rescans internal
-	 * storage and refreshes everything [StickerGalleryScreen] shows - all under the same
+	 * storage and refreshes everything [StickerGalleryPage] shows - all under the same
 	 * isRefreshing spinner, held for at least [MIN_REFRESH_INDICATOR_MS] so the pull-to-refresh
 	 * indicator always gets a visible transition to animate away.
 	 */

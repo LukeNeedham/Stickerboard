@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 
-/** Looks up [crashId] via [CrashStore] - the single crash [CrashDetailScreen] shows, or null if it
+/** Looks up [crashId] via [CrashStore] - the single crash [CrashDetailPage] shows, or null if it
  * can't be found (e.g. it was already trimmed from disk). */
 class CrashDetailViewModel(
 	application: Application,

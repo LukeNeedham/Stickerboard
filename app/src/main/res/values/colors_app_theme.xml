@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-	Modern Material 3 palette for the settings app (MainActivity and the screens it opens: onboarding,
+	Modern Material 3 palette for the settings app (MainActivity and the pages it opens: onboarding,
 	the sticker gallery, debug and crash tools). Deliberately separate from color/accent, color/bg,
 	color/fg, color/onAccent and color/pull_handle in colors.xml/themes.xml, which the keyboard IME
-	(KeyboardScreen) reads directly by resource name - restyling the settings app must never change
+	(KeyboardView) reads directly by resource name - restyling the settings app must never change
 	how the keyboard itself looks. Mirrors the Compose ColorScheme in settings/SettingsTheme.kt.
 -->
 <resources>

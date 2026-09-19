@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/** Owns [SettingsScreen]'s state - just the try-it-out media received so far, since everything
+/** Owns [SettingsPage]'s state - just the try-it-out media received so far, since everything
  * else it shows is static. Enabling the keyboard and navigating elsewhere are one-off platform
  * actions with no state of their own, so they stay as callbacks on [SettingsRoute] instead. */
 class SettingsViewModel : ViewModel() {

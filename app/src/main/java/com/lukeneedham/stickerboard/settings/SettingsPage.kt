@@ -56,20 +56,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
 
-/** Everything the settings screen needs to render - plain state, matching the rest of the app. */
+/** Everything the settings page needs to render - plain state, matching the rest of the app. */
 data class SettingsUiState(
 	val tryItOutMedia: List<Uri> = emptyList(),
 	val showDebugCard: Boolean = false,
 )
 
 /**
- * The settings app's root screen: the same enable-keyboard, try-it-out, view-stickers and
+ * The settings app's root page: the same enable-keyboard, try-it-out, view-stickers and
  * (debug-only) debug tools that MainActivity's old XML layout offered, rebuilt in Compose with a
  * modern Material 3 look. Choosing/reloading the sticker source directory lives entirely on the
  * Stickers page now, alongside its path, sticker/pack counts and last-refreshed time.
  */
 @Composable
-fun SettingsScreen(
+fun SettingsPage(
 	state: SettingsUiState,
 	onEnableKeyboard: () -> Unit,
 	onTryItOutMediaReceived: (Uri) -> Unit,
@@ -281,7 +281,7 @@ internal fun TonalActionButton(
 }
 
 /**
- * Wires [SettingsScreen] up with its real dependencies (the enable-keyboard system intent) and
+ * Wires [SettingsPage] up with its real dependencies (the enable-keyboard system intent) and
  * [SettingsViewModel] - the nav-host destination that used to be MainActivity itself.
  */
 @Composable
@@ -294,7 +294,7 @@ fun SettingsRoute(
 	val context = LocalContext.current
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-	SettingsScreen(
+	SettingsPage(
 		state = uiState,
 		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
 		onTryItOutMediaReceived = viewModel::onTryItOutMediaReceived,

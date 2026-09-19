@@ -28,7 +28,7 @@ import java.util.Date
 
 /** Shows a single crash's full, copyable stack trace. */
 @Composable
-fun CrashDetailScreen(crash: CrashRecord, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun CrashDetailPage(crash: CrashRecord, onBack: () -> Unit, modifier: Modifier = Modifier) {
 	Scaffold(
 		modifier = modifier,
 		containerColor = MaterialTheme.colorScheme.background,
@@ -77,5 +77,5 @@ fun CrashDetailRoute(crashId: String, onBack: () -> Unit, modifier: Modifier = M
 		LaunchedEffect(Unit) { onBack() }
 		return
 	}
-	CrashDetailScreen(crash = crash, onBack = onBack, modifier = modifier)
+	CrashDetailPage(crash = crash, onBack = onBack, modifier = modifier)
 }

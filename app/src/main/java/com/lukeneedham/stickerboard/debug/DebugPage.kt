@@ -19,9 +19,9 @@ import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
-/** Debug-only tools screen, reachable from the settings screen only in debug builds. */
+/** Debug-only tools page, reachable from the settings page only in debug builds. */
 @Composable
-fun DebugScreen(
+fun DebugPage(
 	onBack: () -> Unit,
 	onOpenCrashes: () -> Unit,
 	onOpenOnboarding: () -> Unit,
@@ -54,7 +54,7 @@ fun DebugScreen(
 }
 
 /**
- * Guards [DebugScreen] behind [BuildConfig.DEBUG] - the nav-host destination that used to be
+ * Guards [DebugPage] behind [BuildConfig.DEBUG] - the nav-host destination that used to be
  * DebugActivity, which bailed out the same way in case it was ever reachable in a release build.
  */
 @Composable
@@ -68,7 +68,7 @@ fun DebugRoute(
 		LaunchedEffect(Unit) { onBack() }
 		return
 	}
-	DebugScreen(
+	DebugPage(
 		onBack = onBack,
 		onOpenCrashes = onOpenCrashes,
 		onOpenOnboarding = onOpenOnboarding,

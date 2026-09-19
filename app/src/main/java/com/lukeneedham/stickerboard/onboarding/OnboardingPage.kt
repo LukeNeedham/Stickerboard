@@ -52,7 +52,7 @@ private const val PAGE_FOLDER = 2
 private const val PAGE_COUNT = 3
 private const val LAST_PAGE_INDEX = PAGE_FOLDER
 
-/** Everything the onboarding screen needs to render - plain state, matching the rest of the app. */
+/** Everything the onboarding page needs to render - plain state, matching the rest of the app. */
 data class OnboardingUiState(
 	val keyboardEnabled: Boolean,
 	val isImporting: Boolean,
@@ -67,7 +67,7 @@ data class OnboardingUiState(
  * the pager yet - until that page's requirement (if any) is met.
  */
 @Composable
-fun OnboardingScreen(
+fun OnboardingPage(
 	state: OnboardingUiState,
 	onEnableKeyboard: () -> Unit,
 	onChooseDir: () -> Unit,
@@ -246,9 +246,9 @@ private fun OnboardingHeading(text: String) {
 }
 
 /**
- * Wires [OnboardingScreen] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
+ * Wires [OnboardingPage] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
  * intents - the nav-host destination that used to be OnboardingActivity. [onFinished] replaces
- * this destination with the settings screen on the shared back stack so the user can never
+ * this destination with the settings page on the shared back stack so the user can never
  * swipe/back their way back into onboarding.
  */
 @Composable
@@ -270,7 +270,7 @@ fun OnboardingRoute(
 		}
 	}
 
-	OnboardingScreen(
+	OnboardingPage(
 		state = uiState,
 		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
 		onChooseDir = {

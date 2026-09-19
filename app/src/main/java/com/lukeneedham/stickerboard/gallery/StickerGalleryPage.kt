@@ -74,7 +74,7 @@ import java.io.File
  * re-imports from disk the same way the keyboard's own pull-to-refresh does.
  */
 @Composable
-fun StickerGalleryScreen(
+fun StickerGalleryPage(
 	items: List<BoardItem>?,
 	columns: Int,
 	vibrate: Boolean,
@@ -442,10 +442,10 @@ private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit) {
 }
 
 /**
- * Wires [StickerGalleryScreen] up with its real dependencies (prefs, the internal sticker dir, the
+ * Wires [StickerGalleryPage] up with its real dependencies (prefs, the internal sticker dir, the
  * photo picker, the sticker source directory picker) - the nav-host destination that used to be
  * StickerGalleryActivity, and now also owns choosing/reloading the sticker source directory that
- * used to live on the settings screen.
+ * used to live on the settings page.
  */
 @Composable
 fun GalleryRoute(
@@ -457,7 +457,7 @@ fun GalleryRoute(
 
 	// Lifecycle.addObserver() (which this is built on) replays the events needed to bring a new
 	// observer up to the current state, so this alone also covers the very first load - it fires
-	// immediately here, since the screen is only ever composed while already resumed. A separate
+	// immediately here, since the page is only ever composed while already resumed. A separate
 	// LaunchedEffect(Unit) for that initial load would run concurrently with this and double the
 	// work every time the gallery opens.
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onResumed() }
@@ -481,7 +481,7 @@ fun GalleryRoute(
 		}
 
 	val context = LocalContext.current
-	StickerGalleryScreen(
+	StickerGalleryPage(
 		items = uiState.items,
 		columns = viewModel.columns,
 		vibrate = viewModel.vibrate,

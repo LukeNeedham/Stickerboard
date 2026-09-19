@@ -37,7 +37,7 @@ import java.util.Date
 
 /** Shows every crash recorded by the app or the keyboard, most recent first. */
 @Composable
-fun CrashesScreen(
+fun CrashesPage(
 	crashes: List<CrashRecord>,
 	onBack: () -> Unit,
 	onCrashClick: (CrashRecord) -> Unit,
@@ -107,7 +107,7 @@ private fun CrashCard(crash: CrashRecord, onClick: () -> Unit) {
 }
 
 /**
- * Wires [CrashesScreen] up with [CrashesViewModel] - the nav-host destination that used to be
+ * Wires [CrashesPage] up with [CrashesViewModel] - the nav-host destination that used to be
  * CrashesActivity. Re-scans crashes on resume, in case one was just recorded while this
  * destination wasn't in the foreground.
  */
@@ -121,7 +121,7 @@ fun CrashesRoute(
 	val crashes by viewModel.crashes.collectAsStateWithLifecycle()
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
-	CrashesScreen(
+	CrashesPage(
 		crashes = crashes,
 		onBack = onBack,
 		onCrashClick = { crash -> onCrashClick(crash.id) },

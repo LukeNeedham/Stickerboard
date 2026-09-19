@@ -28,7 +28,7 @@ import coil.imageLoader
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel
-import com.lukeneedham.stickerboard.keyboard.KeyboardScreen
+import com.lukeneedham.stickerboard.keyboard.KeyboardView
 import com.lukeneedham.stickerboard.keyboard.PackNavIcon
 import com.lukeneedham.stickerboard.keyboard.RECENT_PACK_NAME
 import com.lukeneedham.stickerboard.model.BoardItem
@@ -46,10 +46,10 @@ private const val MIN_KEYBOARD_HEIGHT_PX = 300
 private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
 
 /**
- * ImageKeyboard is the "Controller" in the keyboard screen's MVC split: it inherits from
+ * KeyboardController is the "Controller" in the keyboard's MVC split: it inherits from
  * InputMethodService, so it's the only piece that can mediate the platform's IME callbacks
  * (starting/finishing input, computing insets, switching input methods) and own the ComposeView.
- * The UI itself is Jetpack Compose ([KeyboardScreen], the "View" - pure presentation, driven only
+ * The UI itself is Jetpack Compose ([KeyboardView], the "View" - pure presentation, driven only
  * by [KeyboardDataSource]); [KeyboardModel] is the "Model" - packs, caches and prefs, with no
  * dependency on this class.
  *
@@ -65,7 +65,7 @@ private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
  * ViewModel can't hold. Splitting the data that remains into a second, ViewModel-shaped owner
  * would just create two owners of overlapping state for no reason.
  */
-class ImageKeyboard :
+class KeyboardController :
 	InputMethodService(),
 	LifecycleOwner,
 	SavedStateRegistryOwner,
@@ -162,11 +162,11 @@ class ImageKeyboard :
 		}
 
 		return ComposeView(this).apply {
-			setViewTreeLifecycleOwner(this@ImageKeyboard)
-			setViewTreeSavedStateRegistryOwner(this@ImageKeyboard)
+			setViewTreeLifecycleOwner(this@KeyboardController)
+			setViewTreeSavedStateRegistryOwner(this@KeyboardController)
 			setContent {
-				KeyboardScreen(
-					dataSource = this@ImageKeyboard,
+				KeyboardView(
+					dataSource = this@KeyboardController,
 					initialIconsPerX = model.iconsPerX,
 					initialKeyboardHeightPx = keyboardHeight,
 					minKeyboardHeightPx = MIN_KEYBOARD_HEIGHT_PX,
