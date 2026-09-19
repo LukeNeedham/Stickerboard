@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<full-backup-content>
-	<!-- Include the "display" DataStore file (see AppPreferences.kt) -->
-	<include domain="file" path="datastore/display_prefs.preferences_pb"/>
-
-</full-backup-content>
