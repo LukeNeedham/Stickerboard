@@ -22,7 +22,7 @@
 			</intent-filter>
 		</activity>
 		<service
-			android:name="com.lukeneedham.stickerboard.ImageKeyboard"
+			android:name="com.lukeneedham.stickerboard.KeyboardController"
 			android:exported="false"
 			android:label="StickerBoard"
 			android:permission="android.permission.BIND_INPUT_METHOD">
