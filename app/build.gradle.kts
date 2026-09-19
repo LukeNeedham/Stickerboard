@@ -84,6 +84,8 @@ dependencies {
 	implementation("androidx.activity:activity-compose")
 	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
 	implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+	implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
+	implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 	implementation("androidx.savedstate:savedstate-ktx:1.4.0")
 	implementation("androidx.navigation3:navigation3-runtime:1.0.1")
 	implementation("androidx.navigation3:navigation3-ui:1.0.1")

@@ -3,15 +3,8 @@
 package com.lukeneedham.stickerboard.onboarding
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.database.ContentObserver
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
-import android.view.View
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -34,33 +27,24 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.preference.PreferenceManager
-import com.google.android.material.progressindicator.LinearProgressIndicator
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.TonalActionButton
-import com.lukeneedham.stickerboard.utilities.StickerImporter
-import com.lukeneedham.stickerboard.utilities.Toaster
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 private const val PAGE_WELCOME = 0
 private const val PAGE_KEYBOARD = 1
@@ -68,7 +52,7 @@ private const val PAGE_FOLDER = 2
 private const val PAGE_COUNT = 3
 private const val LAST_PAGE_INDEX = PAGE_FOLDER
 
-/** Everything the onboarding screen needs to render - plain state, matching the rest of the app. */
+/** Everything the onboarding page needs to render - plain state, matching the rest of the app. */
 data class OnboardingUiState(
 	val keyboardEnabled: Boolean,
 	val isImporting: Boolean,
@@ -83,7 +67,7 @@ data class OnboardingUiState(
  * the pager yet - until that page's requirement (if any) is met.
  */
 @Composable
-fun OnboardingScreen(
+fun OnboardingPage(
 	state: OnboardingUiState,
 	onEnableKeyboard: () -> Unit,
 	onChooseDir: () -> Unit,
@@ -262,132 +246,44 @@ private fun OnboardingHeading(text: String) {
 }
 
 /**
- * Wires [OnboardingScreen] up with its real dependencies (prefs, the sticker importer, the
- * enable-keyboard/choose-dir system intents) - the nav-host destination that used to be
- * OnboardingActivity. [onFinished] replaces this destination with the settings screen on the
- * shared back stack so the user can never swipe/back their way back into onboarding.
+ * Wires [OnboardingPage] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
+ * intents - the nav-host destination that used to be OnboardingActivity. [onFinished] replaces
+ * this destination with the settings page on the shared back stack so the user can never
+ * swipe/back their way back into onboarding.
  */
 @Composable
-fun OnboardingRoute(onFinished: () -> Unit, modifier: Modifier = Modifier) {
+fun OnboardingRoute(
+	onFinished: () -> Unit,
+	modifier: Modifier = Modifier,
+	viewModel: OnboardingViewModel = viewModel(),
+) {
 	val context = LocalContext.current
-	val scope = rememberCoroutineScope()
-	val sharedPreferences = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-	val toaster = remember { Toaster() }
-	var progressBar by remember { mutableStateOf<LinearProgressIndicator?>(null) }
+	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-	var uiState by remember {
-		mutableStateOf(
-			OnboardingUiState(
-				keyboardEnabled = isKeyboardEnabled(context),
-				isImporting = false,
-				loadedStickerCount = if (hasChosenStickerDir(sharedPreferences)) {
-					sharedPreferences.getInt("numStickersImported", 0)
-				} else {
-					null
-				},
-			),
-		)
-	}
-
-	fun refreshRequirements() {
-		uiState = uiState.copy(keyboardEnabled = isKeyboardEnabled(context))
-	}
-
-	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshRequirements() }
-
-	// Refreshes as soon as Android reports the enabled-keyboards list changed, rather than only on
-	// resume - the security-warning dialog on the keyboard settings screen means users can return
-	// via several back presses, and multi-window/split-screen users may never leave this app at all.
-	DisposableEffect(context) {
-		val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-			override fun onChange(selfChange: Boolean) {
-				refreshRequirements()
-			}
-		}
-		context.contentResolver.registerContentObserver(
-			Settings.Secure.getUriFor(Settings.Secure.ENABLED_INPUT_METHODS),
-			false,
-			observer,
-		)
-		onDispose { context.contentResolver.unregisterContentObserver(observer) }
-	}
-
-	// No toasts here by design - progress is shown inline on the page itself (spinner while
-	// isImporting, then the loaded count), and the finish button stays disabled until
-	// loadedStickerCount is set.
-	fun importStickers(stickerDirPath: String) {
-		val bar = progressBar ?: return
-		uiState = uiState.copy(isImporting = true, loadedStickerCount = null)
-		scope.launch(Dispatchers.IO) {
-			val totalStickers = StickerImporter(context, toaster, bar).importStickers(stickerDirPath)
-			withContext(Dispatchers.Main) {
-				sharedPreferences.edit().putInt("numStickersImported", totalStickers).apply()
-				uiState = uiState.copy(isImporting = false, loadedStickerCount = totalStickers)
-			}
-		}
-	}
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshRequirements() }
 
 	val chooseDirResultLauncher = rememberLauncherForActivityResult(
 		ActivityResultContracts.StartActivityForResult(),
 	) { result ->
 		if (result.resultCode == Activity.RESULT_OK) {
-			val uri = result.data?.data
-			val stickerDirPath = result.data?.data.toString()
-			if (uri != null) {
-				val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-				context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+			viewModel.onDirectorySelected(result.data?.data)
+		}
+	}
+
+	OnboardingPage(
+		state = uiState,
+		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
+		onChooseDir = {
+			val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
 			}
-			sharedPreferences.edit()
-				.putString("stickerDirPath", stickerDirPath)
-				.putLong("lastUpdateEpochMillis", System.currentTimeMillis())
-				.putString("recentCache", "")
-				.putString("compatCache", "")
-				.apply()
-			refreshRequirements()
-			importStickers(stickerDirPath)
-		}
-	}
-
-	Box(modifier) {
-		OnboardingScreen(
-			state = uiState,
-			onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
-			onChooseDir = {
-				val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-					addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-					addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-				}
-				chooseDirResultLauncher.launch(intent)
-			},
-			onFinish = {
-				sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
-				onFinished()
-			},
-		)
-
-		// Never shown - StickerImporter is shared with SettingsScreen and expects a
-		// LinearProgressIndicator to report progress on, but onboarding's own loading
-		// spinner/text (driven by uiState above) is what the user actually sees.
-		Box(Modifier.size(0.dp)) {
-			AndroidView(
-				factory = { c ->
-					LinearProgressIndicator(c).apply {
-						visibility = View.GONE
-						progressBar = this
-					}
-				},
-			)
-		}
-	}
+			chooseDirResultLauncher.launch(intent)
+		},
+		onFinish = {
+			viewModel.onFinish()
+			onFinished()
+		},
+		modifier = modifier,
+	)
 }
-
-/** Whether the StickerBoard keyboard is enabled in the system's input method settings. */
-private fun isKeyboardEnabled(context: Context): Boolean {
-	val inputMethodManager =
-		context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-	return inputMethodManager.enabledInputMethodList.any { it.packageName == context.packageName }
-}
-
-/** Whether a sticker source directory has been chosen. */
-private fun hasChosenStickerDir(sharedPreferences: SharedPreferences): Boolean =
-	sharedPreferences.contains("stickerDirPath")

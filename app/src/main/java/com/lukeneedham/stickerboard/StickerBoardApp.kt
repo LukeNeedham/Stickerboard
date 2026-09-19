@@ -37,7 +37,7 @@ private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideBackward(
 
 /**
  * The single activity's nav host - decides whether to land on onboarding or settings, and wires
- * every screen's navigation callbacks to the one shared back stack.
+ * every page's navigation callbacks to the one shared back stack.
  */
 @Composable
 fun StickerBoardApp() {

@@ -119,7 +119,7 @@ private sealed interface Mode {
  * bookkeeping on the caller's side.
  */
 @Composable
-fun KeyboardScreen(
+fun KeyboardView(
 	dataSource: KeyboardDataSource,
 	initialIconsPerX: Int,
 	initialKeyboardHeightPx: Int,

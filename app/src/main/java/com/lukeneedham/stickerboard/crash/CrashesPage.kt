@@ -17,12 +17,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +28,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import java.text.DateFormat
@@ -38,7 +37,7 @@ import java.util.Date
 
 /** Shows every crash recorded by the app or the keyboard, most recent first. */
 @Composable
-fun CrashesScreen(
+fun CrashesPage(
 	crashes: List<CrashRecord>,
 	onBack: () -> Unit,
 	onCrashClick: (CrashRecord) -> Unit,
@@ -108,7 +107,7 @@ private fun CrashCard(crash: CrashRecord, onClick: () -> Unit) {
 }
 
 /**
- * Wires [CrashesScreen] up with [CrashStore] - the nav-host destination that used to be
+ * Wires [CrashesPage] up with [CrashesViewModel] - the nav-host destination that used to be
  * CrashesActivity. Re-scans crashes on resume, in case one was just recorded while this
  * destination wasn't in the foreground.
  */
@@ -117,13 +116,12 @@ fun CrashesRoute(
 	onBack: () -> Unit,
 	onCrashClick: (crashId: String) -> Unit,
 	modifier: Modifier = Modifier,
+	viewModel: CrashesViewModel = viewModel(),
 ) {
-	val context = LocalContext.current
-	val crashStore = remember { CrashStore(context) }
-	var crashes by remember { mutableStateOf(crashStore.list()) }
-	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { crashes = crashStore.list() }
+	val crashes by viewModel.crashes.collectAsStateWithLifecycle()
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
-	CrashesScreen(
+	CrashesPage(
 		crashes = crashes,
 		onBack = onBack,
 		onCrashClick = { crash -> onCrashClick(crash.id) },
