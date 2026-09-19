@@ -54,10 +54,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -78,7 +76,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
@@ -126,10 +123,6 @@ fun KeyboardView(
 	minKeyboardHeightPx: Int,
 	maxKeyboardHeightPx: Int,
 	initialActivePack: String,
-	showCloseButton: Boolean,
-	showSearchButton: Boolean,
-	vibrate: Boolean,
-	swipeEnabled: Boolean,
 ) {
 	var iconsPerX by remember { mutableIntStateOf(initialIconsPerX) }
 	var keyboardHeightPx by remember { mutableIntStateOf(initialKeyboardHeightPx) }
@@ -208,8 +201,6 @@ fun KeyboardView(
 		) {
 			PullBar(
 				mode = mode,
-				showCloseButton = showCloseButton,
-				showSearchButton = showSearchButton,
 				onOpenSettings = { dataSource.onOpenSettings() },
 				onHeightDrag = { dragAmountPx ->
 					val newHeight = (keyboardHeightPx - dragAmountPx)
@@ -252,20 +243,12 @@ fun KeyboardView(
 							columns = iconsPerX,
 							gridState = gridState,
 							keyboardHeightPx = keyboardHeightPx,
-							swipeEnabled = swipeEnabled,
-							vibrate = vibrate,
 							isRefreshing = isRefreshingStickers,
 							onStickerClick = { sendSticker(it) },
 							onStickerLongClick = { mode = Mode.Preview(it, Mode.Board) },
 							onZoomStep = { delta ->
 								iconsPerX = dataSource.changeIconsPerX(delta)
 								refreshBoard()
-							},
-							onSwipePrevious = {
-								dataSource.previousSection(activeSection)?.let { jumpToSection(it) }
-							},
-							onSwipeNext = {
-								dataSource.nextSection(activeSection)?.let { jumpToSection(it) }
 							},
 							onRefresh = { refreshStickers() },
 						)
@@ -278,7 +261,6 @@ fun KeyboardView(
 							results = searchResults,
 							onStickerClick = { sendSticker(it) },
 							onStickerLongClick = { mode = Mode.Preview(it, Mode.Search) },
-							vibrate = vibrate,
 						)
 						is Mode.Preview -> PreviewContent(
 							sticker = current.sticker,
@@ -333,8 +315,6 @@ private fun StatusBanner(message: String, modifier: Modifier = Modifier) {
 @Composable
 private fun PullBar(
 	mode: Mode,
-	showCloseButton: Boolean,
-	showSearchButton: Boolean,
 	onOpenSettings: () -> Unit,
 	onHeightDrag: (Float) -> Unit,
 	onHeightDragEnd: () -> Unit,
@@ -354,21 +334,19 @@ private fun PullBar(
 				}
 			},
 	) {
-		if (isPreview || isSearch || showCloseButton) {
-			CircleIconButton(
-				iconRes = if (isPreview || isSearch) R.drawable.ic_back else R.drawable.ic_close,
-				contentDescription = when {
-					isPreview -> stringResource(R.string.close_sticker_preview)
-					isSearch -> stringResource(R.string.close_search)
-					else -> stringResource(R.string.pack_icon)
-				},
-				selected = false,
-				onClick = onBackOrClose,
-				modifier = Modifier
-					.align(Alignment.CenterStart)
-					.padding(start = dimensionResource(R.dimen.sticker_padding)),
-			)
-		}
+		CircleIconButton(
+			iconRes = if (isPreview || isSearch) R.drawable.ic_back else R.drawable.ic_close,
+			contentDescription = when {
+				isPreview -> stringResource(R.string.close_sticker_preview)
+				isSearch -> stringResource(R.string.close_search)
+				else -> stringResource(R.string.pack_icon)
+			},
+			selected = false,
+			onClick = onBackOrClose,
+			modifier = Modifier
+				.align(Alignment.CenterStart)
+				.padding(start = dimensionResource(R.dimen.sticker_padding)),
+		)
 		Box(
 			Modifier
 				.align(Alignment.Center)
@@ -389,18 +367,16 @@ private fun PullBar(
 					onClick = onOpenSettings,
 				)
 			}
-			if (isPreview || showSearchButton) {
-				CircleIconButton(
-					iconRes = if (isPreview) R.drawable.ic_send else R.drawable.ic_search,
-					contentDescription = if (isPreview) {
-						stringResource(R.string.send_sticker)
-					} else {
-						stringResource(R.string.pack_icon)
-					},
-					selected = mode is Mode.Search,
-					onClick = onSearchOrSend,
-				)
-			}
+			CircleIconButton(
+				iconRes = if (isPreview) R.drawable.ic_send else R.drawable.ic_search,
+				contentDescription = if (isPreview) {
+					stringResource(R.string.send_sticker)
+				} else {
+					stringResource(R.string.pack_icon)
+				},
+				selected = mode is Mode.Search,
+				onClick = onSearchOrSend,
+			)
 		}
 	}
 }
@@ -490,18 +466,13 @@ private fun BoardGrid(
 	columns: Int,
 	gridState: LazyGridState,
 	keyboardHeightPx: Int,
-	swipeEnabled: Boolean,
-	vibrate: Boolean,
 	isRefreshing: Boolean,
 	onStickerClick: (File) -> Unit,
 	onStickerLongClick: (File) -> Unit,
 	onZoomStep: (Int) -> Unit,
-	onSwipePrevious: () -> Unit,
-	onSwipeNext: () -> Unit,
 	onRefresh: () -> Unit,
 ) {
 	val density = LocalDensity.current
-	val touchSlop = LocalViewConfiguration.current.touchSlop
 	PullToRefreshBox(
 		isRefreshing = isRefreshing,
 		onRefresh = onRefresh,
@@ -516,7 +487,7 @@ private fun BoardGrid(
 			contentPadding = PaddingValues(bottom = with(density) { keyboardHeightPx.toDp() }),
 			modifier = Modifier
 				.fillMaxSize()
-				.boardGestures(swipeEnabled, touchSlop, onZoomStep, onSwipePrevious, onSwipeNext),
+				.boardGestures(onZoomStep),
 		) {
 			items(
 				count = items.size,
@@ -541,7 +512,6 @@ private fun BoardGrid(
 					is BoardItem.Sticker -> StickerCell(
 						file = item.file,
 						contentDescription = stringResource(R.string.pack_icon),
-						vibrate = vibrate,
 						onClick = { onStickerClick(item.file) },
 						onLongClick = { onStickerLongClick(item.file) },
 					)
@@ -589,7 +559,6 @@ private fun SectionEmptyMessage(text: String) {
 private fun StickerCell(
 	file: File,
 	contentDescription: String,
-	vibrate: Boolean,
 	onClick: () -> Unit,
 	onLongClick: () -> Unit,
 	modifier: Modifier = Modifier,
@@ -601,7 +570,7 @@ private fun StickerCell(
 			.aspectRatio(1f)
 			.combinedClickable(
 				onClick = {
-					if (vibrate) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 					onClick()
 				},
 				onLongClick = onLongClick,
@@ -622,7 +591,6 @@ private fun SearchContent(
 	results: List<File>,
 	onStickerClick: (File) -> Unit,
 	onStickerLongClick: (File) -> Unit,
-	vibrate: Boolean,
 ) {
 	Column(Modifier.fillMaxSize()) {
 		LazyRow(Modifier.weight(1f).fillMaxWidth()) {
@@ -631,7 +599,6 @@ private fun SearchContent(
 				StickerCell(
 					file = file,
 					contentDescription = stringResource(R.string.pack_icon),
-					vibrate = vibrate,
 					onClick = { onStickerClick(file) },
 					onLongClick = { onStickerLongClick(file) },
 					modifier = Modifier.fillMaxHeight(),
@@ -842,55 +809,36 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 }
 
 /**
- * Pinch to zoom (spread = fewer, bigger stickers per row; pinch = more, smaller) and swipe to
- * switch section - both live at the [BoardGrid] level so they can intercept multi/single-pointer
- * gestures before the grid's own vertical-scroll handling sees them, without stealing plain
- * single-finger vertical scrolling or taps.
+ * Pinch to zoom (spread = fewer, bigger stickers per row; pinch = more, smaller), living at the
+ * [BoardGrid] level so it can intercept multi-pointer gestures before the grid's own
+ * vertical-scroll handling sees them, without stealing plain single-finger vertical scrolling or
+ * taps.
  */
-private fun Modifier.boardGestures(
-	swipeEnabled: Boolean,
-	touchSlopPx: Float,
-	onZoomStep: (Int) -> Unit,
-	onSwipePrevious: () -> Unit,
-	onSwipeNext: () -> Unit,
-): Modifier = pointerInput(swipeEnabled) {
+private fun Modifier.boardGestures(onZoomStep: (Int) -> Unit): Modifier = pointerInput(Unit) {
 	awaitEachGesture {
 		var cumulativeZoom = 1f
 		var prevPinchDistance = 0f
-		var panX = 0f
-		var swiped = false
 		do {
 			val event = awaitPointerEvent(PointerEventPass.Initial)
 			val pressed = event.changes.filter { it.pressed }
-			when {
-				pressed.size >= 2 -> {
-					val a = pressed[0].position
-					val b = pressed[1].position
-					val distance = hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble()).toFloat()
-					if (prevPinchDistance > 0f) {
-						cumulativeZoom *= distance / prevPinchDistance
-						if (cumulativeZoom > PINCH_STEP_THRESHOLD) {
-							onZoomStep(-1)
-							cumulativeZoom = 1f
-						} else if (cumulativeZoom < 1f / PINCH_STEP_THRESHOLD) {
-							onZoomStep(1)
-							cumulativeZoom = 1f
-						}
-					}
-					prevPinchDistance = distance
-					event.changes.forEach { it.consume() }
-				}
-				swipeEnabled && pressed.size == 1 && !swiped -> {
-					prevPinchDistance = 0f
-					val change = pressed[0]
-					panX += change.positionChange().x
-					if (abs(panX) > touchSlopPx) {
-						swiped = true
-						if (panX > 0) onSwipePrevious() else onSwipeNext()
-						change.consume()
+			if (pressed.size >= 2) {
+				val a = pressed[0].position
+				val b = pressed[1].position
+				val distance = hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble()).toFloat()
+				if (prevPinchDistance > 0f) {
+					cumulativeZoom *= distance / prevPinchDistance
+					if (cumulativeZoom > PINCH_STEP_THRESHOLD) {
+						onZoomStep(-1)
+						cumulativeZoom = 1f
+					} else if (cumulativeZoom < 1f / PINCH_STEP_THRESHOLD) {
+						onZoomStep(1)
+						cumulativeZoom = 1f
 					}
 				}
-				else -> prevPinchDistance = 0f
+				prevPinchDistance = distance
+				event.changes.forEach { it.consume() }
+			} else {
+				prevPinchDistance = 0f
 			}
 		} while (event.changes.any { it.pressed })
 	}

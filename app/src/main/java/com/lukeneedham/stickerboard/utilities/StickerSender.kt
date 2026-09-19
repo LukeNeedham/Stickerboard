@@ -33,7 +33,6 @@ import java.io.IOException
  * @property compatCache: used to track previous x converted compat stickers
  * @property imageLoader: coil imageLoader object used to convert a sticker file to a drawable ready
  * for writing to a compat sticker
- * @property isPngFallback: is a png fallback enabled
  * @property onCannotSend: called when no way was found to deliver the sticker to the current app
  * (neither commitContent nor a share target), so the caller can let the user know
  */
@@ -44,7 +43,6 @@ class StickerSender(
 	private val currentInputEditorInfo: EditorInfo?,
 	private val compatCache: Cache,
 	private val imageLoader: ImageLoader,
-	private val isPngFallback: Boolean,
 	private val onCannotSend: () -> Unit,
 ) {
 
@@ -165,7 +163,7 @@ class StickerSender(
 	 */
 	private suspend fun doFallbackCommitContent(mimeType: String, file: File) {
 
-		if (isPngFallback && ("image/png" in supportedMimes || "image/*" in supportedMimes)) {
+		if ("image/png" in supportedMimes || "image/*" in supportedMimes) {
 			val compatSticker = createCompatSticker(file)
 			if (compatSticker != null) {
 				if (!doCommitContent("image/png", compatSticker)) {

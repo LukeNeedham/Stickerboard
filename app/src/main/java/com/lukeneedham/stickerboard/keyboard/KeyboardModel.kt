@@ -161,20 +161,6 @@ class KeyboardModel(context: Context) {
 		return result
 	}
 
-	fun previousSection(current: String): String? {
-		val names = headerPositions.keys.toList()
-		if (names.isEmpty()) return null
-		val index = names.indexOf(current).let { if (it == -1) 0 else it }
-		return names[if (index > 0) index - 1 else names.size - 1]
-	}
-
-	fun nextSection(current: String): String? {
-		val names = headerPositions.keys.toList()
-		if (names.isEmpty()) return null
-		val index = names.indexOf(current).let { if (it == -1) 0 else it }
-		return names[(index + 1) % names.size]
-	}
-
 	// The same reload GalleryRoute's refresh action performs on the Stickers page, sharing its
 	// logic - so both mean exactly the same thing. A no-op when no source directory is set, or its
 	// contents still match what's already imported.

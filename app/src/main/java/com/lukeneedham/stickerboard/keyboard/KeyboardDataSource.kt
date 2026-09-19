@@ -20,8 +20,6 @@ interface KeyboardDataSource {
 	fun packNavIcons(): List<PackNavIcon>
 	fun sectionIndex(packName: String): Int?
 	fun sectionAt(itemIndex: Int): String?
-	fun previousSection(current: String): String?
-	fun nextSection(current: String): String?
 	fun searchStickers(query: String): List<File>
 	fun changeIconsPerX(delta: Int): Int
 
