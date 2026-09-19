@@ -8,10 +8,12 @@ import java.io.File
 data class PackNavIcon(val packName: String, val thumbnail: File?)
 
 /**
- * Bridges the Compose keyboard UI ([com.lukeneedham.stickerboard.keyboard.KeyboardScreen]) to
- * [com.lukeneedham.stickerboard.ImageKeyboard]'s pack/cache state and side effects (sending a
- * sticker, persisting preferences). The UI layer owns ephemeral view state (current mode, search
- * text, scroll position); this owns everything backed by disk/prefs.
+ * Bridges the Compose "View" ([KeyboardScreen]) to the "Controller"
+ * ([com.lukeneedham.stickerboard.ImageKeyboard]), which implements this interface by reading from
+ * and delegating to [KeyboardModel] (the "Model") and its own InputMethodService-only side effects
+ * (sending a sticker, closing the keyboard). The View owns ephemeral view state of its own (current
+ * mode, search text, scroll position); this interface is the boundary for everything backed by
+ * disk/prefs instead.
  */
 interface KeyboardDataSource {
 	fun boardItems(): List<BoardItem>

@@ -36,10 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,8 +51,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
 
 /** Everything the settings screen needs to render - plain state, matching the rest of the app. */
@@ -283,31 +281,23 @@ internal fun TonalActionButton(
 }
 
 /**
- * Wires [SettingsScreen] up with its real dependencies (the enable-keyboard system intent) - the
- * nav-host destination that used to be MainActivity itself.
+ * Wires [SettingsScreen] up with its real dependencies (the enable-keyboard system intent) and
+ * [SettingsViewModel] - the nav-host destination that used to be MainActivity itself.
  */
 @Composable
 fun SettingsRoute(
 	onViewStickers: () -> Unit,
 	onOpenDebug: () -> Unit,
 	modifier: Modifier = Modifier,
+	viewModel: SettingsViewModel = viewModel(),
 ) {
 	val context = LocalContext.current
-
-	var uiState by remember {
-		mutableStateOf(
-			SettingsUiState(
-				showDebugCard = BuildConfig.DEBUG,
-			),
-		)
-	}
+	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
 	SettingsScreen(
 		state = uiState,
 		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
-		onTryItOutMediaReceived = { uri ->
-			uiState = uiState.copy(tryItOutMedia = listOf(uri) + uiState.tryItOutMedia)
-		},
+		onTryItOutMediaReceived = viewModel::onTryItOutMediaReceived,
 		onViewStickers = onViewStickers,
 		onOpenDebug = onOpenDebug,
 		modifier = modifier,

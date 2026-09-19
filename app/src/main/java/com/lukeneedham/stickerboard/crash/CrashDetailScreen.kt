@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard.crash
 
+import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import java.text.DateFormat
@@ -59,14 +61,18 @@ fun CrashDetailScreen(crash: CrashRecord, onBack: () -> Unit, modifier: Modifier
 }
 
 /**
- * Looks up [crashId] via [CrashStore] and shows it - the nav-host destination that used to be
- * CrashDetailActivity. Bails back out immediately if the crash can't be found (e.g. it was
- * already trimmed from disk), the same way CrashDetailActivity did.
+ * Wires up [CrashDetailViewModel] and shows the crash it looks up - the nav-host destination that
+ * used to be CrashDetailActivity. Bails back out immediately if the crash can't be found (e.g. it
+ * was already trimmed from disk), the same way CrashDetailActivity did.
  */
 @Composable
 fun CrashDetailRoute(crashId: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
-	val context = LocalContext.current
-	val crash = remember(crashId) { CrashStore(context).get(crashId) }
+	val application = LocalContext.current.applicationContext as Application
+	val viewModel: CrashDetailViewModel = viewModel(
+		key = crashId,
+		factory = remember(crashId) { CrashDetailViewModel.factory(application, crashId) },
+	)
+	val crash = viewModel.crash
 	if (crash == null) {
 		LaunchedEffect(Unit) { onBack() }
 		return

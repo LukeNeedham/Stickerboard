@@ -1,8 +1,6 @@
 package com.lukeneedham.stickerboard
 
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.InputMethodService.Insets
 import android.os.Build.VERSION.SDK_INT
@@ -16,7 +14,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.preference.PreferenceManager
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
@@ -30,20 +27,14 @@ import coil.decode.VideoFrameDecoder
 import coil.imageLoader
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
+import com.lukeneedham.stickerboard.keyboard.KeyboardModel
 import com.lukeneedham.stickerboard.keyboard.KeyboardScreen
 import com.lukeneedham.stickerboard.keyboard.PackNavIcon
+import com.lukeneedham.stickerboard.keyboard.RECENT_PACK_NAME
 import com.lukeneedham.stickerboard.model.BoardItem
-import com.lukeneedham.stickerboard.model.StickerPack
-import com.lukeneedham.stickerboard.utilities.Cache
 import com.lukeneedham.stickerboard.utilities.StickerSender
-import com.lukeneedham.stickerboard.utilities.Toaster
-import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import com.lukeneedham.stickerboard.utilities.startLogger
 import java.io.File
-
-/** Bounds for [ImageKeyboard.iconsPerX], matching the settings screen's SeekBar range. */
-private const val MIN_ICONS_PER_X = 2
-private const val MAX_ICONS_PER_X = 6
 
 /** Default pixel height of the scrollable board viewport. */
 private const val KEYBOARD_HEIGHT_PX = 800
@@ -54,20 +45,25 @@ private const val MIN_KEYBOARD_HEIGHT_PX = 300
 /** Largest height the board can be dragged up to, as a fraction of the screen height. */
 private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
 
-/** Synthetic pack name used for the "recently used" section/ nav icon. */
-private const val RECENT_PACK_NAME = "__recentSticker__"
-
-/** Max number of rows the "recently used" section shows, regardless of iconsPerX/ zoom level. */
-private const val RECENT_ROW_LIMIT = 2
-
-/** Max number of stickers shown at once in search results. */
-private const val SEARCH_RESULT_LIMIT = 128
-
 /**
- * ImageKeyboard class inherits from the InputMethodService class - provides the keyboard
- * functionality. The UI itself is Jetpack Compose (see [com.lukeneedham.stickerboard.keyboard]);
- * this class owns the data (packs, caches, prefs) and side effects (sending a sticker, closing
- * the keyboard) that the Compose UI reads and calls back into via [KeyboardDataSource].
+ * ImageKeyboard is the "Controller" in the keyboard screen's MVC split: it inherits from
+ * InputMethodService, so it's the only piece that can mediate the platform's IME callbacks
+ * (starting/finishing input, computing insets, switching input methods) and own the ComposeView.
+ * The UI itself is Jetpack Compose ([KeyboardScreen], the "View" - pure presentation, driven only
+ * by [KeyboardDataSource]); [KeyboardModel] is the "Model" - packs, caches and prefs, with no
+ * dependency on this class.
+ *
+ * A ViewModel was considered instead of a Model class, and rejected: ViewModel's value is
+ * surviving the destruction/recreation of its owning Activity/Fragment across configuration
+ * changes. Here, *this* service instance already plays that role - it isn't destroyed and
+ * recreated the way an Activity is; only [onCreateInputView]'s View is rebuilt, with the service
+ * (and therefore [model]) persisting underneath it regardless. Introducing a real ViewModel would
+ * mean manually implementing `ViewModelStoreOwner` and clearing its store by hand in [onDestroy]
+ * anyway - the same boilerplate as owning a plain Model object, for no extra benefit - while
+ * several [KeyboardDataSource] members ([onClose], [onOpenSettings], [onStickerSend]'s send step)
+ * are inherently Controller-only, since they call InputMethodService/InputConnection APIs a
+ * ViewModel can't hold. Splitting the data that remains into a second, ViewModel-shaped owner
+ * would just create two owners of overlapping state for no reason.
  */
 class ImageKeyboard :
 	InputMethodService(),
@@ -84,29 +80,7 @@ class ImageKeyboard :
 	override val savedStateRegistry: SavedStateRegistry
 		get() = savedStateRegistryController.savedStateRegistry
 
-	// onCreate
-	//  Shared Preferences
-	private lateinit var sharedPreferences: SharedPreferences
-	private lateinit var backupSharedPreferences: SharedPreferences
-	private var restoreOnClose = false
-	private var scroll = false
-	private var vibrate = false
-	private var iconsPerX = 0
-	private var insensitiveSort = false
-	private var isPngFallback = true
-
-	//  Constants
-	private lateinit var internalDir: File
-	private lateinit var toaster: Toaster
-
-	//  Load Packs
-	private lateinit var loadedPacks: HashMap<String, StickerPack>
-	private var allStickers: List<File> = listOf()
-	private var activePack = ""
-
-	//  Caches
-	private var compatCache = Cache()
-	private var recentCache = Cache()
+	private lateinit var model: KeyboardModel
 
 	// onStartInput
 	private lateinit var stickerSender: StickerSender
@@ -115,16 +89,13 @@ class ImageKeyboard :
 	private var keyboardHeight = 0
 	private var maxKeyboardHeightPx = 0
 
-	//  Ordered map of section-name -> board-item position of that section's header row
-	private var headerPositions: LinkedHashMap<String, Int> = LinkedHashMap()
-
 	private val _statusMessage = mutableStateOf<String?>(null)
 	override val statusMessage: State<String?> get() = _statusMessage
 
 	/**
 	 * When the activity is created...
 	 * - ensure coil can decode (and display) animated images
-	 * - set the internal sticker dir, icons-per-col, caches and loaded-packs
+	 * - load [model] (which loads packs/caches/prefs itself)
 	 */
 	override fun onCreate() {
 		// Misc
@@ -150,34 +121,8 @@ class ImageKeyboard :
 				}
 				.build()
 		Coil.setImageLoader(imageLoader)
-		//  Shared Preferences
-		this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext)
-		this.backupSharedPreferences =
-			this.getSharedPreferences("backup_prefs", Context.MODE_PRIVATE)
 
-		XLog.i("Loading private shared preferences: ${this.sharedPreferences.all}")
-		XLog.i("Loading backup shared preferences: ${this.backupSharedPreferences.all}")
-
-		this.restoreOnClose = this.backupSharedPreferences.getBoolean("restoreOnClose", false)
-		this.scroll = this.backupSharedPreferences.getBoolean("scroll", false)
-		this.vibrate = this.backupSharedPreferences.getBoolean("vibrate", true)
-		this.insensitiveSort = this.backupSharedPreferences.getBoolean("insensitiveSort", false)
-		this.isPngFallback = this.backupSharedPreferences.getBoolean("isPngFallback", true)
-
-		this.iconsPerX = this.backupSharedPreferences.getInt("iconsPerX", 4)
-		//  Constants
-		this.internalDir = File(filesDir, "stickers")
-		this.toaster = Toaster()
-		//  Load Packs
-		loadPacks()
-		this.activePack = this.sharedPreferences.getString("activePack", "").toString()
-		//  Caches
-		this.sharedPreferences.getString("recentCache", "")?.let {
-			this.recentCache.fromSharedPref(it)
-		}
-		this.sharedPreferences.getString("compatCache", "")?.let {
-			this.compatCache.fromSharedPref(it)
-		}
+		model = KeyboardModel(baseContext)
 		window.window?.navigationBarColor = getColor(R.color.bg)
 	}
 
@@ -192,23 +137,19 @@ class ImageKeyboard :
 		this.maxKeyboardHeightPx =
 			(resources.displayMetrics.heightPixels * MAX_KEYBOARD_HEIGHT_FRACTION).toInt()
 		this.keyboardHeight =
-			this.backupSharedPreferences.getInt("keyboardHeight", KEYBOARD_HEIGHT_PX)
+			model.savedKeyboardHeightPx(KEYBOARD_HEIGHT_PX)
 				.coerceIn(MIN_KEYBOARD_HEIGHT_PX, this.maxKeyboardHeightPx)
 
-		// Populate headerPositions so the initial section below can be resolved.
-		boardItems()
+		// Populate the model's section positions so the initial section below can be resolved.
+		model.boardItems()
 		// The Recent section always exists in the board now (even empty, as a placeholder), so
 		// check for actual recent stickers rather than just section presence, to still land on
 		// the first real pack on a fresh install with no sticker history.
-		val fallbackTarget = if (this.recentCache.toFiles().isNotEmpty()) {
-			RECENT_PACK_NAME
-		} else {
-			sortedPackNames().firstOrNull()
-		}
+		val fallbackTarget = if (model.hasRecentStickers()) RECENT_PACK_NAME else model.firstPackName()
 		val initialSection =
-			(if (this.headerPositions.containsKey(activePack)) activePack else fallbackTarget)
+			(if (model.sectionExists(model.activePack)) model.activePack else fallbackTarget)
 				?: RECENT_PACK_NAME
-		this.activePack = initialSection
+		model.setActivePack(initialSection)
 
 		// Compose looks up the window's recomposer starting from the *root* of the window's view
 		// hierarchy, not from the view returned below - and that root is a container the system
@@ -226,41 +167,18 @@ class ImageKeyboard :
 			setContent {
 				KeyboardScreen(
 					dataSource = this@ImageKeyboard,
-					initialIconsPerX = iconsPerX,
+					initialIconsPerX = model.iconsPerX,
 					initialKeyboardHeightPx = keyboardHeight,
 					minKeyboardHeightPx = MIN_KEYBOARD_HEIGHT_PX,
 					maxKeyboardHeightPx = maxKeyboardHeightPx,
 					initialActivePack = initialSection,
-					showCloseButton = backupSharedPreferences.getBoolean("showBackButton", true),
-					showSearchButton = backupSharedPreferences.getBoolean("showSearchButton", true),
-					vibrate = vibrate,
-					swipeEnabled = scroll,
+					showCloseButton = model.showCloseButton,
+					showSearchButton = model.showSearchButton,
+					vibrate = model.vibrate,
+					swipeEnabled = model.scroll,
 				)
 			}
 		}
-	}
-
-	/**
-	 * Scan [internalDir] and (re)populate [loadedPacks]/[allStickers] from what's on disk. Safe to
-	 * call again after the initial [onCreate] load - e.g. from [refreshStickers] - to pick up packs
-	 * or stickers added since.
-	 */
-	private fun loadPacks() {
-		this.loadedPacks = HashMap()
-		this.allStickers = listOf()
-		val packs =
-			this.internalDir.listFiles { obj: File ->
-				obj.isDirectory && !obj.absolutePath.contains("__compatSticker__")
-			}
-				?: arrayOf()
-		for (file in packs) {
-			val pack = StickerPack(file)
-			if (pack.stickerList.isNotEmpty()) {
-				this.loadedPacks[file.name] = pack
-			}
-			this.allStickers += pack.stickerList
-		}
-		XLog.i("Loaded all packs: [${this.loadedPacks.keys.joinToString(", ")}]")
 	}
 
 	override fun onWindowShown() {
@@ -313,12 +231,12 @@ class ImageKeyboard :
 	override fun onStartInput(info: EditorInfo?, restarting: Boolean) {
 		this.stickerSender = StickerSender(
 			this.baseContext,
-			this.internalDir,
+			model.internalStickerDir,
 			this.currentInputConnection,
 			this.currentInputEditorInfo,
-			this.compatCache,
+			model.compatCache,
 			this.imageLoader,
-			this.isPngFallback,
+			model.isPngFallback,
 			onCannotSend = { showStatusMessage(getString(R.string.cannot_send_sticker)) },
 		)
 	}
@@ -333,129 +251,30 @@ class ImageKeyboard :
 
 	/** When leaving some input field update the caches */
 	override fun onFinishInput() {
-		XLog.i("Updating sharedPreferences based on use, and closing...")
-		val editor = this.sharedPreferences.edit()
-		editor.putString("recentCache", this.recentCache.toSharedPref())
-		editor.putString("compatCache", this.compatCache.toSharedPref())
-		editor.putString("activePack", this.activePack)
-		editor.apply()
+		model.persistSessionState()
 		super.onFinishInput()
-		if (restoreOnClose) {
+		if (model.restoreOnClose) {
 			closeKeyboard()
 		}
 	}
 
-	/** Pack names in nav-bar/ board order, respecting the case-insensitive-sort preference. */
-	private fun sortedPackNames(): List<String> {
-		return if (this.insensitiveSort) {
-			this.loadedPacks.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
-		} else {
-			this.loadedPacks.keys.sorted()
-		}
-	}
+	override fun boardItems(): List<BoardItem> = model.boardItems()
 
-	/**
-	 * Compute the flattened list of board items (recent section, always first, followed by every
-	 * pack), populating [headerPositions] as a side effect so nav icons can jump straight to a
-	 * section.
-	 */
-	override fun boardItems(): List<BoardItem> {
-		val items = mutableListOf<BoardItem>()
-		this.headerPositions = LinkedHashMap()
+	override fun packNavIcons(): List<PackNavIcon> = model.packNavIcons()
 
-		val recentStickers =
-			this.recentCache.toFiles().reversedArray().take(this.iconsPerX * RECENT_ROW_LIMIT)
-		this.headerPositions[RECENT_PACK_NAME] = items.size
-		items.add(BoardItem.Header(RECENT_PACK_NAME, getString(R.string.recent_heading)))
-		if (recentStickers.isEmpty()) {
-			items.add(BoardItem.EmptyMessage(RECENT_PACK_NAME, getString(R.string.recent_empty)))
-		} else {
-			for (sticker in recentStickers) {
-				items.add(BoardItem.Sticker(sticker, RECENT_PACK_NAME))
-			}
-		}
+	override fun sectionIndex(packName: String): Int? = model.sectionIndex(packName)
 
-		for (packName in sortedPackNames()) {
-			val stickers = this.loadedPacks[packName]?.stickerList ?: continue
-			if (stickers.isEmpty()) continue
-			this.headerPositions[packName] = items.size
-			items.add(BoardItem.Header(packName, prettifyPackName(packName)))
-			for (sticker in stickers) {
-				items.add(BoardItem.Sticker(sticker, packName))
-			}
-		}
-		return items
-	}
+	override fun sectionAt(itemIndex: Int): String? = model.sectionAt(itemIndex)
 
-	override fun packNavIcons(): List<PackNavIcon> {
-		val icons = mutableListOf(PackNavIcon(RECENT_PACK_NAME, null))
-		for (packName in sortedPackNames()) {
-			icons.add(PackNavIcon(packName, this.loadedPacks[packName]?.thumbSticker))
-		}
-		return icons
-	}
+	override fun previousSection(current: String): String? = model.previousSection(current)
 
-	override fun sectionIndex(packName: String): Int? = this.headerPositions[packName]
+	override fun nextSection(current: String): String? = model.nextSection(current)
 
-	/** Find the section a given board-item position belongs to (e.g. for scroll tracking). */
-	override fun sectionAt(itemIndex: Int): String? {
-		var result: String? = null
-		for ((packName, headerPosition) in this.headerPositions) {
-			if (headerPosition <= itemIndex) result = packName else break
-		}
-		return result
-	}
+	override suspend fun refreshStickers() = model.refreshStickers()
 
-	override fun previousSection(current: String): String? {
-		val names = this.headerPositions.keys.toList()
-		if (names.isEmpty()) return null
-		val index = names.indexOf(current).let { if (it == -1) 0 else it }
-		return names[if (index > 0) index - 1 else names.size - 1]
-	}
+	override fun searchStickers(query: String): List<File> = model.searchStickers(query)
 
-	override fun nextSection(current: String): String? {
-		val names = this.headerPositions.keys.toList()
-		if (names.isEmpty()) return null
-		val index = names.indexOf(current).let { if (it == -1) 0 else it }
-		return names[(index + 1) % names.size]
-	}
-
-	// The same reload [com.lukeneedham.stickerboard.gallery.GalleryRoute]'s refresh action performs
-	// on the Stickers page, sharing its logic - so both mean exactly the same thing. A no-op when
-	// no source directory is set, or its contents still match what's already imported.
-	override suspend fun refreshStickers() {
-		val stickerDirPath = this.sharedPreferences.getString("stickerDirPath", null)
-		if (stickerDirPath != null) {
-			reimportStickersIfChanged(baseContext, this.toaster, stickerDirPath)
-		}
-		loadPacks()
-	}
-
-	override fun searchStickers(query: String): List<File> {
-		val queryTerms = splitNameIntoTerms(query)
-		return this.allStickers
-			.filter { file ->
-				val terms = stickerSearchTerms(file)
-				queryTerms.all { queryTerm -> terms.any { term -> term.contains(queryTerm, ignoreCase = true) } }
-			}
-			.take(SEARCH_RESULT_LIMIT)
-	}
-
-	/**
-	 * Change how many stickers are shown per row, clamped to [MIN_ICONS_PER_X, MAX_ICONS_PER_X].
-	 * Persists the new value; this also changes how many stickers fit in the recent section's
-	 * [RECENT_ROW_LIMIT] rows, so callers should refetch [boardItems] afterwards.
-	 *
-	 * @return the clamped iconsPerX actually applied
-	 */
-	override fun changeIconsPerX(delta: Int): Int {
-		val newIconsPerX = (this.iconsPerX + delta).coerceIn(MIN_ICONS_PER_X, MAX_ICONS_PER_X)
-		if (newIconsPerX != this.iconsPerX) {
-			this.iconsPerX = newIconsPerX
-			this.backupSharedPreferences.edit().putInt("iconsPerX", newIconsPerX).apply()
-		}
-		return this.iconsPerX
-	}
+	override fun changeIconsPerX(delta: Int): Int = model.changeIconsPerX(delta)
 
 	override fun onKeyboardHeightChanged(heightPx: Int) {
 		this.keyboardHeight = heightPx
@@ -463,15 +282,13 @@ class ImageKeyboard :
 
 	override fun onKeyboardHeightSettled(heightPx: Int) {
 		this.keyboardHeight = heightPx
-		this.backupSharedPreferences.edit().putInt("keyboardHeight", heightPx).apply()
+		model.saveKeyboardHeight(heightPx)
 	}
 
-	override fun onActivePackChanged(packName: String) {
-		this.activePack = packName
-	}
+	override fun onActivePackChanged(packName: String) = model.setActivePack(packName)
 
 	override fun onStickerSend(sticker: File) {
-		this.recentCache.add(sticker.path)
+		model.recordStickerSent(sticker)
 		this.stickerSender.sendSticker(sticker)
 	}
 
@@ -531,14 +348,4 @@ fun splitNameIntoTerms(name: String): List<String> {
  */
 fun prettifyPackName(name: String): String {
 	return splitNameIntoTerms(name).joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
-}
-
-/**
- * A sticker's search terms: its file name (without extension) and its pack's directory name,
- * each split into individual words - so e.g. sticker "happy-cat_meme.png" in pack "funny_memes"
- * is searchable by "happy", "cat", "meme", "funny", or "memes" individually, not just as a match
- * against the whole file name.
- */
-private fun stickerSearchTerms(file: File): List<String> {
-	return splitNameIntoTerms(file.nameWithoutExtension) + splitNameIntoTerms(file.parentFile?.name ?: "")
 }
