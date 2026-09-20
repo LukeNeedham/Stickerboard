@@ -46,7 +46,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -228,7 +227,7 @@ private fun TryItOutCard(lastMedia: Uri?, onMediaReceived: (Uri) -> Unit) {
  * first one arrives. */
 @Composable
 private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
-	val boxModifier = modifier.width(dimensionResource(R.dimen.try_it_out_media_box_width))
+	val boxModifier = modifier.width(64.dp)
 	if (media != null) {
 		// An image's height can safely follow its width via aspect ratio - unlike text, it
 		// won't get clipped when the user scales up their system font size.
@@ -242,7 +241,7 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 		Box(
 			modifier = boxModifier
 				.background(MaterialTheme.colorScheme.surfaceVariant)
-				.padding(vertical = dimensionResource(R.dimen.card_margin)),
+				.padding(vertical = 16.dp),
 			contentAlignment = Alignment.Center,
 		) {
 			Text(
@@ -263,7 +262,7 @@ private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifie
 	val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
 	val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
 	val backgroundColor = MaterialTheme.colorScheme.surfaceVariant.toArgb()
-	val paddingPx = with(LocalDensity.current) { dimensionResource(R.dimen.card_margin).roundToPx() }
+	val paddingPx = with(LocalDensity.current) { 16.dp.roundToPx() }
 	AndroidView(
 		modifier = modifier.fillMaxWidth(),
 		factory = { context ->
@@ -271,7 +270,7 @@ private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifie
 				this.hint = hint
 				// Sizes via its (sp-scaled) text plus padding, rather than a fixed dp height,
 				// so it grows correctly when the user scales up their system font size.
-				textSize = 16f // mirrors @dimen/text_size_body
+				textSize = 16f // mirrors the keyboard's own body text size
 				setTextColor(textColor)
 				setHintTextColor(hintColor)
 				setPadding(paddingPx, paddingPx, paddingPx, paddingPx)

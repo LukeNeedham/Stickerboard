@@ -3,6 +3,7 @@ package com.lukeneedham.stickerboard
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.utilities.startLogger
 
@@ -20,6 +21,9 @@ import com.lukeneedham.stickerboard.utilities.startLogger
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		// No status/navigation bar color is themed (see styles.xml) - the app draws fully
+		// edge-to-edge, with each page's own composable responsible for padding around system bars.
+		enableEdgeToEdge()
 		startLogger(filesDir)
 
 		XLog.i("=".repeat(80))

@@ -9,6 +9,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -26,6 +27,7 @@ import coil.decode.SvgDecoder
 import coil.decode.VideoFrameDecoder
 import coil.imageLoader
 import com.elvishew.xlog.XLog
+import com.lukeneedham.stickerboard.keyboard.KeyboardColors
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel
 import com.lukeneedham.stickerboard.keyboard.KeyboardView
@@ -123,7 +125,7 @@ class KeyboardController :
 		Coil.setImageLoader(imageLoader)
 
 		model = KeyboardModel(baseContext)
-		window.window?.navigationBarColor = getColor(R.color.bg)
+		window.window?.navigationBarColor = KeyboardColors.bg(baseContext).toArgb()
 	}
 
 	/**
