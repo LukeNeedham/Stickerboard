@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,12 +44,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
@@ -65,7 +65,7 @@ import com.lukeneedham.stickerboard.R
 /** Everything the settings page needs to render - plain state, matching the rest of the app. */
 data class SettingsUiState(
 	val keyboardEnabled: Boolean = false,
-	val tryItOutMedia: List<Uri> = emptyList(),
+	val tryItOutLastMedia: Uri? = null,
 	val showDebugCard: Boolean = false,
 )
 
@@ -111,7 +111,7 @@ fun SettingsPage(
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
 			EnableKeyboardCard(state.keyboardEnabled, onEnableKeyboard)
-			TryItOutCard(state.tryItOutMedia, onTryItOutMediaReceived)
+			TryItOutCard(state.tryItOutLastMedia, onTryItOutMediaReceived)
 			ViewStickersCard(onViewStickers)
 			if (state.showDebugCard) {
 				DebugCard(onOpenDebug)
@@ -210,23 +210,47 @@ internal fun KeyboardStatusIndicator(enabled: Boolean) {
 }
 
 @Composable
-private fun TryItOutCard(media: List<Uri>, onMediaReceived: (Uri) -> Unit) {
+private fun TryItOutCard(lastMedia: Uri?, onMediaReceived: (Uri) -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_send, stringResource(R.string.try_it_out_heading))
 		CardBody(stringResource(R.string.try_it_out_info))
-		TryItOutInputField(onMediaReceived)
-		if (media.isNotEmpty()) {
-			LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				items(media) { uri ->
-					AsyncImage(
-						model = uri,
-						contentDescription = stringResource(R.string.try_it_out_image_content_description),
-						modifier = Modifier
-							.size(dimensionResource(R.dimen.try_it_out_image_size))
-							.clip(RoundedCornerShape(12.dp)),
-					)
-				}
-			}
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.spacedBy(8.dp),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			TryItOutInputField(onMediaReceived, modifier = Modifier.weight(1f))
+			TryItOutMediaBox(lastMedia)
+		}
+	}
+}
+
+/** Shows the last sticker sent through [TryItOutInputField], or an empty placeholder before the
+ * first one arrives. */
+@Composable
+private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
+	val boxModifier = modifier
+		.size(dimensionResource(R.dimen.try_it_out_media_box_size))
+		.clip(RoundedCornerShape(12.dp))
+	if (media != null) {
+		AsyncImage(
+			model = media,
+			contentDescription = stringResource(R.string.try_it_out_image_content_description),
+			contentScale = ContentScale.Crop,
+			modifier = boxModifier,
+		)
+	} else {
+		Box(
+			modifier = boxModifier.background(MaterialTheme.colorScheme.surfaceVariant),
+			contentAlignment = Alignment.Center,
+		) {
+			Text(
+				text = stringResource(R.string.try_it_out_placeholder_text),
+				style = MaterialTheme.typography.labelSmall,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				textAlign = TextAlign.Center,
+				modifier = Modifier.padding(4.dp),
+			)
 		}
 	}
 }
