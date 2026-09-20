@@ -10,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.FilledActionButton
+import com.lukeneedham.stickerboard.settings.KeyboardStatusIndicator
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.TonalActionButton
 import kotlinx.coroutines.launch
@@ -167,30 +166,10 @@ private fun OnboardingKeyboardPage(keyboardEnabled: Boolean, onEnableKeyboard: (
 	OnboardingPageContainer {
 		SettingsCard {
 			OnboardingHeading(stringResource(R.string.onboarding_keyboard_heading))
-			CardBody(stringResource(R.string.onboarding_keyboard_text))
+			CardBody(stringResource(R.string.enable_keyboard_info))
 			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
 			KeyboardStatusIndicator(keyboardEnabled)
 		}
-	}
-}
-
-/** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
-@Composable
-private fun KeyboardStatusIndicator(enabled: Boolean) {
-	val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-	val label = stringResource(
-		if (enabled) {
-			R.string.onboarding_keyboard_status_enabled
-		} else {
-			R.string.onboarding_keyboard_status_not_enabled
-		},
-	)
-	Row(
-		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.spacedBy(8.dp),
-	) {
-		Box(Modifier.size(10.dp).background(color, CircleShape))
-		Text(text = label, style = MaterialTheme.typography.bodyMedium, color = color)
 	}
 }
 
