@@ -21,5 +21,6 @@
 	<dimen name="qwerty_bottom_margin">10dp</dimen>
 	<dimen name="section_header_top_margin">14dp</dimen>
 	<dimen name="pull_bar_height">44dp</dimen>
-	<dimen name="try_it_out_media_box_size">64dp</dimen>
+	<dimen name="try_it_out_field_height">64dp</dimen>
+	<dimen name="try_it_out_media_box_width">64dp</dimen>
 </resources>

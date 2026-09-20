@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,7 +40,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
@@ -230,13 +228,13 @@ private fun TryItOutCard(lastMedia: Uri?, onMediaReceived: (Uri) -> Unit) {
 @Composable
 private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 	val boxModifier = modifier
-		.size(dimensionResource(R.dimen.try_it_out_media_box_size))
-		.clip(RoundedCornerShape(12.dp))
+		.width(dimensionResource(R.dimen.try_it_out_media_box_width))
+		.height(dimensionResource(R.dimen.try_it_out_field_height))
 	if (media != null) {
 		AsyncImage(
 			model = media,
 			contentDescription = stringResource(R.string.try_it_out_image_content_description),
-			contentScale = ContentScale.Crop,
+			contentScale = ContentScale.Fit,
 			modifier = boxModifier,
 		)
 	} else {
@@ -266,7 +264,7 @@ private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifie
 	AndroidView(
 		modifier = modifier
 			.fillMaxWidth()
-			.heightIn(min = 48.dp),
+			.height(dimensionResource(R.dimen.try_it_out_field_height)),
 		factory = { context ->
 			EditText(context).apply {
 				this.hint = hint
