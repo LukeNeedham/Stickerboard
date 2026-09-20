@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,15 +41,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
@@ -65,7 +64,7 @@ import com.lukeneedham.stickerboard.R
 /** Everything the settings page needs to render - plain state, matching the rest of the app. */
 data class SettingsUiState(
 	val keyboardEnabled: Boolean = false,
-	val tryItOutMedia: List<Uri> = emptyList(),
+	val tryItOutLastMedia: Uri? = null,
 	val showDebugCard: Boolean = false,
 )
 
@@ -111,7 +110,7 @@ fun SettingsPage(
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
 			EnableKeyboardCard(state.keyboardEnabled, onEnableKeyboard)
-			TryItOutCard(state.tryItOutMedia, onTryItOutMediaReceived)
+			TryItOutCard(state.tryItOutLastMedia, onTryItOutMediaReceived)
 			ViewStickersCard(onViewStickers)
 			if (state.showDebugCard) {
 				DebugCard(onOpenDebug)
@@ -210,23 +209,49 @@ internal fun KeyboardStatusIndicator(enabled: Boolean) {
 }
 
 @Composable
-private fun TryItOutCard(media: List<Uri>, onMediaReceived: (Uri) -> Unit) {
+private fun TryItOutCard(lastMedia: Uri?, onMediaReceived: (Uri) -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_send, stringResource(R.string.try_it_out_heading))
 		CardBody(stringResource(R.string.try_it_out_info))
-		TryItOutInputField(onMediaReceived)
-		if (media.isNotEmpty()) {
-			LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				items(media) { uri ->
-					AsyncImage(
-						model = uri,
-						contentDescription = stringResource(R.string.try_it_out_image_content_description),
-						modifier = Modifier
-							.size(dimensionResource(R.dimen.try_it_out_image_size))
-							.clip(RoundedCornerShape(12.dp)),
-					)
-				}
-			}
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.spacedBy(8.dp),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			TryItOutInputField(onMediaReceived, modifier = Modifier.weight(1f))
+			TryItOutMediaBox(lastMedia)
+		}
+	}
+}
+
+/** Shows the last sticker sent through [TryItOutInputField], or an empty placeholder before the
+ * first one arrives. */
+@Composable
+private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
+	val boxModifier = modifier.width(dimensionResource(R.dimen.try_it_out_media_box_width))
+	if (media != null) {
+		// An image's height can safely follow its width via aspect ratio - unlike text, it
+		// won't get clipped when the user scales up their system font size.
+		AsyncImage(
+			model = media,
+			contentDescription = stringResource(R.string.try_it_out_image_content_description),
+			contentScale = ContentScale.Fit,
+			modifier = boxModifier.aspectRatio(1f),
+		)
+	} else {
+		Box(
+			modifier = boxModifier
+				.background(MaterialTheme.colorScheme.surfaceVariant)
+				.padding(vertical = dimensionResource(R.dimen.card_margin)),
+			contentAlignment = Alignment.Center,
+		) {
+			Text(
+				text = stringResource(R.string.try_it_out_placeholder_text),
+				style = MaterialTheme.typography.labelSmall,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				textAlign = TextAlign.Center,
+				modifier = Modifier.padding(horizontal = 4.dp),
+			)
 		}
 	}
 }
@@ -240,12 +265,13 @@ private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifie
 	val backgroundColor = MaterialTheme.colorScheme.surfaceVariant.toArgb()
 	val paddingPx = with(LocalDensity.current) { dimensionResource(R.dimen.card_margin).roundToPx() }
 	AndroidView(
-		modifier = modifier
-			.fillMaxWidth()
-			.heightIn(min = 48.dp),
+		modifier = modifier.fillMaxWidth(),
 		factory = { context ->
 			EditText(context).apply {
 				this.hint = hint
+				// Sizes via its (sp-scaled) text plus padding, rather than a fixed dp height,
+				// so it grows correctly when the user scales up their system font size.
+				textSize = 16f // mirrors @dimen/text_size_body
 				setTextColor(textColor)
 				setHintTextColor(hintColor)
 				setPadding(paddingPx, paddingPx, paddingPx, paddingPx)

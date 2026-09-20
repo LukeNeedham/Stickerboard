@@ -51,6 +51,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 	}
 
 	fun onTryItOutMediaReceived(uri: Uri) {
-		_uiState.update { it.copy(tryItOutMedia = listOf(uri) + it.tryItOutMedia) }
+		_uiState.update { it.copy(tryItOutLastMedia = uri) }
 	}
 }
