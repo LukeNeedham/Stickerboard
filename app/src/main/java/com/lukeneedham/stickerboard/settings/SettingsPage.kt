@@ -8,7 +8,9 @@ import android.net.Uri
 import android.provider.Settings
 import android.widget.EditText
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -22,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -32,6 +35,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -51,6 +55,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -58,6 +64,7 @@ import com.lukeneedham.stickerboard.R
 
 /** Everything the settings page needs to render - plain state, matching the rest of the app. */
 data class SettingsUiState(
+	val keyboardEnabled: Boolean = false,
 	val tryItOutMedia: List<Uri> = emptyList(),
 	val showDebugCard: Boolean = false,
 )
@@ -103,7 +110,7 @@ fun SettingsPage(
 				.padding(horizontal = 20.dp, vertical = 8.dp),
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
-			EnableKeyboardCard(onEnableKeyboard)
+			EnableKeyboardCard(state.keyboardEnabled, onEnableKeyboard)
 			TryItOutCard(state.tryItOutMedia, onTryItOutMediaReceived)
 			ViewStickersCard(onViewStickers)
 			if (state.showDebugCard) {
@@ -162,10 +169,44 @@ internal fun CardBody(text: String) {
 }
 
 @Composable
-private fun EnableKeyboardCard(onEnableKeyboard: () -> Unit) {
+private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_settings, stringResource(R.string.enable_keyboard_heading))
-		FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.SpaceBetween,
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			KeyboardStatusIndicator(keyboardEnabled)
+			if (keyboardEnabled) {
+				TextButton(onClick = onEnableKeyboard) {
+					Text(stringResource(R.string.enable_keyboard_settings_button))
+				}
+			}
+		}
+		if (!keyboardEnabled) {
+			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
+		}
+	}
+}
+
+/** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
+@Composable
+internal fun KeyboardStatusIndicator(enabled: Boolean) {
+	val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+	val label = stringResource(
+		if (enabled) {
+			R.string.keyboard_status_enabled
+		} else {
+			R.string.keyboard_status_not_enabled
+		},
+	)
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(8.dp),
+	) {
+		Box(Modifier.size(10.dp).background(color, CircleShape))
+		Text(text = label, style = MaterialTheme.typography.bodyMedium, color = color)
 	}
 }
 
@@ -293,6 +334,8 @@ fun SettingsRoute(
 ) {
 	val context = LocalContext.current
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshKeyboardEnabled() }
 
 	SettingsPage(
 		state = uiState,

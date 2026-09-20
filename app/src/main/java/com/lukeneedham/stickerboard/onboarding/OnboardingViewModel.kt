@@ -1,19 +1,18 @@
 package com.lukeneedham.stickerboard.onboarding
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.isKeyboardEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -99,11 +98,4 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 	fun onFinish() {
 		prefs.onboardingComplete = true
 	}
-}
-
-/** Whether the StickerBoard keyboard is enabled in the system's input method settings. */
-private fun isKeyboardEnabled(context: Context): Boolean {
-	val inputMethodManager =
-		context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-	return inputMethodManager.enabledInputMethodList.any { it.packageName == context.packageName }
 }
