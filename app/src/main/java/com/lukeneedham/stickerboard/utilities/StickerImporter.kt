@@ -33,9 +33,9 @@ private const val BUFFER_SIZE = 64 * 1024 // 64 KB
  * keyboard's pull-to-refresh.
  */
 fun hasStickerSourceChanged(context: Context, stickerDirPath: String): Boolean {
-	val leafNodes = walkLeafFiles(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
+	val sourceStickers = walkStickers(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
 	val lastSignature = AppPreferences(context).stickerDirSignature
-	return signatureOf(leafNodes) != lastSignature
+	return signatureOf(sourceStickers) != lastSignature
 }
 
 /**
@@ -57,36 +57,52 @@ suspend fun reimportStickersIfChanged(context: Context, toaster: Toaster, sticke
 	StickerImporter(context, toaster).importStickers(stickerDirPath)
 }
 
+/**
+ * A sticker file found under the source tree, paired with the pack it belongs to - the name of
+ * its immediate parent directory, or, for stickers nested several directories deep, the full
+ * chain of directory names from just below the sticker root down to its parent, joined with "-"
+ * (e.g. root/A/B/C/sticker.png becomes pack "A-B-C"). A sticker sitting directly in the sticker
+ * root (no parent directory of its own) falls into a pack named after the root itself.
+ */
+private data class SourceSticker(val file: DocumentFile, val packName: String)
+
 /** An order-independent fingerprint of a set of source files, sensitive to any file being added,
- * removed, resized, or having its modified time changed. */
-private fun signatureOf(leafNodes: Set<DocumentFile>): String {
+ * removed, resized, or having its modified time changed, or moved to a different pack. */
+private fun signatureOf(sourceStickers: List<SourceSticker>): String {
 	val digest = MessageDigest.getInstance("SHA-256")
-	leafNodes
-		.map { "${it.parentFile?.name}/${it.name}:${it.length()}:${it.lastModified()}" }
+	sourceStickers
+		.map { "${it.packName}/${it.file.name}:${it.file.length()}:${it.file.lastModified()}" }
 		.sorted()
 		.forEach { digest.update(it.toByteArray()) }
 	return digest.digest().joinToString("") { "%02x".format(it) }
 }
 
 /**
- * Get a set of leaf (file, not directory) DocumentFiles under rootNode, capped at [MAX_FILES] + 1.
+ * Walk every file under rootNode, however deeply nested, capped at [MAX_FILES] + 1. Each result
+ * carries the pack name derived from the full chain of directories between rootNode and the file.
  */
-private fun walkLeafFiles(rootNode: DocumentFile?): Set<DocumentFile> {
-	val leafNodes = mutableSetOf<DocumentFile>()
-	val stack = ArrayDeque<DocumentFile?>()
-	rootNode?.let { stack.addLast(it) }
-	while (stack.isNotEmpty() && leafNodes.size < MAX_FILES) {
-		val currentFile = stack.removeLast()
-		currentFile?.listFiles()?.forEach { file ->
+private fun walkStickers(rootNode: DocumentFile?): List<SourceSticker> {
+	if (rootNode == null) return emptyList()
+	val rootName = rootNode.name ?: "__default__"
+	val sourceStickers = mutableListOf<SourceSticker>()
+	// Each stack entry is a directory paired with the pack name that any sticker directly inside
+	// it belongs to.
+	val stack = ArrayDeque<Pair<DocumentFile, String>>()
+	stack.addLast(rootNode to rootName)
+	while (stack.isNotEmpty() && sourceStickers.size < MAX_FILES) {
+		val (currentDir, packName) = stack.removeLast()
+		currentDir.listFiles().forEach { file ->
 			if (file.isFile) {
-				leafNodes.add(file)
-				if (leafNodes.size > MAX_FILES) return leafNodes
+				sourceStickers.add(SourceSticker(file, packName))
+				if (sourceStickers.size > MAX_FILES) return sourceStickers
 			} else if (file.isDirectory) {
-				stack.addLast(file)
+				val childDirName = file.name ?: "__default__"
+				val childPackName = if (currentDir == rootNode) childDirName else "$packName-$childDirName"
+				stack.addLast(file to childPackName)
 			}
 		}
 	}
-	return leafNodes
+	return sourceStickers
 }
 
 /**
@@ -135,12 +151,12 @@ class StickerImporter(
 		}
 
 		XLog.i("Walking $stickerDirPath...")
-		val leafNodes = walkLeafFiles(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
-		if (leafNodes.size > MAX_FILES) {
+		val sourceStickers = walkStickers(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
+		if (sourceStickers.size > MAX_FILES) {
 			XLog.w("Found more than $MAX_FILES stickers, notify user")
 			toaster.setMessage(context.getString(R.string.imported_031, MAX_FILES))
 		}
-		AppPreferences(context).stickerDirSignature = signatureOf(leafNodes)
+		AppPreferences(context).stickerDirSignature = signatureOf(sourceStickers)
 
 		withContext(Dispatchers.Main) {
 			progressBar?.isIndeterminate = false
@@ -149,11 +165,11 @@ class StickerImporter(
 		// Perform concurrent file copy operations
 		XLog.i("Perform concurrent file copy operations...")
 		withContext(Dispatchers.IO) {
-			leafNodes.take(MAX_FILES).mapIndexed { index, file ->
+			sourceStickers.take(MAX_FILES).mapIndexed { index, sourceSticker ->
 				async {
-					importSticker(file)
+					importSticker(sourceSticker)
 					mainHandler.post {
-						updateProgressBar(index + 1, leafNodes.size)
+						updateProgressBar(index + 1, sourceStickers.size)
 					}
 				}
 			}.awaitAll()
@@ -163,45 +179,46 @@ class StickerImporter(
 			progressBar?.visibility = View.GONE
 		}
 
-		XLog.i("Copied ${totalStickers.get()} / ${leafNodes.size}")
+		XLog.i("Copied ${totalStickers.get()} / ${sourceStickers.size}")
 
 		return totalStickers.get()
 	}
 
 	/**
-	 * Copies stickers from source to internal storage
+	 * Copies a sticker from source to internal storage, into the directory for its pack
 	 *
-	 * @param sticker sticker to copy over
+	 * @param sourceSticker sticker to copy over, and the pack it belongs to
 	 *
 	 * @return 1 if sticker imported successfully else 0
 	 */
-	private suspend fun importSticker(sticker: DocumentFile) {
-		val parentDir = sticker.parentFile?.name ?: "__default__"
-		val packSize = packSizes[parentDir] ?: 0
+	private suspend fun importSticker(sourceSticker: SourceSticker) {
+		val sticker = sourceSticker.file
+		val packName = sourceSticker.packName
+		val packSize = packSizes[packName] ?: 0
 		if (packSize > MAX_PACK_SIZE) {
-			XLog.w("Found more than $MAX_PACK_SIZE stickers in '$parentDir', notify user")
-			toaster.setMessage(context.getString(R.string.imported_032, MAX_PACK_SIZE, parentDir))
+			XLog.w("Found more than $MAX_PACK_SIZE stickers in '$packName', notify user")
+			toaster.setMessage(context.getString(R.string.imported_032, MAX_PACK_SIZE, packName))
 			return
 		}
 		if (sticker.type !in supportedMimes) {
-			XLog.w("'$parentDir/${sticker.name}' is not a supported mimetype (${sticker.type}), notify user")
+			XLog.w("'$packName/${sticker.name}' is not a supported mimetype (${sticker.type}), notify user")
 			toaster.setMessage(
 				context.getString(
 					R.string.imported_033,
 					sticker.type,
-					parentDir,
+					packName,
 					sticker.name
 				)
 			)
 			return
 		}
-		packSizes[parentDir] = packSize + 1
+		packSizes[packName] = packSize + 1
 
 		val contentResolver = context.contentResolver
 		try {
 			val inputStream = contentResolver.openInputStream(sticker.uri)
 			if (inputStream != null) {
-				val destSticker = File(context.filesDir, "stickers/$parentDir/${sticker.name}")
+				val destSticker = File(context.filesDir, "stickers/$packName/${sticker.name}")
 				destSticker.parentFile?.mkdirs()
 
 				withContext(Dispatchers.IO) {
@@ -217,7 +234,7 @@ class StickerImporter(
 				totalStickers.incrementAndGet()
 			}
 		} catch (e: IOException) {
-			XLog.e("There was an IOException when copying '${parentDir}/${sticker.name}'!")
+			XLog.e("There was an IOException when copying '${packName}/${sticker.name}'!")
 			XLog.e(e)
 		}
 	}

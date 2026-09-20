@@ -37,7 +37,7 @@ app - built from a folder of images you choose yourself. It started life as a fo
 
 - **Wide format support**: gif, png, webp, jpeg, heif and svg images, plus 3gpp, mp4, mkv and webm video.
 
-- **Your own sticker folder**: point StickerBoard at any folder on your device (chosen with the system folder picker) and it copies the contents in, with every sub-folder becoming a sticker pack. Supports up to 4096 stickers in total, 128 per pack.
+- **Your own sticker folder**: point StickerBoard at any folder on your device (chosen with the system folder picker) and it copies the contents in, with every sub-folder becoming a sticker pack. Sub-folders can be nested arbitrarily deep - a pack's name is built from the chain of folder names leading to it, e.g. `A/B/C` becomes pack "A-B-C". Supports up to 4096 stickers in total, 128 per pack.
 
 - **Stays in sync with your folder**: pull down on the keyboard, or on the in-app Stickers page, to re-scan your source folder for changes - only what's actually changed gets re-copied.
 
