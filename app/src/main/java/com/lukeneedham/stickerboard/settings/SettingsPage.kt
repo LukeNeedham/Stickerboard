@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -227,19 +228,21 @@ private fun TryItOutCard(lastMedia: Uri?, onMediaReceived: (Uri) -> Unit) {
  * first one arrives. */
 @Composable
 private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
-	val boxModifier = modifier
-		.width(dimensionResource(R.dimen.try_it_out_media_box_width))
-		.height(dimensionResource(R.dimen.try_it_out_field_height))
+	val boxModifier = modifier.width(dimensionResource(R.dimen.try_it_out_media_box_width))
 	if (media != null) {
+		// An image's height can safely follow its width via aspect ratio - unlike text, it
+		// won't get clipped when the user scales up their system font size.
 		AsyncImage(
 			model = media,
 			contentDescription = stringResource(R.string.try_it_out_image_content_description),
 			contentScale = ContentScale.Fit,
-			modifier = boxModifier,
+			modifier = boxModifier.aspectRatio(1f),
 		)
 	} else {
 		Box(
-			modifier = boxModifier.background(MaterialTheme.colorScheme.surfaceVariant),
+			modifier = boxModifier
+				.background(MaterialTheme.colorScheme.surfaceVariant)
+				.padding(vertical = dimensionResource(R.dimen.card_margin)),
 			contentAlignment = Alignment.Center,
 		) {
 			Text(
@@ -247,7 +250,7 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 				style = MaterialTheme.typography.labelSmall,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				textAlign = TextAlign.Center,
-				modifier = Modifier.padding(4.dp),
+				modifier = Modifier.padding(horizontal = 4.dp),
 			)
 		}
 	}
@@ -262,12 +265,13 @@ private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifie
 	val backgroundColor = MaterialTheme.colorScheme.surfaceVariant.toArgb()
 	val paddingPx = with(LocalDensity.current) { dimensionResource(R.dimen.card_margin).roundToPx() }
 	AndroidView(
-		modifier = modifier
-			.fillMaxWidth()
-			.height(dimensionResource(R.dimen.try_it_out_field_height)),
+		modifier = modifier.fillMaxWidth(),
 		factory = { context ->
 			EditText(context).apply {
 				this.hint = hint
+				// Sizes via its (sp-scaled) text plus padding, rather than a fixed dp height,
+				// so it grows correctly when the user scales up their system font size.
+				textSize = 16f // mirrors @dimen/text_size_body
 				setTextColor(textColor)
 				setHintTextColor(hintColor)
 				setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
