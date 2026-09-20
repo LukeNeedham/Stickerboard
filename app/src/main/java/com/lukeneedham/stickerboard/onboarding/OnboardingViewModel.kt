@@ -3,7 +3,6 @@ package com.lukeneedham.stickerboard.onboarding
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
@@ -12,7 +11,7 @@ import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.preference.PreferenceManager
+import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
 import kotlinx.coroutines.Dispatchers
@@ -28,18 +27,14 @@ import kotlinx.coroutines.withContext
  * the keyboard is enabled, and importing stickers from a chosen source directory.
  */
 class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
-	private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
+	private val prefs = AppPreferences(application)
 	private val toaster = Toaster()
 
 	private val _uiState = MutableStateFlow(
 		OnboardingUiState(
 			keyboardEnabled = isKeyboardEnabled(application),
 			isImporting = false,
-			loadedStickerCount = if (hasChosenStickerDir(sharedPreferences)) {
-				sharedPreferences.getInt("numStickersImported", 0)
-			} else {
-				null
-			},
+			loadedStickerCount = if (prefs.stickerDirPath != null) prefs.numStickersImported else null,
 		),
 	)
 	val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
@@ -79,12 +74,10 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 			context.contentResolver.takePersistableUriPermission(uri, takeFlags)
 		}
 		val stickerDirPath = uri.toString()
-		sharedPreferences.edit()
-			.putString("stickerDirPath", stickerDirPath)
-			.putLong("lastUpdateEpochMillis", System.currentTimeMillis())
-			.putString("recentCache", "")
-			.putString("compatCache", "")
-			.apply()
+		prefs.stickerDirPath = stickerDirPath
+		prefs.lastUpdateEpochMillis = System.currentTimeMillis()
+		prefs.recentCache = ""
+		prefs.compatCache = ""
 		refreshRequirements()
 		importStickers(stickerDirPath)
 	}
@@ -97,14 +90,14 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 		viewModelScope.launch(Dispatchers.IO) {
 			val totalStickers = StickerImporter(getApplication(), toaster).importStickers(stickerDirPath)
 			withContext(Dispatchers.Main) {
-				sharedPreferences.edit().putInt("numStickersImported", totalStickers).apply()
+				prefs.numStickersImported = totalStickers
 				_uiState.update { it.copy(isImporting = false, loadedStickerCount = totalStickers) }
 			}
 		}
 	}
 
 	fun onFinish() {
-		sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
+		prefs.onboardingComplete = true
 	}
 }
 
@@ -114,7 +107,3 @@ private fun isKeyboardEnabled(context: Context): Boolean {
 		context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 	return inputMethodManager.enabledInputMethodList.any { it.packageName == context.packageName }
 }
-
-/** Whether a sticker source directory has been chosen. */
-private fun hasChosenStickerDir(sharedPreferences: SharedPreferences): Boolean =
-	sharedPreferences.contains("stickerDirPath")

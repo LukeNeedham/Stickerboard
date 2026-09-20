@@ -15,9 +15,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.NavDisplay
-import androidx.preference.PreferenceManager
 import com.lukeneedham.stickerboard.crash.CrashDetailRoute
 import com.lukeneedham.stickerboard.crash.CrashesRoute
+import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.debug.DebugRoute
 import com.lukeneedham.stickerboard.gallery.GalleryRoute
 import com.lukeneedham.stickerboard.navigation.Route
@@ -99,12 +99,12 @@ fun StickerBoardApp() {
  * users aren't sent through it retroactively.
  */
 private fun isOnboardingComplete(context: Context): Boolean {
-	val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-	if (sharedPreferences.getBoolean("onboardingComplete", false)) {
+	val prefs = AppPreferences(context)
+	if (prefs.onboardingComplete) {
 		return true
 	}
-	if (sharedPreferences.contains("stickerDirPath")) {
-		sharedPreferences.edit().putBoolean("onboardingComplete", true).apply()
+	if (prefs.stickerDirPath != null) {
+		prefs.onboardingComplete = true
 		return true
 	}
 	return false

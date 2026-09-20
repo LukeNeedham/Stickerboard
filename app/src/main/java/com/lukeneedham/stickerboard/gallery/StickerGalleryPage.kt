@@ -77,7 +77,6 @@ import java.io.File
 fun StickerGalleryPage(
 	items: List<BoardItem>?,
 	columns: Int,
-	vibrate: Boolean,
 	stickerDirDisplayName: String,
 	lastUpdateDate: String,
 	isRefreshing: Boolean,
@@ -164,11 +163,9 @@ fun StickerGalleryPage(
 							is BoardItem.EmptyMessage -> GallerySectionEmptyMessage(item.message)
 							is BoardItem.Sticker -> GalleryStickerCell(
 								file = item.file,
-								vibrate = vibrate,
 								onClick = { previewSticker = item.file },
 							)
 							is BoardItem.AddPhoto -> GalleryAddPhotoCell(
-								vibrate = vibrate,
 								onClick = { onAddPhotoClick(item.packName) },
 							)
 						}
@@ -347,14 +344,14 @@ private fun GallerySectionEmptyMessage(text: String) {
 }
 
 @Composable
-private fun GalleryStickerCell(file: File, vibrate: Boolean, onClick: () -> Unit) {
+private fun GalleryStickerCell(file: File, onClick: () -> Unit) {
 	val haptic = LocalHapticFeedback.current
 	Box(
 		modifier = Modifier
 			.padding(4.dp)
 			.aspectRatio(1f)
 			.clickable {
-				if (vibrate) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+				haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 				onClick()
 			},
 	) {
@@ -369,7 +366,7 @@ private fun GalleryStickerCell(file: File, vibrate: Boolean, onClick: () -> Unit
 /** Same footprint as a sticker cell, so the grid stays aligned, but the tappable circle itself is
  * small and centered - a sticker-sized button here would dwarf the actual stickers around it. */
 @Composable
-private fun GalleryAddPhotoCell(vibrate: Boolean, onClick: () -> Unit) {
+private fun GalleryAddPhotoCell(onClick: () -> Unit) {
 	val haptic = LocalHapticFeedback.current
 	Box(
 		modifier = Modifier
@@ -383,7 +380,7 @@ private fun GalleryAddPhotoCell(vibrate: Boolean, onClick: () -> Unit) {
 				.clip(CircleShape)
 				.background(MaterialTheme.colorScheme.surfaceVariant)
 				.clickable {
-					if (vibrate) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 					onClick()
 				},
 			contentAlignment = Alignment.Center,
@@ -484,7 +481,6 @@ fun GalleryRoute(
 	StickerGalleryPage(
 		items = uiState.items,
 		columns = viewModel.columns,
-		vibrate = viewModel.vibrate,
 		stickerDirDisplayName = uiState.stickerDirDisplayName,
 		lastUpdateDate = uiState.lastUpdateDate,
 		isRefreshing = uiState.isRefreshing,

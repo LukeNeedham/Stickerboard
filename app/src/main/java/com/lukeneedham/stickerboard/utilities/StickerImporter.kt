@@ -6,9 +6,9 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.documentfile.provider.DocumentFile
-import androidx.preference.PreferenceManager
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.data.AppPreferences
 
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.Dispatchers
@@ -25,10 +25,6 @@ private const val MAX_FILES = 4096
 private const val MAX_PACK_SIZE = 128
 private const val BUFFER_SIZE = 64 * 1024 // 64 KB
 
-/** SharedPreferences key holding a fingerprint of the sticker source directory as of the most
- * recent successful [StickerImporter.importStickers] call - see [hasStickerSourceChanged]. */
-private const val SOURCE_SIGNATURE_PREF_KEY = "stickerDirSignature"
-
 /**
  * True if [stickerDirPath]'s contents differ from what was imported into internal storage last
  * time [StickerImporter.importStickers] ran against it - e.g. stickers were added, removed, or
@@ -38,8 +34,7 @@ private const val SOURCE_SIGNATURE_PREF_KEY = "stickerDirSignature"
  */
 fun hasStickerSourceChanged(context: Context, stickerDirPath: String): Boolean {
 	val leafNodes = walkLeafFiles(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
-	val lastSignature =
-		PreferenceManager.getDefaultSharedPreferences(context).getString(SOURCE_SIGNATURE_PREF_KEY, null)
+	val lastSignature = AppPreferences(context).stickerDirSignature
 	return signatureOf(leafNodes) != lastSignature
 }
 
@@ -145,9 +140,7 @@ class StickerImporter(
 			XLog.w("Found more than $MAX_FILES stickers, notify user")
 			toaster.setMessage(context.getString(R.string.imported_031, MAX_FILES))
 		}
-		PreferenceManager.getDefaultSharedPreferences(context).edit()
-			.putString(SOURCE_SIGNATURE_PREF_KEY, signatureOf(leafNodes))
-			.apply()
+		AppPreferences(context).stickerDirSignature = signatureOf(leafNodes)
 
 		withContext(Dispatchers.Main) {
 			progressBar?.isIndeterminate = false
