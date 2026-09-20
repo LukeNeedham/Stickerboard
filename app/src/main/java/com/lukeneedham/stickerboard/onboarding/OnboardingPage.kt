@@ -166,7 +166,7 @@ private fun OnboardingKeyboardPage(keyboardEnabled: Boolean, onEnableKeyboard: (
 	OnboardingPageContainer {
 		SettingsCard {
 			OnboardingHeading(stringResource(R.string.onboarding_keyboard_heading))
-			CardBody(stringResource(R.string.onboarding_keyboard_text))
+			CardBody(stringResource(R.string.enable_keyboard_info))
 			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
 			KeyboardStatusIndicator(keyboardEnabled)
 		}

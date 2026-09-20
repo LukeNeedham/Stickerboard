@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +36,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -179,12 +179,11 @@ private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () ->
 		) {
 			KeyboardStatusIndicator(keyboardEnabled)
 			if (keyboardEnabled) {
-				TextButton(onClick = onEnableKeyboard) {
-					Text(stringResource(R.string.enable_keyboard_settings_button))
-				}
+				SmallActionButton(stringResource(R.string.enable_keyboard_settings_button), onEnableKeyboard)
 			}
 		}
 		if (!keyboardEnabled) {
+			CardBody(stringResource(R.string.enable_keyboard_info))
 			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
 		}
 	}
@@ -318,6 +317,20 @@ internal fun TonalActionButton(
 		modifier = modifier.fillMaxWidth(),
 	) {
 		Text(text)
+	}
+}
+
+/** A compact, content-width button - for inline use alongside other content, unlike the
+ * full-width [FilledActionButton]/[TonalActionButton] used for a card's primary action. */
+@Composable
+internal fun SmallActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+	FilledTonalButton(
+		onClick = onClick,
+		shape = RoundedCornerShape(12.dp),
+		contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+		modifier = modifier,
+	) {
+		Text(text, style = MaterialTheme.typography.labelLarge)
 	}
 }
 
