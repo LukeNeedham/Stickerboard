@@ -2,9 +2,9 @@
 	<!--
 		Base application theme. Only matters for the brief window chrome that exists before Compose
 		draws (MainActivity's setContent, KeyboardController's ComposeView) - no classic Android View
-		in the app is actually themed by these attributes. Colors are literal, mirroring
-		StickerBoardSettingsTheme's light Material 3 ColorScheme (settings/SettingsTheme.kt) by hand;
-		see values-night/styles.xml for the dark-mode override. Deliberately no
+		in the app is actually themed by these attributes, and real theming (including light/dark) is
+		entirely Compose's job (settings/SettingsTheme.kt, keyboard/AppTheme.kt), so this doesn't try
+		to track it - it's a single static placeholder. Deliberately no
 		android:statusBarColor/navigationBarColor here - the app is edge-to-edge
 		(MainActivity.enableEdgeToEdge()), with each page's own composable padding around system bars.
 	-->

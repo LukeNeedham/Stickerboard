@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -52,6 +53,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -99,22 +102,6 @@ private const val MIN_REFRESH_INDICATOR_MS = 500L
 
 /** How long the [StatusBanner] (e.g. "Cannot send image") stays on screen before auto-dismissing. */
 private const val STATUS_MESSAGE_DURATION_MS = 2500L
-
-// Keyboard layout dimensions - kept as plain Compose constants (rather than dimens.xml) so every
-// value the keyboard's own UI uses lives in code, alongside the composables that use it.
-private val ContentMargin = 10.dp
-private val CardMargin = 16.dp
-private val ContentMarginTop = 8.dp
-private val ContentMarginBottom = 4.dp
-private val Corner = 16.dp
-private val PackDimens = 40.dp
-private val NavIconPadding = 6.dp
-private val NavButtonIconPadding = 8.dp
-private val StickerPadding = 4.dp
-private val QwertyKeyIconSize = 20.dp
-private val QwertyBottomMargin = 10.dp
-private val SectionHeaderTopMargin = 14.dp
-private val PullBarHeight = 44.dp
 
 /** Which content is currently showing below the pull bar. */
 private sealed interface Mode {
@@ -202,105 +189,107 @@ fun KeyboardView(
 	}
 
 	val density = LocalDensity.current
-	Box(
-		Modifier
-			.fillMaxWidth()
-			.height(with(density) { maxKeyboardHeightPx.toDp() }),
-	) {
-		Column(
+	AppTheme {
+		Box(
 			Modifier
-				.align(Alignment.BottomStart)
 				.fillMaxWidth()
-				.height(with(density) { keyboardHeightPx.toDp() })
-				.background(KeyboardColors.bg()),
+				.height(with(density) { maxKeyboardHeightPx.toDp() }),
 		) {
-			PullBar(
-				mode = mode,
-				onOpenSettings = { dataSource.onOpenSettings() },
-				onHeightDrag = { dragAmountPx ->
-					val newHeight = (keyboardHeightPx - dragAmountPx)
-						.roundToInt()
-						.coerceIn(minKeyboardHeightPx, maxKeyboardHeightPx)
-					keyboardHeightPx = newHeight
-					dataSource.onKeyboardHeightChanged(newHeight)
-				},
-				onHeightDragEnd = { dataSource.onKeyboardHeightSettled(keyboardHeightPx) },
-				onBackOrClose = {
-					when (val current = mode) {
-						is Mode.Preview -> mode = current.returnTo
-						Mode.Search -> mode = Mode.Board
-						Mode.Board -> dataSource.onClose()
-					}
-				},
-				onSearchOrSend = {
-					when (val current = mode) {
-						is Mode.Preview -> {
-							sendSticker(current.sticker)
-							mode = current.returnTo
+			Column(
+				Modifier
+					.align(Alignment.BottomStart)
+					.fillMaxWidth()
+					.height(with(density) { keyboardHeightPx.toDp() })
+					.background(LocalAppTheme.current.bg),
+			) {
+				PullBar(
+					mode = mode,
+					onOpenSettings = { dataSource.onOpenSettings() },
+					onHeightDrag = { dragAmountPx ->
+						val newHeight = (keyboardHeightPx - dragAmountPx)
+							.roundToInt()
+							.coerceIn(minKeyboardHeightPx, maxKeyboardHeightPx)
+						keyboardHeightPx = newHeight
+						dataSource.onKeyboardHeightChanged(newHeight)
+					},
+					onHeightDragEnd = { dataSource.onKeyboardHeightSettled(keyboardHeightPx) },
+					onBackOrClose = {
+						when (val current = mode) {
+							is Mode.Preview -> mode = current.returnTo
+							Mode.Search -> mode = Mode.Board
+							Mode.Board -> dataSource.onClose()
 						}
-						Mode.Search -> jumpToSection(activeSection)
-						Mode.Board -> mode = Mode.Search
-					}
-				},
-			)
-			Column(Modifier.weight(1f).fillMaxWidth()) {
-				if (mode is Mode.Board) {
-					PackNavRow(
-						packs = packNavIcons,
-						activeSection = activeSection,
-						onPackClick = { jumpToSection(it) },
-					)
-				}
-				Box(Modifier.weight(1f).fillMaxWidth()) {
-					when (val current = mode) {
-						Mode.Board -> BoardGrid(
-							items = boardItems,
-							columns = iconsPerX,
-							gridState = gridState,
-							keyboardHeightPx = keyboardHeightPx,
-							isRefreshing = isRefreshingStickers,
-							onStickerClick = { sendSticker(it) },
-							onStickerLongClick = { mode = Mode.Preview(it, Mode.Board) },
-							onZoomStep = { delta ->
-								iconsPerX = dataSource.changeIconsPerX(delta)
-								refreshBoard()
-							},
-							onRefresh = { refreshStickers() },
-						)
-						Mode.Search -> SearchContent(
-							query = searchQuery,
-							onQueryChange = { query ->
-								searchQuery = query
-								searchResults = dataSource.searchStickers(query)
-							},
-							results = searchResults,
-							onStickerClick = { sendSticker(it) },
-							onStickerLongClick = { mode = Mode.Preview(it, Mode.Search) },
-						)
-						is Mode.Preview -> PreviewContent(
-							sticker = current.sticker,
-							onSend = {
+					},
+					onSearchOrSend = {
+						when (val current = mode) {
+							is Mode.Preview -> {
 								sendSticker(current.sticker)
 								mode = current.returnTo
-							},
+							}
+							Mode.Search -> jumpToSection(activeSection)
+							Mode.Board -> mode = Mode.Search
+						}
+					},
+				)
+				Column(Modifier.weight(1f).fillMaxWidth()) {
+					if (mode is Mode.Board) {
+						PackNavRow(
+							packs = packNavIcons,
+							activeSection = activeSection,
+							onPackClick = { jumpToSection(it) },
 						)
+					}
+					Box(Modifier.weight(1f).fillMaxWidth()) {
+						when (val current = mode) {
+							Mode.Board -> BoardGrid(
+								items = boardItems,
+								columns = iconsPerX,
+								gridState = gridState,
+								keyboardHeightPx = keyboardHeightPx,
+								isRefreshing = isRefreshingStickers,
+								onStickerClick = { sendSticker(it) },
+								onStickerLongClick = { mode = Mode.Preview(it, Mode.Board) },
+								onZoomStep = { delta ->
+									iconsPerX = dataSource.changeIconsPerX(delta)
+									refreshBoard()
+								},
+								onRefresh = { refreshStickers() },
+							)
+							Mode.Search -> SearchContent(
+								query = searchQuery,
+								onQueryChange = { query ->
+									searchQuery = query
+									searchResults = dataSource.searchStickers(query)
+								},
+								results = searchResults,
+								onStickerClick = { sendSticker(it) },
+								onStickerLongClick = { mode = Mode.Preview(it, Mode.Search) },
+							)
+							is Mode.Preview -> PreviewContent(
+								sticker = current.sticker,
+								onSend = {
+									sendSticker(current.sticker)
+									mode = current.returnTo
+								},
+							)
+						}
 					}
 				}
 			}
-		}
 
-		val statusMessage: String? = dataSource.statusMessage.value
-		if (statusMessage != null) {
-			LaunchedEffect(statusMessage) {
-				delay(STATUS_MESSAGE_DURATION_MS)
-				dataSource.onStatusMessageShown()
+			val statusMessage: String? = dataSource.statusMessage.value
+			if (statusMessage != null) {
+				LaunchedEffect(statusMessage) {
+					delay(STATUS_MESSAGE_DURATION_MS)
+					dataSource.onStatusMessageShown()
+				}
+				StatusBanner(
+					message = statusMessage,
+					modifier = Modifier
+						.align(Alignment.BottomCenter)
+						.padding(bottom = 10.dp),
+				)
 			}
-			StatusBanner(
-				message = statusMessage,
-				modifier = Modifier
-					.align(Alignment.BottomCenter)
-					.padding(bottom = ContentMargin),
-			)
 		}
 	}
 }
@@ -313,16 +302,16 @@ fun KeyboardView(
 private fun StatusBanner(message: String, modifier: Modifier = Modifier) {
 	Box(
 		modifier
-			.clip(RoundedCornerShape(Corner))
-			.background(KeyboardColors.accent)
+			.clip(RoundedCornerShape(16.dp))
+			.background(LocalAppTheme.current.accent)
 			.padding(
-				horizontal = CardMargin,
-				vertical = ContentMargin,
+				horizontal = 16.dp,
+				vertical = 10.dp,
 			),
 	) {
 		BasicText(
 			text = message,
-			style = TextStyle(color = KeyboardColors.onAccent, fontSize = 16.sp),
+			style = TextStyle(color = LocalAppTheme.current.onAccent, fontSize = 16.sp),
 		)
 	}
 }
@@ -341,7 +330,7 @@ private fun PullBar(
 	Box(
 		Modifier
 			.fillMaxWidth()
-			.height(PullBarHeight)
+			.height(44.dp)
 			.pointerInput(Unit) {
 				detectVerticalDragGestures(onDragEnd = onHeightDragEnd) { change, dragAmount ->
 					change.consume()
@@ -360,19 +349,19 @@ private fun PullBar(
 			onClick = onBackOrClose,
 			modifier = Modifier
 				.align(Alignment.CenterStart)
-				.padding(start = StickerPadding),
+				.padding(start = 4.dp),
 		)
 		Box(
 			Modifier
 				.align(Alignment.Center)
 				.width(36.dp)
 				.height(4.dp)
-				.background(KeyboardColors.pullHandle, RoundedCornerShape(2.dp)),
+				.background(LocalAppTheme.current.pullHandle, RoundedCornerShape(2.dp)),
 		)
 		Row(
 			Modifier
 				.align(Alignment.CenterEnd)
-				.padding(end = StickerPadding),
+				.padding(end = 4.dp),
 		) {
 			if (!isPreview) {
 				CircleIconButton(
@@ -396,6 +385,32 @@ private fun PullBar(
 	}
 }
 
+/**
+ * Shared 40dp touch target for [CircleIconButton]'s pull-bar icons and [NavIconButton]'s pack nav
+ * row icons - a square or circular slot that highlights white when [selected]. The 40dp size lives
+ * only here, not as a value shared by its two callers.
+ */
+@Composable
+private fun SelectableIconSlot(
+	selected: Boolean,
+	onClick: () -> Unit,
+	contentPadding: Dp,
+	modifier: Modifier = Modifier,
+	shape: Shape = RectangleShape,
+	content: @Composable BoxScope.() -> Unit,
+) {
+	Box(
+		modifier
+			.size(40.dp)
+			.clip(shape)
+			.background(if (selected) Color.White else Color.Transparent)
+			.clickable(onClick = onClick)
+			.padding(contentPadding),
+		contentAlignment = Alignment.Center,
+		content = content,
+	)
+}
+
 @Composable
 private fun CircleIconButton(
 	iconRes: Int,
@@ -404,19 +419,17 @@ private fun CircleIconButton(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	Box(
-		modifier
-			.size(PackDimens)
-			.clip(CircleShape)
-			.background(if (selected) Color.White else Color.Transparent)
-			.clickable(onClick = onClick)
-			.padding(NavButtonIconPadding),
-		contentAlignment = Alignment.Center,
+	SelectableIconSlot(
+		selected = selected,
+		onClick = onClick,
+		contentPadding = 8.dp,
+		shape = CircleShape,
+		modifier = modifier,
 	) {
 		Image(
 			painter = painterResource(iconRes),
 			contentDescription = contentDescription,
-			colorFilter = ColorFilter.tint(KeyboardColors.fg()),
+			colorFilter = ColorFilter.tint(LocalAppTheme.current.fg),
 			modifier = Modifier.fillMaxSize(),
 		)
 	}
@@ -432,14 +445,14 @@ private fun PackNavRow(
 		Modifier
 			.fillMaxWidth()
 			.horizontalScroll(rememberScrollState())
-			.padding(StickerPadding),
+			.padding(4.dp),
 	) {
 		for (pack in packs) {
 			NavIconButton(
 				thumbnail = pack.thumbnail,
 				selected = pack.packName == activeSection,
 				onClick = { onPackClick(pack.packName) },
-				modifier = Modifier.padding(StickerPadding),
+				modifier = Modifier.padding(4.dp),
 			)
 		}
 	}
@@ -452,13 +465,11 @@ private fun NavIconButton(
 	onClick: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	Box(
-		modifier
-			.size(PackDimens)
-			.background(if (selected) Color.White else Color.Transparent)
-			.clickable(onClick = onClick)
-			.padding(NavIconPadding),
-		contentAlignment = Alignment.Center,
+	SelectableIconSlot(
+		selected = selected,
+		onClick = onClick,
+		contentPadding = 6.dp,
+		modifier = modifier,
 	) {
 		if (thumbnail != null) {
 			StickerImage(
@@ -470,7 +481,7 @@ private fun NavIconButton(
 			Image(
 				painter = painterResource(R.drawable.ic_recent),
 				contentDescription = stringResource(R.string.pack_icon),
-				colorFilter = ColorFilter.tint(KeyboardColors.fg()),
+				colorFilter = ColorFilter.tint(LocalAppTheme.current.fg),
 				modifier = Modifier.fillMaxSize(),
 			)
 		}
@@ -545,16 +556,16 @@ private fun SectionHeader(text: String) {
 	BasicText(
 		text = text,
 		style = TextStyle(
-			color = KeyboardColors.fg(),
+			color = LocalAppTheme.current.fg,
 			fontSize = 16.sp, // the keyboard's standard body text size, also used elsewhere in this file
 			fontWeight = FontWeight.Bold,
 		),
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(horizontal = ContentMargin)
+			.padding(horizontal = 10.dp)
 			.padding(
-				top = SectionHeaderTopMargin,
-				bottom = ContentMarginBottom,
+				top = 14.dp,
+				bottom = 4.dp,
 			),
 	)
 }
@@ -563,12 +574,12 @@ private fun SectionHeader(text: String) {
 private fun SectionEmptyMessage(text: String) {
 	BasicText(
 		text = text,
-		style = TextStyle(color = KeyboardColors.fg(), fontSize = 16.sp),
+		style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 16.sp),
 		modifier = Modifier
 			.fillMaxWidth()
 			.alpha(0.6f)
-			.padding(horizontal = ContentMargin)
-			.padding(bottom = ContentMargin),
+			.padding(horizontal = 10.dp)
+			.padding(bottom = 10.dp),
 	)
 }
 
@@ -583,7 +594,7 @@ private fun StickerCell(
 	val haptic = LocalHapticFeedback.current
 	Box(
 		modifier
-			.padding(StickerPadding)
+			.padding(4.dp)
 			.aspectRatio(1f)
 			.combinedClickable(
 				onClick = {
@@ -626,7 +637,7 @@ private fun SearchContent(
 		BoxWithConstraints(
 			Modifier
 				.fillMaxWidth()
-				.padding(bottom = QwertyBottomMargin),
+				.padding(bottom = 10.dp),
 		) {
 			// The widest row's keys share maxWidth evenly, with no margin between them.
 			val keyWidth = maxWidth / QWERTY_TOP_ROW.length
@@ -662,12 +673,12 @@ private fun SearchQueryBar(query: String) {
 			.fillMaxWidth()
 			// 40sp, not 40dp - scales with the system font size the same way the row's own text does.
 			.height(with(density) { 40.sp.toDp() })
-			.padding(horizontal = CardMargin),
+			.padding(horizontal = 16.dp),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		BasicText(
 			text = query,
-			style = TextStyle(color = KeyboardColors.fg(), fontSize = 16.sp),
+			style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 16.sp),
 		)
 		Box(
 			Modifier
@@ -675,7 +686,7 @@ private fun SearchQueryBar(query: String) {
 				.width(2.dp)
 				.height(20.dp)
 				.alpha(if (cursorVisible) 1f else 0f)
-				.background(KeyboardColors.fg()),
+				.background(LocalAppTheme.current.fg),
 		)
 	}
 }
@@ -766,13 +777,13 @@ private fun QwertyKey(
 			Image(
 				painter = painterResource(iconRes),
 				contentDescription = contentDescription,
-				colorFilter = ColorFilter.tint(KeyboardColors.fg()),
-				modifier = Modifier.size(QwertyKeyIconSize),
+				colorFilter = ColorFilter.tint(LocalAppTheme.current.fg),
+				modifier = Modifier.size(20.dp),
 			)
 		} else if (text != null) {
 			BasicText(
 				text = text,
-				style = TextStyle(color = KeyboardColors.fg(), fontSize = 16.sp),
+				style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 16.sp),
 			)
 		}
 	}
@@ -783,19 +794,19 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 	Column(
 		Modifier
 			.fillMaxSize()
-			.padding(horizontal = ContentMargin)
-			.padding(bottom = ContentMargin),
+			.padding(horizontal = 10.dp)
+			.padding(bottom = 10.dp),
 	) {
 		Column(
 			Modifier
 				.align(Alignment.CenterHorizontally)
-				.padding(top = ContentMarginTop),
+				.padding(top = 8.dp),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			BasicText(
 				text = prettifyPackName(sticker.parent?.split('/')?.last() ?: ""),
 				style = TextStyle(
-					color = KeyboardColors.accent,
+					color = LocalAppTheme.current.accent,
 					fontWeight = FontWeight.Bold,
 					fontSize = 20.sp, // subheading size
 				),
@@ -804,7 +815,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 			)
 			BasicText(
 				text = trimString(sticker.name),
-				style = TextStyle(color = KeyboardColors.fg(), fontSize = 10.sp), // tiny caption size
+				style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 10.sp), // tiny caption size
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 				modifier = Modifier.alpha(0.6f),
@@ -814,7 +825,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 			Modifier
 				.weight(1f)
 				.fillMaxWidth()
-				.padding(top = ContentMarginTop)
+				.padding(top = 8.dp)
 				.clickable(onClick = onSend),
 		) {
 			StickerImage(
@@ -822,7 +833,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 				contentDescription = stringResource(R.string.send_sticker),
 				modifier = Modifier
 					.fillMaxSize()
-					.padding(CardMargin),
+					.padding(16.dp),
 			)
 		}
 	}
