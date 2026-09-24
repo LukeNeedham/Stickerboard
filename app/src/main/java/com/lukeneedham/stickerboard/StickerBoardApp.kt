@@ -97,10 +97,13 @@ fun StickerBoardApp(
 							onCancel = onCancelShareImport,
 							onImported = { packName, fileName ->
 								// The picker screen was the start route (opened straight from another
-								// app's Share action), so there's no prior screen to return to - land on
-								// the Stickers page as the new root instead, scrolled to what just
-								// landed there, mirroring how onboarding finishes onto Settings.
+								// app's Share action), so there's nothing under it to return to - rebuild
+								// the stack as Settings with the Stickers page pushed on top (exactly how
+								// reaching it normally looks), scrolled to what just landed there. Landing
+								// on a bare Gallery instead would leave its own back button with nothing
+								// left to pop, crashing NavDisplay ("backstack cannot be empty").
 								backStack.clear()
+								backStack.add(Route.Settings)
 								backStack.add(Route.Gallery(scrollToPackName = packName, scrollToFileName = fileName))
 							},
 						)

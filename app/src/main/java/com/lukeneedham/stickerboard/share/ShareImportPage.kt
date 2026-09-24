@@ -42,24 +42,19 @@ import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
-import kotlinx.coroutines.delay
-
-/** How long the success message shows before the page auto-closes. */
-private const val SUCCESS_AUTO_CLOSE_DELAY_MS = 900L
 
 /**
  * Shown when another app shares image(s) into StickerBoard: a small preview of what's being
  * imported, then either a list of existing sticker packs to add them to, or a field to name a new
  * one. Picking a pack starts the copy immediately (mirroring the Stickers page's own "add photo"
- * action, which offers no separate confirm step either) - a spinner covers the import, then a brief
- * success message before the page closes itself.
+ * action, which offers no separate confirm step either) - a spinner covers the import, then the
+ * caller immediately jumps to the Stickers page once it finishes.
  */
 @Composable
 fun ShareImportPage(
 	imageUris: List<Uri>,
 	packNames: List<String>,
 	isImporting: Boolean,
-	importedCount: Int?,
 	onBack: () -> Unit,
 	onPackSelected: (String) -> Unit,
 	modifier: Modifier = Modifier,
@@ -83,12 +78,6 @@ fun ShareImportPage(
 			SharePreviewRow(imageUris)
 
 			when {
-				importedCount != null -> Text(
-					text = stringResource(R.string.share_import_success, importedCount),
-					style = MaterialTheme.typography.bodyLarge,
-					color = MaterialTheme.colorScheme.primary,
-				)
-
 				isImporting -> Box(
 					modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
 					contentAlignment = Alignment.Center,
@@ -126,7 +115,7 @@ fun ShareImportPage(
 }
 
 /** A row of small thumbnails of the images being imported, capped so a large multi-share doesn't
- * blow out the layout - the exact count is shown as text once the import succeeds instead. */
+ * blow out the layout. */
 @Composable
 private fun SharePreviewRow(imageUris: List<Uri>, modifier: Modifier = Modifier) {
 	Row(
@@ -193,9 +182,10 @@ private fun NewPackRow(
 
 /**
  * Wires [ShareImportPage] up with [ShareImportViewModel] - the nav-host destination reached from
- * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. A moment after a successful import,
- * hands off to [onImported] (the pack it landed in, and the last file added) so the caller can jump
- * to the Stickers page with it in view; backing out before picking a pack calls [onCancel] instead.
+ * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. As soon as an import finishes, hands
+ * off to [onImported] (the pack it landed in, and the last file added) so the caller can jump
+ * straight to the Stickers page with it in view; backing out before picking a pack calls [onCancel]
+ * instead.
  */
 @Composable
 fun ShareImportRoute(
@@ -209,7 +199,6 @@ fun ShareImportRoute(
 
 	LaunchedEffect(uiState.result) {
 		val result = uiState.result ?: return@LaunchedEffect
-		delay(SUCCESS_AUTO_CLOSE_DELAY_MS)
 		onImported(result.packName, result.lastFileName)
 	}
 
@@ -217,7 +206,6 @@ fun ShareImportRoute(
 		imageUris = imageUris,
 		packNames = uiState.packNames,
 		isImporting = uiState.isImporting,
-		importedCount = uiState.result?.count,
 		onBack = onCancel,
 		onPackSelected = { packName -> viewModel.importInto(packName, imageUris) },
 		modifier = modifier,
