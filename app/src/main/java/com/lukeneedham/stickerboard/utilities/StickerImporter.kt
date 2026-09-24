@@ -64,51 +64,58 @@ suspend fun reimportStickersIfChanged(context: Context, toaster: Toaster, sticke
  * wipes and re-imports the internal copy from scratch) doesn't lose them. Shared by the Stickers
  * page's "add photo" action and image share-to-StickerBoard import; marks [KeyboardRefreshSignal]
  * dirty on success so an already-running keyboard picks up the change next time it's shown. Skips
- * once [packName] reaches [MAX_PACK_SIZE] stickers total. Returns how many were actually copied.
+ * once [packName] reaches [MAX_PACK_SIZE] stickers total. Returns the internal-storage copies that
+ * were actually created, in the order [photoUris] was given.
  */
-suspend fun importPhotosToPack(context: Context, packName: String, photoUris: List<Uri>): Int =
+suspend fun importPhotosToPack(
+	context: Context,
+	packName: String,
+	photoUris: List<Uri>,
+): List<File> =
 	withContext(Dispatchers.IO) {
 		val packDir = File(context.filesDir, "stickers/$packName")
 		packDir.mkdirs()
 		var packSize = packDir.listFiles { file -> file.isFile }?.size ?: 0
-		var addedCount = 0
+		val addedFiles = mutableListOf<File>()
 		for (uri in photoUris) {
 			if (packSize >= MAX_PACK_SIZE) break
-			if (copyPhotoIntoPack(context, uri, packDir, packName)) {
-				addedCount++
+			val addedFile = copyPhotoIntoPack(context, uri, packDir, packName)
+			if (addedFile != null) {
+				addedFiles.add(addedFile)
 				packSize++
 			}
 		}
-		if (addedCount > 0) KeyboardRefreshSignal.markDirty()
-		addedCount
+		if (addedFiles.isNotEmpty()) KeyboardRefreshSignal.markDirty()
+		addedFiles
 	}
 
 /**
  * Copies a single photo from [uri] into [packDir] - and, best-effort, into the matching pack folder
  * of the external sticker source directory too.
  *
- * @return true if the internal copy (the one the keyboard actually reads) succeeded
+ * @return the internal copy (the one the keyboard actually reads), or null if it failed
  */
 private fun copyPhotoIntoPack(
 	context: Context,
 	uri: Uri,
 	packDir: File,
 	packName: String,
-): Boolean {
+): File? {
 	return try {
 		val mimeType = context.contentResolver.getType(uri)
 		val extension = mimeType?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) } ?: "jpg"
 		val fileName = "imported_${System.currentTimeMillis()}_${System.nanoTime()}.$extension"
 
-		val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return false
-		File(packDir, fileName).outputStream().use { it.write(bytes) }
+		val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+		val destFile = File(packDir, fileName)
+		destFile.outputStream().use { it.write(bytes) }
 
 		copyToExternalSourceDir(context, packName, fileName, bytes)
-		true
+		destFile
 	} catch (e: IOException) {
 		XLog.e("There was an IOException when copying a photo into '$packName'!")
 		XLog.e(e)
-		false
+		null
 	}
 }
 

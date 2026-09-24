@@ -22,7 +22,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,9 +36,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,6 +90,7 @@ fun StickerGalleryPage(
 	onRefresh: () -> Unit,
 	onAddPhotoClick: (packName: String) -> Unit,
 	modifier: Modifier = Modifier,
+	gridState: LazyGridState = rememberLazyGridState(),
 ) {
 	var previewSticker by remember { mutableStateOf<File?>(null) }
 
@@ -106,6 +111,7 @@ fun StickerGalleryPage(
 		) {
 			LazyVerticalGrid(
 				columns = GridCells.Fixed(columns),
+				state = gridState,
 				modifier = Modifier.fillMaxSize(),
 				contentPadding = PaddingValues(bottom = 20.dp),
 			) {
@@ -447,6 +453,8 @@ private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit) {
 @Composable
 fun GalleryRoute(
 	onBack: () -> Unit,
+	scrollToPackName: String? = null,
+	scrollToFileName: String? = null,
 	modifier: Modifier = Modifier,
 	viewModel: GalleryViewModel = viewModel(),
 ) {
@@ -458,6 +466,28 @@ fun GalleryRoute(
 	// LaunchedEffect(Unit) for that initial load would run concurrently with this and double the
 	// work every time the gallery opens.
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onResumed() }
+
+	val gridState = rememberLazyGridState()
+	// One-shot: once items load, jump to whatever scrollToPackName/scrollToFileName pointed at
+	// (e.g. a sticker just imported via a share) and don't fight the user's own scrolling after.
+	var hasScrolledToTarget by rememberSaveable(scrollToPackName, scrollToFileName) {
+		mutableStateOf(scrollToPackName == null)
+	}
+	LaunchedEffect(uiState.items) {
+		if (hasScrolledToTarget) return@LaunchedEffect
+		val items = uiState.items ?: return@LaunchedEffect
+		val targetIndex = items.indexOfFirst { item ->
+			item is BoardItem.Sticker &&
+				item.packName == scrollToPackName &&
+				(scrollToFileName == null || item.file.name == scrollToFileName)
+		}.takeIf { it >= 0 } ?: items.indexOfFirst { item ->
+			item is BoardItem.Header && item.packName == scrollToPackName
+		}
+		if (targetIndex >= 0) {
+			gridState.animateScrollToItem(targetIndex)
+		}
+		hasScrolledToTarget = true
+	}
 
 	val chooseDirLauncher = rememberLauncherForActivityResult(
 		ActivityResultContracts.StartActivityForResult(),
@@ -501,5 +531,6 @@ fun GalleryRoute(
 			)
 		},
 		modifier = modifier,
+		gridState = gridState,
 	)
 }

@@ -193,31 +193,32 @@ private fun NewPackRow(
 
 /**
  * Wires [ShareImportPage] up with [ShareImportViewModel] - the nav-host destination reached from
- * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. Closes itself (via [onDone]) a
- * moment after a successful import, or immediately if the user backs out first.
+ * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. A moment after a successful import,
+ * hands off to [onImported] (the pack it landed in, and the last file added) so the caller can jump
+ * to the Stickers page with it in view; backing out before picking a pack calls [onCancel] instead.
  */
 @Composable
 fun ShareImportRoute(
 	imageUris: List<Uri>,
-	onDone: () -> Unit,
+	onCancel: () -> Unit,
+	onImported: (packName: String, fileName: String?) -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: ShareImportViewModel = viewModel(),
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-	LaunchedEffect(uiState.importedCount) {
-		if (uiState.importedCount != null) {
-			delay(SUCCESS_AUTO_CLOSE_DELAY_MS)
-			onDone()
-		}
+	LaunchedEffect(uiState.result) {
+		val result = uiState.result ?: return@LaunchedEffect
+		delay(SUCCESS_AUTO_CLOSE_DELAY_MS)
+		onImported(result.packName, result.lastFileName)
 	}
 
 	ShareImportPage(
 		imageUris = imageUris,
 		packNames = uiState.packNames,
 		isImporting = uiState.isImporting,
-		importedCount = uiState.importedCount,
-		onBack = onDone,
+		importedCount = uiState.result?.count,
+		onBack = onCancel,
 		onPackSelected = { packName -> viewModel.importInto(packName, imageUris) },
 		modifier = modifier,
 	)

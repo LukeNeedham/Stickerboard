@@ -150,12 +150,12 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 */
 	fun addPhotosToPack(packName: String, uris: List<Uri>) {
 		viewModelScope.launch(Dispatchers.IO) {
-			val addedCount = importPhotosToPack(getApplication(), packName, uris)
-			if (addedCount == 0) return@launch
+			val addedFiles = importPhotosToPack(getApplication(), packName, uris)
+			if (addedFiles.isEmpty()) return@launch
 			val refreshedBoardItems = computeBoardItems()
 
 			withContext(Dispatchers.Main) {
-				prefs.numStickersImported += addedCount
+				prefs.numStickersImported += addedFiles.size
 				_uiState.update { it.copy(items = refreshedBoardItems) }
 			}
 		}

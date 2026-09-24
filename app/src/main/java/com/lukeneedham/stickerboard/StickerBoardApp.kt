@@ -47,7 +47,7 @@ private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideBackward(
 @Composable
 fun StickerBoardApp(
 	sharedImageUris: List<Uri> = emptyList(),
-	onFinishShareImport: () -> Unit = {},
+	onCancelShareImport: () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val startRoute = remember(sharedImageUris) {
@@ -80,17 +80,29 @@ fun StickerBoardApp(
 					}
 					entry<Route.Settings> {
 						SettingsRoute(
-							onViewStickers = { backStack.add(Route.Gallery) },
+							onViewStickers = { backStack.add(Route.Gallery()) },
 							onOpenDebug = { backStack.add(Route.Debug) },
 						)
 					}
-					entry<Route.Gallery> {
-						GalleryRoute(onBack = { backStack.removeLastOrNull() })
+					entry<Route.Gallery> { route ->
+						GalleryRoute(
+							onBack = { backStack.removeLastOrNull() },
+							scrollToPackName = route.scrollToPackName,
+							scrollToFileName = route.scrollToFileName,
+						)
 					}
 					entry<Route.ShareImport> { route ->
 						ShareImportRoute(
 							imageUris = route.imageUris.map { Uri.parse(it) },
-							onDone = onFinishShareImport,
+							onCancel = onCancelShareImport,
+							onImported = { packName, fileName ->
+								// The picker screen was the start route (opened straight from another
+								// app's Share action), so there's no prior screen to return to - land on
+								// the Stickers page as the new root instead, scrolled to what just
+								// landed there, mirroring how onboarding finishes onto Settings.
+								backStack.clear()
+								backStack.add(Route.Gallery(scrollToPackName = packName, scrollToFileName = fileName))
+							},
 						)
 					}
 					entry<Route.Debug> {

@@ -13,12 +13,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 
+/** How a finished import went - the pack it landed in, how many images were added, and the file
+ * name of the last one, so the Stickers page can scroll straight to it. */
+data class ShareImportResult(val packName: String, val count: Int, val lastFileName: String?)
+
 /** Everything [ShareImportPage] needs to render: the existing packs to choose from, whether an
- * import is currently running, and how many images were added once it finishes. */
+ * import is currently running, and the outcome once it finishes. */
 data class ShareImportUiState(
 	val packNames: List<String> = emptyList(),
 	val isImporting: Boolean = false,
-	val importedCount: Int? = null,
+	val result: ShareImportResult? = null,
 )
 
 /**
@@ -42,14 +46,15 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
 			.orEmpty()
 
 	/** Imports [uris] into [packName] (created fresh on disk if it doesn't exist yet), then reports
-	 * how many were added via [ShareImportUiState.importedCount]. A no-op while already importing. */
+	 * the outcome via [ShareImportUiState.result]. A no-op while already importing. */
 	fun importInto(packName: String, uris: List<Uri>) {
 		if (_uiState.value.isImporting || uris.isEmpty()) return
 		_uiState.update { it.copy(isImporting = true) }
 		viewModelScope.launch {
-			val addedCount = importPhotosToPack(getApplication(), packName, uris)
-			prefs.numStickersImported += addedCount
-			_uiState.update { it.copy(isImporting = false, importedCount = addedCount) }
+			val addedFiles = importPhotosToPack(getApplication(), packName, uris)
+			prefs.numStickersImported += addedFiles.size
+			val result = ShareImportResult(packName, addedFiles.size, addedFiles.lastOrNull()?.name)
+			_uiState.update { it.copy(isImporting = false, result = result) }
 		}
 	}
 }

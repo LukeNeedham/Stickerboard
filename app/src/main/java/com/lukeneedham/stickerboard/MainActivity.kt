@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
 		setContent {
 			StickerBoardApp(
 				sharedImageUris = sharedImageUris,
-				onFinishShareImport = { finish() },
+				onCancelShareImport = { finish() },
 			)
 		}
 	}
