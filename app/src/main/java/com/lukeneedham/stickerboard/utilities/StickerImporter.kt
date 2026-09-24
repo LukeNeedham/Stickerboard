@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.webkit.MimeTypeMap
 import androidx.documentfile.provider.DocumentFile
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.R
@@ -55,6 +56,83 @@ suspend fun reimportStickersIfChanged(context: Context, toaster: Toaster, sticke
 	if (!changed) return
 	XLog.i("Sticker source directory changed, reimporting...")
 	StickerImporter(context, toaster).importStickers(stickerDirPath)
+}
+
+/**
+ * Copies [photoUris] into [packName] inside internal storage - and, best-effort, into the matching
+ * pack folder of the external sticker source directory too, so a future "Reload stickers" (which
+ * wipes and re-imports the internal copy from scratch) doesn't lose them. Shared by the Stickers
+ * page's "add photo" action and image share-to-StickerBoard import; marks [KeyboardRefreshSignal]
+ * dirty on success so an already-running keyboard picks up the change next time it's shown. Skips
+ * once [packName] reaches [MAX_PACK_SIZE] stickers total. Returns how many were actually copied.
+ */
+suspend fun importPhotosToPack(context: Context, packName: String, photoUris: List<Uri>): Int =
+	withContext(Dispatchers.IO) {
+		val packDir = File(context.filesDir, "stickers/$packName")
+		packDir.mkdirs()
+		var packSize = packDir.listFiles { file -> file.isFile }?.size ?: 0
+		var addedCount = 0
+		for (uri in photoUris) {
+			if (packSize >= MAX_PACK_SIZE) break
+			if (copyPhotoIntoPack(context, uri, packDir, packName)) {
+				addedCount++
+				packSize++
+			}
+		}
+		if (addedCount > 0) KeyboardRefreshSignal.markDirty()
+		addedCount
+	}
+
+/**
+ * Copies a single photo from [uri] into [packDir] - and, best-effort, into the matching pack folder
+ * of the external sticker source directory too.
+ *
+ * @return true if the internal copy (the one the keyboard actually reads) succeeded
+ */
+private fun copyPhotoIntoPack(
+	context: Context,
+	uri: Uri,
+	packDir: File,
+	packName: String,
+): Boolean {
+	return try {
+		val mimeType = context.contentResolver.getType(uri)
+		val extension = mimeType?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) } ?: "jpg"
+		val fileName = "imported_${System.currentTimeMillis()}_${System.nanoTime()}.$extension"
+
+		val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return false
+		File(packDir, fileName).outputStream().use { it.write(bytes) }
+
+		copyToExternalSourceDir(context, packName, fileName, bytes)
+		true
+	} catch (e: IOException) {
+		XLog.e("There was an IOException when copying a photo into '$packName'!")
+		XLog.e(e)
+		false
+	}
+}
+
+/**
+ * Best-effort copy of [fileName]'s [bytes] into [packName]'s folder in the external sticker source
+ * directory, if one is configured - silently does nothing/fails otherwise, since the internal copy
+ * is already usable regardless.
+ */
+private fun copyToExternalSourceDir(
+	context: Context,
+	packName: String,
+	fileName: String,
+	bytes: ByteArray,
+) {
+	val path = AppPreferences(context).stickerDirPath ?: return
+	try {
+		val rootDir = DocumentFile.fromTreeUri(context, Uri.parse(path)) ?: return
+		val packDocDir = rootDir.findFile(packName) ?: rootDir.createDirectory(packName) ?: return
+		val newFile = packDocDir.createFile("application/octet-stream", fileName) ?: return
+		context.contentResolver.openOutputStream(newFile.uri)?.use { it.write(bytes) }
+	} catch (e: Exception) {
+		XLog.e("There was an error copying a photo into the external sticker source directory!")
+		XLog.e(e)
+	}
 }
 
 /**

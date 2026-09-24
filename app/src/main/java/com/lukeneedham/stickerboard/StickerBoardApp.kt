@@ -1,6 +1,7 @@
 package com.lukeneedham.stickerboard
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -25,6 +26,7 @@ import com.lukeneedham.stickerboard.navigation.Route
 import com.lukeneedham.stickerboard.onboarding.OnboardingRoute
 import com.lukeneedham.stickerboard.settings.SettingsRoute
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.share.ShareImportRoute
 
 private val SLIDE_SPEC = tween<IntOffset>(durationMillis = 300)
 
@@ -37,14 +39,25 @@ private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideBackward(
 	slideInHorizontally(SLIDE_SPEC) { -it } togetherWith slideOutHorizontally(SLIDE_SPEC) { it }
 
 /**
- * The single activity's nav host - decides whether to land on onboarding or settings, and wires
- * every page's navigation callbacks to the one shared back stack.
+ * The single activity's nav host - decides whether to land on onboarding, settings, or (when
+ * [sharedImageUris] is non-empty, i.e. [MainActivity] was opened via another app's Share action)
+ * straight into the sticker-pack picker - and wires every page's navigation callbacks to the one
+ * shared back stack.
  */
 @Composable
-fun StickerBoardApp() {
+fun StickerBoardApp(
+	sharedImageUris: List<Uri> = emptyList(),
+	onFinishShareImport: () -> Unit = {},
+) {
 	val context = LocalContext.current
-	val startRoute = remember {
-		if (isOnboardingComplete(context)) Route.Settings else Route.Onboarding
+	val startRoute = remember(sharedImageUris) {
+		when {
+			sharedImageUris.isNotEmpty() && isOnboardingComplete(context) ->
+				Route.ShareImport(sharedImageUris.map { it.toString() })
+
+			isOnboardingComplete(context) -> Route.Settings
+			else -> Route.Onboarding
+		}
 	}
 	val backStack = rememberNavBackStack(startRoute)
 
@@ -73,6 +86,12 @@ fun StickerBoardApp() {
 					}
 					entry<Route.Gallery> {
 						GalleryRoute(onBack = { backStack.removeLastOrNull() })
+					}
+					entry<Route.ShareImport> { route ->
+						ShareImportRoute(
+							imageUris = route.imageUris.map { Uri.parse(it) },
+							onDone = onFinishShareImport,
+						)
 					}
 					entry<Route.Debug> {
 						DebugRoute(

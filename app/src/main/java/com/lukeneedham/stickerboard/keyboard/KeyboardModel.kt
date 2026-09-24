@@ -77,6 +77,12 @@ class KeyboardModel(context: Context) {
 
 	fun sectionExists(packName: String): Boolean = headerPositions.containsKey(packName)
 
+	/** Re-scan [internalDir] without touching the external source directory - cheap enough to call
+	 * every time the keyboard becomes visible (see
+	 * [com.lukeneedham.stickerboard.utilities.KeyboardRefreshSignal]), unlike [refreshStickers] which
+	 * may also re-import from the (potentially large) external tree. */
+	fun rescanFromDisk() = loadPacks()
+
 	fun setActivePack(packName: String) {
 		activePack = packName
 	}

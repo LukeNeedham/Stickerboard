@@ -15,6 +15,11 @@ sealed interface Route : NavKey {
 	@Serializable
 	data object Gallery : Route
 
+	/** Reached when another app shares image(s) into StickerBoard - lets the user pick which sticker
+	 * pack (existing or new) to import [imageUris] into. */
+	@Serializable
+	data class ShareImport(val imageUris: List<String>) : Route
+
 	@Serializable
 	data object Debug : Route
 
