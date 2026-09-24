@@ -1,6 +1,7 @@
 package com.lukeneedham.stickerboard
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.InputMethodService.Insets
 import android.os.Build.VERSION.SDK_INT
@@ -9,6 +10,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -26,9 +28,11 @@ import coil.decode.SvgDecoder
 import coil.decode.VideoFrameDecoder
 import coil.imageLoader
 import com.elvishew.xlog.XLog
+import com.lukeneedham.stickerboard.keyboard.DarkColors
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel
 import com.lukeneedham.stickerboard.keyboard.KeyboardView
+import com.lukeneedham.stickerboard.keyboard.LightColors
 import com.lukeneedham.stickerboard.keyboard.PackNavIcon
 import com.lukeneedham.stickerboard.keyboard.RECENT_PACK_NAME
 import com.lukeneedham.stickerboard.model.BoardItem
@@ -123,7 +127,11 @@ class KeyboardController :
 		Coil.setImageLoader(imageLoader)
 
 		model = KeyboardModel(baseContext)
-		window.window?.navigationBarColor = getColor(R.color.bg)
+		// Set directly on the window rather than through Compose: this runs before
+		// onCreateInputView() builds any Compose UI, so LocalAppTheme isn't available yet.
+		val nightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+		val bg = if (nightMode == Configuration.UI_MODE_NIGHT_YES) DarkColors.bg else LightColors.bg
+		window.window?.navigationBarColor = bg.toArgb()
 	}
 
 	/**

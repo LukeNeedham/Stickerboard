@@ -20,6 +20,7 @@ import com.lukeneedham.stickerboard.crash.CrashesRoute
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.debug.DebugRoute
 import com.lukeneedham.stickerboard.gallery.GalleryRoute
+import com.lukeneedham.stickerboard.keyboard.AppTheme
 import com.lukeneedham.stickerboard.navigation.Route
 import com.lukeneedham.stickerboard.onboarding.OnboardingRoute
 import com.lukeneedham.stickerboard.settings.SettingsRoute
@@ -47,49 +48,51 @@ fun StickerBoardApp() {
 	}
 	val backStack = rememberNavBackStack(startRoute)
 
-	StickerBoardSettingsTheme {
-		NavDisplay(
-			backStack = backStack,
-			onBack = { backStack.removeLastOrNull() },
-			transitionSpec = { slideForward() },
-			popTransitionSpec = { slideBackward() },
-			predictivePopTransitionSpec = { slideBackward() },
-			entryProvider = entryProvider {
-				entry<Route.Onboarding> {
-					OnboardingRoute(
-						onFinished = {
-							backStack.clear()
-							backStack.add(Route.Settings)
-						},
-					)
-				}
-				entry<Route.Settings> {
-					SettingsRoute(
-						onViewStickers = { backStack.add(Route.Gallery) },
-						onOpenDebug = { backStack.add(Route.Debug) },
-					)
-				}
-				entry<Route.Gallery> {
-					GalleryRoute(onBack = { backStack.removeLastOrNull() })
-				}
-				entry<Route.Debug> {
-					DebugRoute(
-						onBack = { backStack.removeLastOrNull() },
-						onOpenCrashes = { backStack.add(Route.Crashes) },
-						onOpenOnboarding = { backStack.add(Route.Onboarding) },
-					)
-				}
-				entry<Route.Crashes> {
-					CrashesRoute(
-						onBack = { backStack.removeLastOrNull() },
-						onCrashClick = { crashId -> backStack.add(Route.CrashDetail(crashId)) },
-					)
-				}
-				entry<Route.CrashDetail> { route ->
-					CrashDetailRoute(crashId = route.crashId, onBack = { backStack.removeLastOrNull() })
-				}
-			},
-		)
+	AppTheme {
+		StickerBoardSettingsTheme {
+			NavDisplay(
+				backStack = backStack,
+				onBack = { backStack.removeLastOrNull() },
+				transitionSpec = { slideForward() },
+				popTransitionSpec = { slideBackward() },
+				predictivePopTransitionSpec = { slideBackward() },
+				entryProvider = entryProvider {
+					entry<Route.Onboarding> {
+						OnboardingRoute(
+							onFinished = {
+								backStack.clear()
+								backStack.add(Route.Settings)
+							},
+						)
+					}
+					entry<Route.Settings> {
+						SettingsRoute(
+							onViewStickers = { backStack.add(Route.Gallery) },
+							onOpenDebug = { backStack.add(Route.Debug) },
+						)
+					}
+					entry<Route.Gallery> {
+						GalleryRoute(onBack = { backStack.removeLastOrNull() })
+					}
+					entry<Route.Debug> {
+						DebugRoute(
+							onBack = { backStack.removeLastOrNull() },
+							onOpenCrashes = { backStack.add(Route.Crashes) },
+							onOpenOnboarding = { backStack.add(Route.Onboarding) },
+						)
+					}
+					entry<Route.Crashes> {
+						CrashesRoute(
+							onBack = { backStack.removeLastOrNull() },
+							onCrashClick = { crashId -> backStack.add(Route.CrashDetail(crashId)) },
+						)
+					}
+					entry<Route.CrashDetail> { route ->
+						CrashDetailRoute(crashId = route.crashId, onBack = { backStack.removeLastOrNull() })
+					}
+				},
+			)
+		}
 	}
 }
 

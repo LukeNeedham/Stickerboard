@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -93,7 +96,14 @@ fun OnboardingPage(
 	val pagerState = rememberPagerState(pageCount = { firstUnmetPage() + 1 })
 	val scope = rememberCoroutineScope()
 
-	Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+	Column(
+		modifier
+			.fillMaxSize()
+			.background(MaterialTheme.colorScheme.background)
+			// The only page without a Scaffold/TopAppBar of its own to absorb system bar insets -
+			// every other page gets this for free from Scaffold's default contentWindowInsets.
+			.windowInsetsPadding(WindowInsets.systemBars),
+	) {
 		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
 			when (page) {
 				PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
