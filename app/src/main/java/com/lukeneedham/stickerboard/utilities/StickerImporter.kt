@@ -63,9 +63,11 @@ suspend fun reimportStickersIfChanged(context: Context, toaster: Toaster, sticke
  * pack folder of the external sticker source directory too, so a future "Reload stickers" (which
  * wipes and re-imports the internal copy from scratch) doesn't lose them. Shared by the Stickers
  * page's "add photo" action and image share-to-StickerBoard import; marks [KeyboardRefreshSignal]
- * dirty on success so an already-running keyboard picks up the change next time it's shown. Skips
- * once [packName] reaches [MAX_PACK_SIZE] stickers total. Returns the internal-storage copies that
- * were actually created, in the order [photoUris] was given.
+ * dirty on success so an already-running keyboard picks up the change next time it's shown, and
+ * resyncs the stored source-directory signature (see [resyncStickerDirSignature]) so a later
+ * deletion of one of these stickers is still noticed by [hasStickerSourceChanged]. Skips once
+ * [packName] reaches [MAX_PACK_SIZE] stickers total. Returns the internal-storage copies that were
+ * actually created, in the order [photoUris] was given.
  */
 suspend fun importPhotosToPack(
 	context: Context,
@@ -85,9 +87,33 @@ suspend fun importPhotosToPack(
 				packSize++
 			}
 		}
-		if (addedFiles.isNotEmpty()) KeyboardRefreshSignal.markDirty()
+		if (addedFiles.isNotEmpty()) {
+			KeyboardRefreshSignal.markDirty()
+			resyncStickerDirSignature(context)
+		}
 		addedFiles
 	}
+
+/**
+ * Re-computes and persists [AppPreferences.stickerDirSignature] from the external sticker source
+ * directory's current contents, if one is configured. Without this, a sticker copied there by
+ * [importPhotosToPack] (rather than by a full [StickerImporter.importStickers] pass) would never be
+ * reflected in the stored signature - so if that sticker were later deleted directly from the
+ * external folder, its contents would return to exactly matching the older, pre-addition signature,
+ * [hasStickerSourceChanged] would see no difference, and the stale internal copy would never get
+ * cleaned up by a "Reload stickers"/pull-to-refresh, no matter how many times it's tried.
+ */
+private fun resyncStickerDirSignature(context: Context) {
+	val prefs = AppPreferences(context)
+	val path = prefs.stickerDirPath ?: return
+	try {
+		val sourceStickers = walkStickers(DocumentFile.fromTreeUri(context, Uri.parse(path)))
+		prefs.stickerDirSignature = signatureOf(sourceStickers)
+	} catch (e: Exception) {
+		XLog.e("Failed to resync the sticker source directory signature after an add-photo import")
+		XLog.e(e)
+	}
+}
 
 /**
  * Copies a single photo from [uri] into [packDir] - and, best-effort, into the matching pack folder
