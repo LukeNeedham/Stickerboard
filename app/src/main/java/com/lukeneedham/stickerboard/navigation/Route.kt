@@ -12,12 +12,14 @@ sealed interface Route : NavKey {
 	@Serializable
 	data object Settings : Route
 
-	/** [scrollToPackName]/[scrollToFileName] name a sticker to scroll to as soon as the grid loads -
-	 * e.g. one just imported via a share - or null (the default) to just open at the top. */
+	/** [pendingImportPackName]/[pendingImportUris] carry a share-import that hasn't happened yet - the
+	 * pack picked on the ShareImport screen, and the image URIs to copy into it - so this page can
+	 * show its own loading indicator while running the copy itself, then scroll to what it added.
+	 * Both empty/null (the default) for an ordinary visit here. */
 	@Serializable
 	data class Gallery(
-		val scrollToPackName: String? = null,
-		val scrollToFileName: String? = null,
+		val pendingImportPackName: String? = null,
+		val pendingImportUris: List<String> = emptyList(),
 	) : Route
 
 	/** Reached when another app shares image(s) into StickerBoard - lets the user pick which sticker

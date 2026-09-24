@@ -5,7 +5,6 @@ package com.lukeneedham.stickerboard.share
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +21,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,15 +43,14 @@ import com.lukeneedham.stickerboard.settings.SettingsTopBar
 /**
  * Shown when another app shares image(s) into StickerBoard: a small preview of what's being
  * imported, then either a list of existing sticker packs to add them to, or a field to name a new
- * one. Picking a pack starts the copy immediately (mirroring the Stickers page's own "add photo"
- * action, which offers no separate confirm step either) - a spinner covers the import, then the
- * caller immediately jumps to the Stickers page once it finishes.
+ * one. Picking a pack (or naming a new one) doesn't do any importing here - it immediately hands the
+ * choice back to the caller, which navigates to the Stickers page and runs the actual copy there,
+ * showing its own loading indicator while it does.
  */
 @Composable
 fun ShareImportPage(
 	imageUris: List<Uri>,
 	packNames: List<String>,
-	isImporting: Boolean,
 	onBack: () -> Unit,
 	onPackSelected: (String) -> Unit,
 	modifier: Modifier = Modifier,
@@ -77,36 +73,25 @@ fun ShareImportPage(
 		) {
 			SharePreviewRow(imageUris)
 
-			when {
-				isImporting -> Box(
-					modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-					contentAlignment = Alignment.Center,
-				) {
-					CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-				}
+			Text(
+				text = stringResource(R.string.share_import_prompt),
+				style = MaterialTheme.typography.bodyMedium,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+			)
 
-				else -> {
-					Text(
-						text = stringResource(R.string.share_import_prompt),
-						style = MaterialTheme.typography.bodyMedium,
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
-					)
+			NewPackRow(
+				packName = newPackName,
+				onPackNameChange = { newPackName = it },
+				onAdd = {
+					val trimmed = newPackName.trim()
+					if (trimmed.isNotEmpty()) onPackSelected(trimmed)
+				},
+			)
 
-					NewPackRow(
-						packName = newPackName,
-						onPackNameChange = { newPackName = it },
-						onAdd = {
-							val trimmed = newPackName.trim()
-							if (trimmed.isNotEmpty()) onPackSelected(trimmed)
-						},
-					)
-
-					if (packNames.isNotEmpty()) {
-						LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-							items(packNames) { packName ->
-								PackRow(packName = packName, onClick = { onPackSelected(packName) })
-							}
-						}
+			if (packNames.isNotEmpty()) {
+				LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+					items(packNames) { packName ->
+						PackRow(packName = packName, onClick = { onPackSelected(packName) })
 					}
 				}
 			}
@@ -182,32 +167,25 @@ private fun NewPackRow(
 
 /**
  * Wires [ShareImportPage] up with [ShareImportViewModel] - the nav-host destination reached from
- * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. As soon as an import finishes, hands
- * off to [onImported] (the pack it landed in, and the last file added) so the caller can jump
- * straight to the Stickers page with it in view; backing out before picking a pack calls [onCancel]
- * instead.
+ * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. Picking a pack calls [onPackChosen]
+ * immediately, before anything is actually copied - the caller is expected to navigate to the
+ * Stickers page and run the import there. Backing out before picking a pack calls [onCancel] instead.
  */
 @Composable
 fun ShareImportRoute(
 	imageUris: List<Uri>,
 	onCancel: () -> Unit,
-	onImported: (packName: String, fileName: String?) -> Unit,
+	onPackChosen: (packName: String) -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: ShareImportViewModel = viewModel(),
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-	LaunchedEffect(uiState.result) {
-		val result = uiState.result ?: return@LaunchedEffect
-		onImported(result.packName, result.lastFileName)
-	}
-
 	ShareImportPage(
 		imageUris = imageUris,
 		packNames = uiState.packNames,
-		isImporting = uiState.isImporting,
 		onBack = onCancel,
-		onPackSelected = { packName -> viewModel.importInto(packName, imageUris) },
+		onPackSelected = onPackChosen,
 		modifier = modifier,
 	)
 }

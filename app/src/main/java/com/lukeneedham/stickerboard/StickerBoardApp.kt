@@ -87,24 +87,30 @@ fun StickerBoardApp(
 					entry<Route.Gallery> { route ->
 						GalleryRoute(
 							onBack = { backStack.removeLastOrNull() },
-							scrollToPackName = route.scrollToPackName,
-							scrollToFileName = route.scrollToFileName,
+							pendingImportPackName = route.pendingImportPackName,
+							pendingImportUris = route.pendingImportUris,
 						)
 					}
 					entry<Route.ShareImport> { route ->
 						ShareImportRoute(
 							imageUris = route.imageUris.map { Uri.parse(it) },
 							onCancel = onCancelShareImport,
-							onImported = { packName, fileName ->
+							onPackChosen = { packName ->
 								// The picker screen was the start route (opened straight from another
 								// app's Share action), so there's nothing under it to return to - rebuild
 								// the stack as Settings with the Stickers page pushed on top (exactly how
-								// reaching it normally looks), scrolled to what just landed there. Landing
-								// on a bare Gallery instead would leave its own back button with nothing
-								// left to pop, crashing NavDisplay ("backstack cannot be empty").
+								// reaching it normally looks), which runs the actual import itself and
+								// shows its own loading state while it does. Landing on a bare Gallery
+								// instead would leave its own back button with nothing left to pop,
+								// crashing NavDisplay ("backstack cannot be empty").
 								backStack.clear()
 								backStack.add(Route.Settings)
-								backStack.add(Route.Gallery(scrollToPackName = packName, scrollToFileName = fileName))
+								backStack.add(
+									Route.Gallery(
+										pendingImportPackName = packName,
+										pendingImportUris = route.imageUris,
+									),
+								)
 							},
 						)
 					}

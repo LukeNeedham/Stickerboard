@@ -4,6 +4,7 @@ package com.lukeneedham.stickerboard.gallery
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,7 +41,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -453,8 +453,8 @@ private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit) {
 @Composable
 fun GalleryRoute(
 	onBack: () -> Unit,
-	scrollToPackName: String? = null,
-	scrollToFileName: String? = null,
+	pendingImportPackName: String? = null,
+	pendingImportUris: List<String> = emptyList(),
 	modifier: Modifier = Modifier,
 	viewModel: GalleryViewModel = viewModel(),
 ) {
@@ -467,26 +467,32 @@ fun GalleryRoute(
 	// work every time the gallery opens.
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onResumed() }
 
-	val gridState = rememberLazyGridState()
-	// One-shot: once items load, jump to whatever scrollToPackName/scrollToFileName pointed at
-	// (e.g. a sticker just imported via a share) and don't fight the user's own scrolling after.
-	var hasScrolledToTarget by rememberSaveable(scrollToPackName, scrollToFileName) {
-		mutableStateOf(scrollToPackName == null)
+	// Runs once per GalleryViewModel (guarded on its side against a config change re-triggering
+	// this LaunchedEffect) - a pack picked on the ShareImport screen that hasn't been copied yet.
+	LaunchedEffect(pendingImportPackName) {
+		if (pendingImportPackName != null) {
+			viewModel.runPendingImport(pendingImportPackName, pendingImportUris.map { Uri.parse(it) })
+		}
 	}
-	LaunchedEffect(uiState.items) {
-		if (hasScrolledToTarget) return@LaunchedEffect
+
+	val gridState = rememberLazyGridState()
+	// Jump to whatever scrollToPackName/scrollToFileName currently points at (e.g. a sticker just
+	// imported via a share) as soon as items reflects it, then consume it so a later, unrelated
+	// items update doesn't scroll back there again.
+	LaunchedEffect(uiState.items, uiState.scrollToPackName) {
+		val packName = uiState.scrollToPackName ?: return@LaunchedEffect
 		val items = uiState.items ?: return@LaunchedEffect
 		val targetIndex = items.indexOfFirst { item ->
 			item is BoardItem.Sticker &&
-				item.packName == scrollToPackName &&
-				(scrollToFileName == null || item.file.name == scrollToFileName)
+				item.packName == packName &&
+				(uiState.scrollToFileName == null || item.file.name == uiState.scrollToFileName)
 		}.takeIf { it >= 0 } ?: items.indexOfFirst { item ->
-			item is BoardItem.Header && item.packName == scrollToPackName
+			item is BoardItem.Header && item.packName == packName
 		}
 		if (targetIndex >= 0) {
 			gridState.animateScrollToItem(targetIndex)
 		}
-		hasScrolledToTarget = true
+		viewModel.onScrolledToTarget()
 	}
 
 	val chooseDirLauncher = rememberLauncherForActivityResult(
