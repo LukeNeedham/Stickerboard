@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
-import android.webkit.MimeTypeMap
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.elvishew.xlog.XLog
@@ -16,6 +14,7 @@ import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.importPhotosToPack
 import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -26,16 +25,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.system.measureTimeMillis
 import android.text.format.DateFormat as AndroidDateFormat
-
-/** Maximum number of stickers allowed in a single pack, mirrors StickerImporter's limit. */
-private const val MAX_PACK_SIZE = 128
 
 /** Bounds for iconsPerX, matching the settings page's SeekBar range. */
 private const val MIN_ICONS_PER_X = 2
@@ -56,6 +51,10 @@ data class GalleryUiState(
 	val stickerDirDisplayName: String = "",
 	val lastUpdateDate: String = "",
 	val isRefreshing: Boolean = false,
+	/** A sticker (or, if [scrollToFileName] is null, just a pack) to scroll the grid to as soon as
+	 * [items] reflects it - e.g. one just added by [runPendingImport]. Cleared once consumed. */
+	val scrollToPackName: String? = null,
+	val scrollToFileName: String? = null,
 )
 
 /**
@@ -149,77 +148,62 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	}
 
 	/**
-	 * Best-effort copy of a just-added photo into the user's external sticker source directory, so
-	 * that a future "Reload stickers" - which wipes and re-imports the internal copy from scratch -
-	 * doesn't lose it. Silently does nothing if no source directory is configured; silently fails if
-	 * the write doesn't succeed for any other reason, since the sticker is already usable from the
-	 * internal copy regardless.
-	 */
-	private fun copyToExternalSourceDir(packName: String, fileName: String, bytes: ByteArray) {
-		val context = getApplication<Application>()
-		val path = prefs.stickerDirPath ?: return
-		try {
-			val rootDir = DocumentFile.fromTreeUri(context, Uri.parse(path)) ?: return
-			val packDocDir = rootDir.findFile(packName) ?: rootDir.createDirectory(packName) ?: return
-			val newFile = packDocDir.createFile("application/octet-stream", fileName) ?: return
-			context.contentResolver.openOutputStream(newFile.uri)?.use { it.write(bytes) }
-		} catch (e: Exception) {
-			XLog.e("There was an error copying a gallery photo into the external sticker source directory!")
-			XLog.e(e)
-		}
-	}
-
-	/**
-	 * Copies a single gallery photo into packDir - and, best-effort, into the matching pack folder
-	 * of the external sticker source directory too - returning true if the internal copy (the one
-	 * the keyboard actually reads) succeeded.
-	 */
-	private fun copyPhotoToPack(uri: Uri, packDir: File, packName: String): Boolean {
-		val context = getApplication<Application>()
-		return try {
-			val mimeType = context.contentResolver.getType(uri)
-			val extension =
-				mimeType?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) } ?: "jpg"
-			val fileName = "gallery_${System.currentTimeMillis()}_${System.nanoTime()}.$extension"
-
-			val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return false
-			File(packDir, fileName).outputStream().use { it.write(bytes) }
-
-			copyToExternalSourceDir(packName, fileName, bytes)
-			true
-		} catch (e: IOException) {
-			XLog.e("There was an IOException when copying a gallery photo into a pack!")
-			XLog.e(e)
-			false
-		}
-	}
-
-	/**
-	 * Copies the given gallery photo URIs into packName, up to MAX_PACK_SIZE stickers total. No
-	 * feedback on success/failure/limit by design - the grid updating (or not) is the feedback.
+	 * Copies the given gallery photo URIs into packName, up to MAX_PACK_SIZE stickers total (see
+	 * [importPhotosToPack]). No feedback on success/failure/limit by design - the grid updating (or
+	 * not) is the feedback.
 	 */
 	fun addPhotosToPack(packName: String, uris: List<Uri>) {
-		val packDir = File(internalDir, packName)
 		viewModelScope.launch(Dispatchers.IO) {
-			packDir.mkdirs()
-			var packSize = packDir.listFiles { file -> file.isFile }?.size ?: 0
-			var addedCount = 0
-			for (uri in uris) {
-				if (packSize >= MAX_PACK_SIZE) break
-				if (copyPhotoToPack(uri, packDir, packName)) {
-					addedCount++
-					packSize++
-				}
-			}
-
-			if (addedCount == 0) return@launch
+			val addedFiles = importPhotosToPack(getApplication(), packName, uris)
+			if (addedFiles.isEmpty()) return@launch
 			val refreshedBoardItems = computeBoardItems()
 
 			withContext(Dispatchers.Main) {
-				prefs.numStickersImported += addedCount
+				prefs.numStickersImported += addedFiles.size
 				_uiState.update { it.copy(items = refreshedBoardItems) }
 			}
 		}
+	}
+
+	// Set once a pending import has been started, so a config change re-composing GalleryRoute (and
+	// re-running its LaunchedEffect) can't kick off the same import a second time - unlike isRefreshing,
+	// this stays true for the rest of this ViewModel's life, well after the import itself finishes.
+	private var hasStartedPendingImport = false
+
+	/**
+	 * Runs a share-import that was deferred until landing here - see
+	 * [com.lukeneedham.stickerboard.share.ShareImportRoute], which navigates to this page the instant
+	 * a pack is picked rather than waiting for the copy itself. Shows the same isRefreshing spinner a
+	 * manual reload does while [uris] are copied into [packName], then sets [GalleryUiState
+	 * .scrollToPackName]/[GalleryUiState.scrollToFileName] to whichever one landed last. A no-op if
+	 * called again, or with nothing to import.
+	 */
+	fun runPendingImport(packName: String, uris: List<Uri>) {
+		if (hasStartedPendingImport || uris.isEmpty()) return
+		hasStartedPendingImport = true
+		_uiState.update { it.copy(isRefreshing = true) }
+		viewModelScope.launch {
+			val addedFiles = withContext(Dispatchers.IO) {
+				importPhotosToPack(getApplication(), packName, uris)
+			}
+			if (addedFiles.isNotEmpty()) prefs.numStickersImported += addedFiles.size
+			val items = withContext(Dispatchers.IO) { computeBoardItems() }
+			_uiState.update {
+				it.copy(
+					items = items,
+					isRefreshing = false,
+					scrollToPackName = packName,
+					scrollToFileName = addedFiles.lastOrNull()?.name,
+				)
+			}
+		}
+	}
+
+	/** Clears [GalleryUiState.scrollToPackName]/[GalleryUiState.scrollToFileName] once
+	 * [StickerGalleryPage] has scrolled to it, so a later, unrelated items update doesn't scroll
+	 * there again. */
+	fun onScrolledToTarget() {
+		_uiState.update { it.copy(scrollToPackName = null, scrollToFileName = null) }
 	}
 
 	/**

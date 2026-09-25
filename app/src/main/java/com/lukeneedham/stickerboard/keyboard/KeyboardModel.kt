@@ -71,11 +71,17 @@ class KeyboardModel(context: Context) {
 		prefs.saveKeyboardHeight(heightPx)
 	}
 
-	fun hasRecentStickers(): Boolean = recentCache.toFiles().isNotEmpty()
+	fun hasRecentStickers(): Boolean = recentCache.toFiles().any { it.exists() }
 
 	fun firstPackName(): String? = sortedPackNames().firstOrNull()
 
 	fun sectionExists(packName: String): Boolean = headerPositions.containsKey(packName)
+
+	/** Re-scan [internalDir] without touching the external source directory - cheap enough to call
+	 * every time the keyboard becomes visible (see
+	 * [com.lukeneedham.stickerboard.utilities.KeyboardRefreshSignal]), unlike [refreshStickers] which
+	 * may also re-import from the (potentially large) external tree. */
+	fun rescanFromDisk() = loadPacks()
 
 	fun setActivePack(packName: String) {
 		activePack = packName
@@ -118,7 +124,13 @@ class KeyboardModel(context: Context) {
 		val items = mutableListOf<BoardItem>()
 		val newHeaderPositions = LinkedHashMap<String, Int>()
 
-		val recentStickers = recentCache.toFiles().reversedArray().take(iconsPerX * RECENT_ROW_LIMIT)
+		// recentCache just remembers paths of previously-sent stickers, with no way to notice a
+		// sticker being deleted (or a whole reimport removing it) out from under it - filter out
+		// anything no longer on disk so a deleted sticker doesn't linger here forever.
+		val recentStickers = recentCache.toFiles()
+			.filter { it.exists() }
+			.asReversed()
+			.take(iconsPerX * RECENT_ROW_LIMIT)
 		newHeaderPositions[RECENT_PACK_NAME] = items.size
 		items.add(BoardItem.Header(RECENT_PACK_NAME, appContext.getString(R.string.recent_heading)))
 		if (recentStickers.isEmpty()) {

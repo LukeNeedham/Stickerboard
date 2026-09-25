@@ -54,6 +54,11 @@ Tap the button below to open your keyboard settings, then switch on \"StickerBoa
 	<string name="view_stickers_button">View Stickers</string>
 	<string name="view_stickers_empty">No sticker packs yet. Choose a sticker source directory above to get started.</string>
 	<string name="add_photo_content_description">Add photo</string>
+	<!-- Share Import -->
+	<string name="share_import_heading">Add to Sticker Pack</string>
+	<string name="share_import_prompt">Choose a sticker pack to add these to, or create a new one.</string>
+	<string name="share_import_new_pack_hint">New pack name</string>
+	<string name="share_import_new_pack_button">Add</string>
 	<!-- Interactive Messages -->
 	<string name="imported_031">E031: Found more than %1$d stickers in total</string>
 	<string name="imported_032">E032: Found more than %1$d stickers in pack (%2$s)</string>

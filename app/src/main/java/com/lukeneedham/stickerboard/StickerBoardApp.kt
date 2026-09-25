@@ -1,6 +1,7 @@
 package com.lukeneedham.stickerboard
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -25,6 +26,7 @@ import com.lukeneedham.stickerboard.navigation.Route
 import com.lukeneedham.stickerboard.onboarding.OnboardingRoute
 import com.lukeneedham.stickerboard.settings.SettingsRoute
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.share.ShareImportRoute
 
 private val SLIDE_SPEC = tween<IntOffset>(durationMillis = 300)
 
@@ -37,14 +39,25 @@ private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideBackward(
 	slideInHorizontally(SLIDE_SPEC) { -it } togetherWith slideOutHorizontally(SLIDE_SPEC) { it }
 
 /**
- * The single activity's nav host - decides whether to land on onboarding or settings, and wires
- * every page's navigation callbacks to the one shared back stack.
+ * The single activity's nav host - decides whether to land on onboarding, settings, or (when
+ * [sharedImageUris] is non-empty, i.e. [MainActivity] was opened via another app's Share action)
+ * straight into the sticker-pack picker - and wires every page's navigation callbacks to the one
+ * shared back stack.
  */
 @Composable
-fun StickerBoardApp() {
+fun StickerBoardApp(
+	sharedImageUris: List<Uri> = emptyList(),
+	onCancelShareImport: () -> Unit = {},
+) {
 	val context = LocalContext.current
-	val startRoute = remember {
-		if (isOnboardingComplete(context)) Route.Settings else Route.Onboarding
+	val startRoute = remember(sharedImageUris) {
+		when {
+			sharedImageUris.isNotEmpty() && isOnboardingComplete(context) ->
+				Route.ShareImport(sharedImageUris.map { it.toString() })
+
+			isOnboardingComplete(context) -> Route.Settings
+			else -> Route.Onboarding
+		}
 	}
 	val backStack = rememberNavBackStack(startRoute)
 
@@ -67,12 +80,39 @@ fun StickerBoardApp() {
 					}
 					entry<Route.Settings> {
 						SettingsRoute(
-							onViewStickers = { backStack.add(Route.Gallery) },
+							onViewStickers = { backStack.add(Route.Gallery()) },
 							onOpenDebug = { backStack.add(Route.Debug) },
 						)
 					}
-					entry<Route.Gallery> {
-						GalleryRoute(onBack = { backStack.removeLastOrNull() })
+					entry<Route.Gallery> { route ->
+						GalleryRoute(
+							onBack = { backStack.removeLastOrNull() },
+							pendingImportPackName = route.pendingImportPackName,
+							pendingImportUris = route.pendingImportUris,
+						)
+					}
+					entry<Route.ShareImport> { route ->
+						ShareImportRoute(
+							imageUris = route.imageUris.map { Uri.parse(it) },
+							onCancel = onCancelShareImport,
+							onPackChosen = { packName ->
+								// The picker screen was the start route (opened straight from another
+								// app's Share action), so there's nothing under it to return to - rebuild
+								// the stack as Settings with the Stickers page pushed on top (exactly how
+								// reaching it normally looks), which runs the actual import itself and
+								// shows its own loading state while it does. Landing on a bare Gallery
+								// instead would leave its own back button with nothing left to pop,
+								// crashing NavDisplay ("backstack cannot be empty").
+								backStack.clear()
+								backStack.add(Route.Settings)
+								backStack.add(
+									Route.Gallery(
+										pendingImportPackName = packName,
+										pendingImportUris = route.imageUris,
+									),
+								)
+							},
+						)
 					}
 					entry<Route.Debug> {
 						DebugRoute(

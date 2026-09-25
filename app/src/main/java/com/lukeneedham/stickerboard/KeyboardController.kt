@@ -36,6 +36,7 @@ import com.lukeneedham.stickerboard.keyboard.LightColors
 import com.lukeneedham.stickerboard.keyboard.PackNavIcon
 import com.lukeneedham.stickerboard.keyboard.RECENT_PACK_NAME
 import com.lukeneedham.stickerboard.model.BoardItem
+import com.lukeneedham.stickerboard.utilities.KeyboardRefreshSignal
 import com.lukeneedham.stickerboard.utilities.StickerSender
 import com.lukeneedham.stickerboard.utilities.startLogger
 import java.io.File
@@ -187,6 +188,11 @@ class KeyboardController :
 
 	override fun onWindowShown() {
 		super.onWindowShown()
+		// Picks up stickers added by the app while this keyboard instance was already running -
+		// e.g. a photo added from the Stickers page, or an image shared into StickerBoard.
+		if (KeyboardRefreshSignal.consumeDirty()) {
+			model.rescanFromDisk()
+		}
 		lifecycleRegistry.currentState = Lifecycle.State.RESUMED
 	}
 
