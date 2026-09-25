@@ -5,11 +5,14 @@ package com.lukeneedham.stickerboard.gallery
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +31,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -71,11 +77,14 @@ import java.io.File
 
 /**
  * Shows every sticker pack using the same section/grid board layout as the keyboard's own board,
- * with an extra "add photo" cell at the end of each pack's section. Tapping a sticker opens a
- * read-only enlarged preview; tapping the add-photo cell opens the device's photo picker. A card
- * above the grid shows where the stickers are sourced from and lets the user change or open that
- * folder or re-import from it - it scrolls with the rest of the page, and pulling down anywhere
- * re-imports from disk the same way the keyboard's own pull-to-refresh does.
+ * with an extra "add photo" cell at the end of each pack's section. Tapping a sticker opens an
+ * enlarged preview, which has its own delete button; tapping the add-photo cell opens the device's
+ * photo picker. Long-pressing a sticker instead enters multi-select mode, where tapping toggles
+ * stickers in/out of the selection and the top bar's delete button removes all of them at once -
+ * either way, a confirmation dialog stands between the tap and the actual deletion. A card above
+ * the grid shows where the stickers are sourced from and lets the user change or open that folder
+ * or re-import from it - it scrolls with the rest of the page, and pulling down anywhere re-imports
+ * from disk the same way the keyboard's own pull-to-refresh does.
  */
 @Composable
 fun StickerGalleryPage(
@@ -89,19 +98,41 @@ fun StickerGalleryPage(
 	onChangeDirectory: () -> Unit,
 	onRefresh: () -> Unit,
 	onAddPhotoClick: (packName: String) -> Unit,
+	onDeleteStickers: (Set<File>) -> Unit,
 	modifier: Modifier = Modifier,
 	gridState: LazyGridState = rememberLazyGridState(),
 ) {
 	var previewSticker by remember { mutableStateOf<File?>(null) }
+	var selectedStickers by remember { mutableStateOf(setOf<File>()) }
+	var stickerPendingDelete by remember { mutableStateOf<File?>(null) }
+	var showBulkDeleteConfirm by remember { mutableStateOf(false) }
+
+	BackHandler(enabled = selectedStickers.isNotEmpty()) { selectedStickers = emptySet() }
 
 	Scaffold(
 		modifier = modifier,
 		containerColor = MaterialTheme.colorScheme.background,
 		topBar = {
-			SettingsTopBar(
-				title = stringResource(R.string.view_stickers_heading),
-				onBack = onBack,
-			)
+			if (selectedStickers.isNotEmpty()) {
+				SettingsTopBar(
+					title = stringResource(R.string.selected_count_lbl, selectedStickers.size),
+					onBack = { selectedStickers = emptySet() },
+					actions = {
+						IconButton(onClick = { showBulkDeleteConfirm = true }) {
+							Icon(
+								painter = painterResource(R.drawable.ic_delete),
+								contentDescription = stringResource(R.string.delete_button),
+								tint = MaterialTheme.colorScheme.error,
+							)
+						}
+					},
+				)
+			} else {
+				SettingsTopBar(
+					title = stringResource(R.string.view_stickers_heading),
+					onBack = onBack,
+				)
+			}
 		},
 	) { innerPadding ->
 		PullToRefreshBox(
@@ -169,10 +200,20 @@ fun StickerGalleryPage(
 							is BoardItem.EmptyMessage -> GallerySectionEmptyMessage(item.message)
 							is BoardItem.Sticker -> GalleryStickerCell(
 								file = item.file,
-								onClick = { previewSticker = item.file },
+								isSelected = item.file in selectedStickers,
+								selectionMode = selectedStickers.isNotEmpty(),
+								onClick = {
+									if (selectedStickers.isNotEmpty()) {
+										selectedStickers = selectedStickers.toggled(item.file)
+									} else {
+										previewSticker = item.file
+									}
+								},
+								onLongClick = { selectedStickers = selectedStickers.toggled(item.file) },
 							)
 							is BoardItem.AddPhoto -> GalleryAddPhotoCell(
 								onClick = { onAddPhotoClick(item.packName) },
+								enabled = selectedStickers.isEmpty(),
 							)
 						}
 					}
@@ -182,9 +223,43 @@ fun StickerGalleryPage(
 	}
 
 	previewSticker?.let { sticker ->
-		StickerPreviewDialog(sticker = sticker, onDismiss = { previewSticker = null })
+		StickerPreviewDialog(
+			sticker = sticker,
+			onDismiss = { previewSticker = null },
+			onDeleteClick = { stickerPendingDelete = sticker },
+		)
+	}
+
+	stickerPendingDelete?.let { sticker ->
+		DeleteConfirmationDialog(
+			title = stringResource(R.string.delete_sticker_confirm_title),
+			message = stringResource(R.string.delete_sticker_confirm_message),
+			onConfirm = {
+				onDeleteStickers(setOf(sticker))
+				stickerPendingDelete = null
+				previewSticker = null
+			},
+			onDismiss = { stickerPendingDelete = null },
+		)
+	}
+
+	if (showBulkDeleteConfirm) {
+		DeleteConfirmationDialog(
+			title = stringResource(R.string.delete_stickers_confirm_title, selectedStickers.size),
+			message = stringResource(R.string.delete_stickers_confirm_message),
+			onConfirm = {
+				onDeleteStickers(selectedStickers)
+				selectedStickers = emptySet()
+				showBulkDeleteConfirm = false
+			},
+			onDismiss = { showBulkDeleteConfirm = false },
+		)
 	}
 }
+
+/** Toggles [element]'s membership in this set, returning the updated copy. */
+private fun <T> Set<T>.toggled(element: T): Set<T> =
+	if (element in this) this - element else this + element
 
 /**
  * Shows where the loaded stickers came from, how many there are, and when they were last
@@ -349,30 +424,83 @@ private fun GallerySectionEmptyMessage(text: String) {
 	)
 }
 
+/** [selectionMode] shows a selection badge in the corner (filled and checked when [isSelected]) -
+ * long-pressing any cell enters selection mode, after which tapping any cell toggles it instead of
+ * opening the full-screen preview. */
 @Composable
-private fun GalleryStickerCell(file: File, onClick: () -> Unit) {
+private fun GalleryStickerCell(
+	file: File,
+	isSelected: Boolean,
+	selectionMode: Boolean,
+	onClick: () -> Unit,
+	onLongClick: () -> Unit,
+) {
 	val haptic = LocalHapticFeedback.current
 	Box(
 		modifier = Modifier
 			.padding(4.dp)
 			.aspectRatio(1f)
-			.clickable {
-				haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-				onClick()
-			},
+			.combinedClickable(
+				onClick = {
+					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+					onClick()
+				},
+				onLongClick = {
+					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+					onLongClick()
+				},
+			),
 	) {
 		StickerImage(
 			file = file,
 			contentDescription = stringResource(R.string.pack_icon),
-			modifier = Modifier.fillMaxSize(),
+			modifier = Modifier
+				.fillMaxSize()
+				.let { imageModifier ->
+					if (isSelected) {
+						imageModifier
+							.clip(RoundedCornerShape(10.dp))
+							.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp))
+					} else {
+						imageModifier
+					}
+				},
 		)
+		if (selectionMode) {
+			Box(
+				modifier = Modifier
+					.align(Alignment.TopEnd)
+					.padding(4.dp)
+					.size(22.dp)
+					.clip(CircleShape)
+					.background(
+						if (isSelected) {
+							MaterialTheme.colorScheme.primary
+						} else {
+							Color.Black.copy(alpha = 0.35f)
+						},
+					)
+					.border(1.5.dp, Color.White, CircleShape),
+				contentAlignment = Alignment.Center,
+			) {
+				if (isSelected) {
+					Icon(
+						painter = painterResource(R.drawable.ic_check),
+						contentDescription = stringResource(R.string.sticker_selected_content_description),
+						tint = Color.White,
+						modifier = Modifier.size(14.dp),
+					)
+				}
+			}
+		}
 	}
 }
 
 /** Same footprint as a sticker cell, so the grid stays aligned, but the tappable circle itself is
- * small and centered - a sticker-sized button here would dwarf the actual stickers around it. */
+ * small and centered - a sticker-sized button here would dwarf the actual stickers around it.
+ * Disabled (but still shown, to keep the grid's layout stable) while a bulk selection is active. */
 @Composable
-private fun GalleryAddPhotoCell(onClick: () -> Unit) {
+private fun GalleryAddPhotoCell(onClick: () -> Unit, enabled: Boolean) {
 	val haptic = LocalHapticFeedback.current
 	Box(
 		modifier = Modifier
@@ -385,7 +513,7 @@ private fun GalleryAddPhotoCell(onClick: () -> Unit) {
 				.size(40.dp)
 				.clip(CircleShape)
 				.background(MaterialTheme.colorScheme.surfaceVariant)
-				.clickable {
+				.clickable(enabled = enabled) {
 					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 					onClick()
 				},
@@ -401,47 +529,93 @@ private fun GalleryAddPhotoCell(onClick: () -> Unit) {
 	}
 }
 
-/** A simple, read-only enlarged preview of a sticker - tap the image (or outside) to dismiss. */
+/** An enlarged preview of a sticker - tap the image (or outside) to dismiss, or tap the delete
+ * button in the corner to ask [onDeleteClick] to confirm and delete it. */
 @Composable
-private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit) {
+private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit, onDeleteClick: () -> Unit) {
 	Dialog(
 		onDismissRequest = onDismiss,
 		properties = DialogProperties(usePlatformDefaultWidth = false),
 	) {
-		Column(
+		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.background)
-				.clickable(onClick = onDismiss)
-				.padding(20.dp),
-			horizontalAlignment = Alignment.CenterHorizontally,
+				.background(MaterialTheme.colorScheme.background),
 		) {
-			Text(
-				text = prettifyPackName(sticker.parentFile?.name.orEmpty()),
-				style = MaterialTheme.typography.titleMedium,
-				fontWeight = FontWeight.Bold,
-				color = MaterialTheme.colorScheme.primary,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-			)
-			Text(
-				text = trimString(sticker.name),
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis,
-			)
-			StickerImage(
-				file = sticker,
-				contentDescription = trimString(sticker.name),
+			Column(
 				modifier = Modifier
-					.weight(1f)
-					.fillMaxWidth()
-					.padding(top = 16.dp)
-					.clickable(onClick = onDismiss),
-			)
+					.fillMaxSize()
+					.clickable(onClick = onDismiss)
+					.padding(20.dp),
+				horizontalAlignment = Alignment.CenterHorizontally,
+			) {
+				Text(
+					text = prettifyPackName(sticker.parentFile?.name.orEmpty()),
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.primary,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+				)
+				Text(
+					text = trimString(sticker.name),
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurfaceVariant,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+				)
+				StickerImage(
+					file = sticker,
+					contentDescription = trimString(sticker.name),
+					modifier = Modifier
+						.weight(1f)
+						.fillMaxWidth()
+						.padding(top = 16.dp)
+						.clickable(onClick = onDismiss),
+				)
+			}
+			IconButton(
+				onClick = onDeleteClick,
+				modifier = Modifier
+					.align(Alignment.TopEnd)
+					.padding(12.dp),
+			) {
+				Icon(
+					painter = painterResource(R.drawable.ic_delete),
+					contentDescription = stringResource(R.string.delete_sticker_button),
+					tint = MaterialTheme.colorScheme.error,
+				)
+			}
 		}
 	}
+}
+
+/** A destructive-action confirmation dialog shared by the single-sticker and bulk deletes. */
+@Composable
+private fun DeleteConfirmationDialog(
+	title: String,
+	message: String,
+	onConfirm: () -> Unit,
+	onDismiss: () -> Unit,
+) {
+	AlertDialog(
+		onDismissRequest = onDismiss,
+		title = { Text(title) },
+		text = { Text(message) },
+		confirmButton = {
+			TextButton(onClick = onConfirm) {
+				Text(
+					text = stringResource(R.string.delete_button),
+					color = MaterialTheme.colorScheme.error,
+				)
+			}
+		},
+		dismissButton = {
+			TextButton(onClick = onDismiss) {
+				Text(stringResource(R.string.cancel_button))
+			}
+		},
+	)
 }
 
 /**
@@ -536,6 +710,7 @@ fun GalleryRoute(
 				PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
 			)
 		},
+		onDeleteStickers = { files -> viewModel.deleteStickers(files) },
 		modifier = modifier,
 		gridState = gridState,
 	)

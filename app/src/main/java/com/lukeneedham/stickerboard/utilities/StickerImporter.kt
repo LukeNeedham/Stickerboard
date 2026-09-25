@@ -95,6 +95,50 @@ suspend fun importPhotosToPack(
 	}
 
 /**
+ * Deletes [files] (internal-storage sticker files) from disk - and, best-effort, their matching
+ * copies from the external sticker source directory too, so a future "Reload stickers" (which
+ * wipes and re-imports the internal copy from scratch) doesn't bring them back. Shared by the
+ * Stickers page's single-sticker delete (full-screen preview) and its bulk multi-select delete;
+ * marks [KeyboardRefreshSignal] dirty on success and resyncs the stored source-directory signature
+ * the same way [importPhotosToPack] does for additions, so a later "Reload stickers" doesn't
+ * re-copy a deleted sticker back in from the external folder. Returns the number of files actually
+ * deleted.
+ */
+suspend fun deleteStickerFiles(context: Context, files: Collection<File>): Int =
+	withContext(Dispatchers.IO) {
+		var deletedCount = 0
+		for (file in files) {
+			val packName = file.parentFile?.name ?: continue
+			if (file.delete()) {
+				deletedCount++
+				deleteFromExternalSourceDir(context, packName, file.name)
+			}
+		}
+		if (deletedCount > 0) {
+			KeyboardRefreshSignal.markDirty()
+			resyncStickerDirSignature(context)
+		}
+		deletedCount
+	}
+
+/**
+ * Best-effort deletion of [fileName] from [packName]'s folder in the external sticker source
+ * directory, if one is configured - silently does nothing/fails otherwise, since the internal
+ * copy is already gone regardless.
+ */
+private fun deleteFromExternalSourceDir(context: Context, packName: String, fileName: String) {
+	val path = AppPreferences(context).stickerDirPath ?: return
+	try {
+		val rootDir = DocumentFile.fromTreeUri(context, Uri.parse(path)) ?: return
+		val packDocDir = rootDir.findFile(packName) ?: return
+		packDocDir.findFile(fileName)?.delete()
+	} catch (e: Exception) {
+		XLog.e("There was an error deleting a photo from the external sticker source directory!")
+		XLog.e(e)
+	}
+}
+
+/**
  * Re-computes and persists [AppPreferences.stickerDirSignature] from the external sticker source
  * directory's current contents, if one is configured. Without this, a sticker copied there by
  * [importPhotosToPack] (rather than by a full [StickerImporter.importStickers] pass) would never be

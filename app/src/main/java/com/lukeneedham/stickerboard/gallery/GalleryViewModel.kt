@@ -14,6 +14,7 @@ import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.deleteStickerFiles
 import com.lukeneedham.stickerboard.utilities.importPhotosToPack
 import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import kotlinx.coroutines.Dispatchers
@@ -161,6 +162,23 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 			withContext(Dispatchers.Main) {
 				prefs.numStickersImported += addedFiles.size
 				_uiState.update { it.copy(items = refreshedBoardItems) }
+			}
+		}
+	}
+
+	/**
+	 * Deletes [files] from internal storage (and, best-effort, the external sticker source
+	 * directory), then rescans and refreshes everything [StickerGalleryPage] shows. Used for both
+	 * the single-sticker delete (full-screen preview) and the bulk multi-select delete - a no-op
+	 * if [files] is empty.
+	 */
+	fun deleteStickers(files: Set<File>) {
+		if (files.isEmpty()) return
+		viewModelScope.launch(Dispatchers.IO) {
+			deleteStickerFiles(getApplication(), files)
+			val items = computeBoardItems()
+			withContext(Dispatchers.Main) {
+				_uiState.update { it.copy(items = items) }
 			}
 		}
 	}
