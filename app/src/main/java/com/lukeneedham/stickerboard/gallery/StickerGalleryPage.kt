@@ -49,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -81,10 +82,13 @@ import java.io.File
  * enlarged preview, which has its own delete button; tapping the add-photo cell opens the device's
  * photo picker. Long-pressing a sticker instead enters multi-select mode, where tapping toggles
  * stickers in/out of the selection and the top bar's delete button removes all of them at once -
- * either way, a confirmation dialog stands between the tap and the actual deletion. A card above
- * the grid shows where the stickers are sourced from and lets the user change or open that folder
- * or re-import from it - it scrolls with the rest of the page, and pulling down anywhere re-imports
- * from disk the same way the keyboard's own pull-to-refresh does.
+ * either way, a confirmation dialog stands between the tap and the actual deletion, and a spinner
+ * overlays a sticker's cell for as long as its delete is still in flight. A sticker being added -
+ * from the add-photo cell or a share-import - shows a matching spinner placeholder in its pack's
+ * section until it's actually landed on disk. A card above the grid shows where the stickers are
+ * sourced from and lets the user change or open that folder or re-import from it - it scrolls with
+ * the rest of the page, and pulling down anywhere re-imports from disk the same way the keyboard's
+ * own pull-to-refresh does.
  */
 @Composable
 fun StickerGalleryPage(
@@ -99,6 +103,7 @@ fun StickerGalleryPage(
 	onRefresh: () -> Unit,
 	onAddPhotoClick: (packName: String) -> Unit,
 	onDeleteStickers: (Set<File>) -> Unit,
+	deletingStickers: Set<File>,
 	modifier: Modifier = Modifier,
 	gridState: LazyGridState = rememberLazyGridState(),
 ) {
@@ -186,6 +191,7 @@ fun StickerGalleryPage(
 								is BoardItem.EmptyMessage -> "empty:${item.packName}"
 								is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
 								is BoardItem.AddPhoto -> "add:${item.packName}"
+								is BoardItem.Loading -> "loading:${item.packName}:${item.token}"
 							}
 						},
 						span = { index ->
@@ -201,6 +207,7 @@ fun StickerGalleryPage(
 							is BoardItem.Sticker -> GalleryStickerCell(
 								file = item.file,
 								isSelected = item.file in selectedStickers,
+								isDeleting = item.file in deletingStickers,
 								selectionMode = selectedStickers.isNotEmpty(),
 								onClick = {
 									if (selectedStickers.isNotEmpty()) {
@@ -215,6 +222,7 @@ fun StickerGalleryPage(
 								onClick = { onAddPhotoClick(item.packName) },
 								enabled = selectedStickers.isEmpty(),
 							)
+							is BoardItem.Loading -> GalleryLoadingCell()
 						}
 					}
 				}
@@ -426,11 +434,13 @@ private fun GallerySectionEmptyMessage(text: String) {
 
 /** [selectionMode] shows a selection badge in the corner (filled and checked when [isSelected]) -
  * long-pressing any cell enters selection mode, after which tapping any cell toggles it instead of
- * opening the full-screen preview. */
+ * opening the full-screen preview. [isDeleting] dims the sticker and overlays a spinner instead,
+ * and disables both taps, for as long as it's still visible here while its delete is in flight. */
 @Composable
 private fun GalleryStickerCell(
 	file: File,
 	isSelected: Boolean,
+	isDeleting: Boolean,
 	selectionMode: Boolean,
 	onClick: () -> Unit,
 	onLongClick: () -> Unit,
@@ -441,6 +451,7 @@ private fun GalleryStickerCell(
 			.padding(4.dp)
 			.aspectRatio(1f)
 			.combinedClickable(
+				enabled = !isDeleting,
 				onClick = {
 					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 					onClick()
@@ -464,9 +475,10 @@ private fun GalleryStickerCell(
 					} else {
 						imageModifier
 					}
-				},
+				}
+				.alpha(if (isDeleting) 0.3f else 1f),
 		)
-		if (selectionMode) {
+		if (selectionMode && !isDeleting) {
 			Box(
 				modifier = Modifier
 					.align(Alignment.TopEnd)
@@ -492,6 +504,13 @@ private fun GalleryStickerCell(
 					)
 				}
 			}
+		}
+		if (isDeleting) {
+			CircularProgressIndicator(
+				modifier = Modifier.align(Alignment.Center).size(24.dp),
+				strokeWidth = 2.dp,
+				color = MaterialTheme.colorScheme.primary,
+			)
 		}
 	}
 }
@@ -526,6 +545,27 @@ private fun GalleryAddPhotoCell(onClick: () -> Unit, enabled: Boolean) {
 				modifier = Modifier.size(20.dp),
 			)
 		}
+	}
+}
+
+/** Same footprint as a sticker cell - shown in a pack's section in place of a sticker that's still
+ * being copied in, either via [GalleryAddPhotoCell] or a share-import, until it lands on disk and
+ * a real [BoardItem.Sticker] takes its place. */
+@Composable
+private fun GalleryLoadingCell() {
+	Box(
+		modifier = Modifier
+			.padding(4.dp)
+			.aspectRatio(1f)
+			.clip(RoundedCornerShape(10.dp))
+			.background(MaterialTheme.colorScheme.surfaceVariant),
+		contentAlignment = Alignment.Center,
+	) {
+		CircularProgressIndicator(
+			modifier = Modifier.size(24.dp),
+			strokeWidth = 2.dp,
+			color = MaterialTheme.colorScheme.primary,
+		)
 	}
 }
 
@@ -711,6 +751,7 @@ fun GalleryRoute(
 			)
 		},
 		onDeleteStickers = { files -> viewModel.deleteStickers(files) },
+		deletingStickers = uiState.deletingStickers,
 		modifier = modifier,
 		gridState = gridState,
 	)

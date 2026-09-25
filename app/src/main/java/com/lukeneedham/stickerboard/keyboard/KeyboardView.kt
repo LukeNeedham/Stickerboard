@@ -525,6 +525,7 @@ private fun BoardGrid(
 						is BoardItem.EmptyMessage -> "empty:${item.packName}"
 						is BoardItem.Sticker -> "sticker:${item.packName}:${item.file.path}"
 						is BoardItem.AddPhoto -> "add:${item.packName}"
+						is BoardItem.Loading -> "loading:${item.packName}:${item.token}"
 					}
 				},
 				span = { index ->
@@ -543,8 +544,9 @@ private fun BoardGrid(
 						onClick = { onStickerClick(item.file) },
 						onLongClick = { onStickerLongClick(item.file) },
 					)
-					// Board mode (unlike the sticker gallery) never surfaces AddPhoto cells.
+					// Board mode (unlike the sticker gallery) never surfaces AddPhoto or Loading cells.
 					is BoardItem.AddPhoto -> Unit
+					is BoardItem.Loading -> Unit
 				}
 			}
 		}
