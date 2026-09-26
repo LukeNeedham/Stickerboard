@@ -14,6 +14,7 @@ import com.lukeneedham.stickerboard.model.StickerPack
 import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.utilities.StickerImporter
 import com.lukeneedham.stickerboard.utilities.Toaster
+import com.lukeneedham.stickerboard.utilities.deleteStickerFiles
 import com.lukeneedham.stickerboard.utilities.importPhotosToPack
 import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +56,9 @@ data class GalleryUiState(
 	 * [items] reflects it - e.g. one just added by [runPendingImport]. Cleared once consumed. */
 	val scrollToPackName: String? = null,
 	val scrollToFileName: String? = null,
+	/** Stickers whose delete is currently in flight - [StickerGalleryPage] overlays a loading
+	 * indicator on their cell until they actually disappear from [items]. */
+	val deletingStickers: Set<File> = emptySet(),
 )
 
 /**
@@ -104,6 +108,49 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		}
 	}
 
+	/** A single photo currently being copied into [packName] by [addPhotosToPack] or
+	 * [runPendingImport] - not yet visible in [rawItems] since it hasn't landed on disk yet. */
+	private data class PendingAdd(val token: String, val packName: String)
+
+	// rawItems/pendingAdds back GalleryUiState.items (see mergeWithPendingAdds) but aren't
+	// StateFlow-backed themselves - every write to them below either runs directly on the main
+	// thread or hops back to it via withContext(Dispatchers.Main) first, so plain vars are enough.
+	private var rawItems: List<BoardItem>? = null
+	private var pendingAdds: List<PendingAdd> = emptyList()
+	private var nextPendingAddId = 0L
+
+	private fun newPendingAddToken(): String = "pending-${nextPendingAddId++}"
+
+	/**
+	 * Splices a [BoardItem.Loading] placeholder into [items] for each of [pendingAdds] - right
+	 * before the [BoardItem.AddPhoto] cell of the pack it's copying into, the same slot the real
+	 * [BoardItem.Sticker] will take once it lands on disk and [items] catches up. A pending add for
+	 * a pack with no section yet (e.g. a brand new one from share-import) gets its own section
+	 * appended at the end instead. A no-op (returned as-is) while [items] is still null, i.e. before
+	 * the very first load.
+	 */
+	private fun mergeWithPendingAdds(
+		items: List<BoardItem>?,
+		pendingAdds: List<PendingAdd>,
+	): List<BoardItem>? {
+		if (items == null || pendingAdds.isEmpty()) return items
+		val remaining = pendingAdds.groupByTo(LinkedHashMap()) { it.packName }
+		val result = mutableListOf<BoardItem>()
+		for (item in items) {
+			if (item is BoardItem.AddPhoto) {
+				remaining.remove(item.packName)?.forEach { pending ->
+					result.add(BoardItem.Loading(pending.token, item.packName))
+				}
+			}
+			result.add(item)
+		}
+		for ((packName, pending) in remaining) {
+			result.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			pending.forEach { result.add(BoardItem.Loading(it.token, packName)) }
+		}
+		return result
+	}
+
 	private fun sortedPackNames(loadedPacks: Map<String, StickerPack>): List<String> =
 		loadedPacks.keys.sorted()
 
@@ -143,24 +190,60 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 			val (items, dirName) = withContext(Dispatchers.IO) {
 				computeBoardItems() to currentStickerDirDisplayName()
 			}
-			_uiState.update { it.copy(items = items, stickerDirDisplayName = dirName) }
+			rawItems = items
+			_uiState.update {
+				it.copy(items = mergeWithPendingAdds(rawItems, pendingAdds), stickerDirDisplayName = dirName)
+			}
 		}
 	}
 
 	/**
 	 * Copies the given gallery photo URIs into packName, up to MAX_PACK_SIZE stickers total (see
-	 * [importPhotosToPack]). No feedback on success/failure/limit by design - the grid updating (or
-	 * not) is the feedback.
+	 * [importPhotosToPack]). Shows a [BoardItem.Loading] placeholder for each one (see
+	 * [mergeWithPendingAdds]) for as long as its copy is in flight - otherwise no feedback on
+	 * success/failure/limit by design, the grid updating (or not) once it's done is the feedback.
 	 */
 	fun addPhotosToPack(packName: String, uris: List<Uri>) {
+		if (uris.isEmpty()) return
+		val tokens = uris.map { PendingAdd(newPendingAddToken(), packName) }
+		pendingAdds = pendingAdds + tokens
+		_uiState.update { it.copy(items = mergeWithPendingAdds(rawItems, pendingAdds)) }
+
 		viewModelScope.launch(Dispatchers.IO) {
 			val addedFiles = importPhotosToPack(getApplication(), packName, uris)
-			if (addedFiles.isEmpty()) return@launch
 			val refreshedBoardItems = computeBoardItems()
 
 			withContext(Dispatchers.Main) {
-				prefs.numStickersImported += addedFiles.size
-				_uiState.update { it.copy(items = refreshedBoardItems) }
+				if (addedFiles.isNotEmpty()) prefs.numStickersImported += addedFiles.size
+				rawItems = refreshedBoardItems
+				pendingAdds = pendingAdds - tokens.toSet()
+				_uiState.update { it.copy(items = mergeWithPendingAdds(rawItems, pendingAdds)) }
+			}
+		}
+	}
+
+	/**
+	 * Deletes [files] from internal storage (and, best-effort, the external sticker source
+	 * directory), then rescans and refreshes everything [StickerGalleryPage] shows. Used for both
+	 * the single-sticker delete (full-screen preview) and the bulk multi-select delete - a no-op
+	 * if [files] is empty. Adds [files] to [GalleryUiState.deletingStickers] immediately, so
+	 * [StickerGalleryPage] can overlay a loading indicator on them for as long as they're still
+	 * visible in [items] (i.e. until the rescan below actually removes them).
+	 */
+	fun deleteStickers(files: Set<File>) {
+		if (files.isEmpty()) return
+		_uiState.update { it.copy(deletingStickers = it.deletingStickers + files) }
+		viewModelScope.launch(Dispatchers.IO) {
+			deleteStickerFiles(getApplication(), files)
+			val items = computeBoardItems()
+			withContext(Dispatchers.Main) {
+				rawItems = items
+				_uiState.update {
+					it.copy(
+						items = mergeWithPendingAdds(rawItems, pendingAdds),
+						deletingStickers = it.deletingStickers - files,
+					)
+				}
 			}
 		}
 	}
@@ -181,16 +264,22 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	fun runPendingImport(packName: String, uris: List<Uri>) {
 		if (hasStartedPendingImport || uris.isEmpty()) return
 		hasStartedPendingImport = true
-		_uiState.update { it.copy(isRefreshing = true) }
+		val tokens = uris.map { PendingAdd(newPendingAddToken(), packName) }
+		pendingAdds = pendingAdds + tokens
+		_uiState.update {
+			it.copy(isRefreshing = true, items = mergeWithPendingAdds(rawItems, pendingAdds))
+		}
 		viewModelScope.launch {
 			val addedFiles = withContext(Dispatchers.IO) {
 				importPhotosToPack(getApplication(), packName, uris)
 			}
 			if (addedFiles.isNotEmpty()) prefs.numStickersImported += addedFiles.size
 			val items = withContext(Dispatchers.IO) { computeBoardItems() }
+			rawItems = items
+			pendingAdds = pendingAdds - tokens.toSet()
 			_uiState.update {
 				it.copy(
-					items = items,
+					items = mergeWithPendingAdds(rawItems, pendingAdds),
 					isRefreshing = false,
 					scrollToPackName = packName,
 					scrollToFileName = addedFiles.lastOrNull()?.name,
@@ -248,9 +337,10 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 				computeBoardItems() to currentStickerDirDisplayName()
 			}
 			prefs.lastUpdateEpochMillis = System.currentTimeMillis()
+			rawItems = items
 			_uiState.update {
 				it.copy(
-					items = items,
+					items = mergeWithPendingAdds(rawItems, pendingAdds),
 					stickerDirDisplayName = dirName,
 					lastUpdateDate = currentLastUpdateDate(),
 					isRefreshing = false,
