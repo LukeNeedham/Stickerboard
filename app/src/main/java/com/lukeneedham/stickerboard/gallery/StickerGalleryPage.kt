@@ -463,7 +463,7 @@ private fun GallerySectionEmptyMessage(text: String) {
 
 /** [selectionMode] shows a selection badge in the corner (filled and checked when [isSelected]) -
  * long-pressing any cell enters selection mode, after which tapping any cell toggles it instead of
- * opening the full-screen preview. [isDeleting] dims the sticker and overlays a spinner instead,
+ * opening the full-screen preview. GIFs get a small play badge in the bottom-left corner, since they're shown as a static frame here. [isDeleting] dims the sticker and overlays a spinner instead,
  * and disables both taps, for as long as it's still visible here while its delete is in flight. */
 @Composable
 private fun GalleryStickerCell(
@@ -508,6 +508,24 @@ private fun GalleryStickerCell(
 				}
 				.alpha(if (isDeleting) 0.3f else 1f),
 		)
+		if (file.extension.equals("gif", ignoreCase = true) && !isDeleting) {
+			Box(
+				modifier = Modifier
+					.align(Alignment.BottomStart)
+					.padding(4.dp)
+					.size(22.dp)
+					.clip(CircleShape)
+					.background(Color.Black.copy(alpha = 0.5f)),
+				contentAlignment = Alignment.Center,
+			) {
+				Icon(
+					painter = painterResource(R.drawable.ic_play),
+					contentDescription = stringResource(R.string.sticker_animated_content_description),
+					tint = Color.White,
+					modifier = Modifier.size(12.dp),
+				)
+			}
+		}
 		if (selectionMode && !isDeleting) {
 			Box(
 				modifier = Modifier
