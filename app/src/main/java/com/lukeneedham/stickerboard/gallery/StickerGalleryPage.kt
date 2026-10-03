@@ -645,8 +645,9 @@ private fun GalleryStickerCell(
 	}
 }
 
-/** Same footprint as a sticker cell, so the grid stays aligned, but the tappable circle itself is
- * small and centered - a sticker-sized button here would dwarf the actual stickers around it.
+/** Same footprint as a sticker cell, so the grid stays aligned, but the visible circle itself is
+ * small and centered - a sticker-sized button here would dwarf the actual stickers around it. The
+ * whole cell is tappable, not just the circle.
  * Disabled (but still shown, to keep the grid's layout stable) while a bulk selection is active. */
 @Composable
 private fun GalleryAddPhotoCell(onClick: () -> Unit, enabled: Boolean) {
@@ -654,18 +655,19 @@ private fun GalleryAddPhotoCell(onClick: () -> Unit, enabled: Boolean) {
 	Box(
 		modifier = Modifier
 			.padding(4.dp)
-			.aspectRatio(1f),
+			.aspectRatio(1f)
+			.clip(RoundedCornerShape(10.dp))
+			.clickable(enabled = enabled) {
+				haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+				onClick()
+			},
 		contentAlignment = Alignment.Center,
 	) {
 		Box(
 			modifier = Modifier
 				.size(40.dp)
 				.clip(CircleShape)
-				.background(MaterialTheme.colorScheme.surfaceVariant)
-				.clickable(enabled = enabled) {
-					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-					onClick()
-				},
+				.background(MaterialTheme.colorScheme.surfaceVariant),
 			contentAlignment = Alignment.Center,
 		) {
 			Icon(
