@@ -41,4 +41,4 @@ fun StickerImage(
 	)
 }
 
-private val STATIC_DECODABLE_EXTENSIONS = setOf("gif", "webp", "png", "jpg", "jpeg", "bmp")
+private val STATIC_DECODABLE_EXTENSIONS = setOf("gif", "webp", "png", "jpg", "jpeg", "bmp", "avif")
