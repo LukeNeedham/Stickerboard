@@ -57,6 +57,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +84,7 @@ import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import com.lukeneedham.stickerboard.utilities.StickerImage
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -124,6 +126,8 @@ fun StickerGalleryPage(
 	var stickerPendingRename by remember { mutableStateOf<File?>(null) }
 	var isRenaming by remember { mutableStateOf(false) }
 	var showBulkDeleteConfirm by remember { mutableStateOf(false) }
+
+	val scope = rememberCoroutineScope()
 
 	BackHandler(enabled = selectedStickers.isNotEmpty()) { selectedStickers = emptySet() }
 
@@ -168,14 +172,37 @@ fun StickerGalleryPage(
 					StickerSourceCard(
 						stickerDirDisplayName = stickerDirDisplayName,
 						lastUpdateDate = lastUpdateDate,
-						totalStickers = items?.count { it is BoardItem.Sticker } ?: 0,
-						totalPacks = items?.count { it is BoardItem.Header } ?: 0,
 						isRefreshing = isRefreshing,
 						onOpenFolder = onOpenFolder,
 						onChangeDirectory = onChangeDirectory,
 						onRefresh = onRefresh,
 						modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
 					)
+				}
+				val packSummaries = items.orEmpty()
+					.filterIsInstance<BoardItem.Header>()
+					.map { header ->
+						PackSummary(
+							packName = header.packName,
+							displayName = header.displayName,
+							stickerCount = items.orEmpty().count {
+								it is BoardItem.Sticker && it.packName == header.packName
+							},
+							itemIndex = items.orEmpty().indexOf(header),
+						)
+					}
+				// Items after the source card (and the pack list, when present) are offset in the grid.
+				val itemsOffset = if (packSummaries.isEmpty()) 1 else 2
+				if (packSummaries.isNotEmpty()) {
+					item(span = { GridItemSpan(maxLineSpan) }) {
+						PackListCard(
+							packs = packSummaries,
+							onPackClick = { pack ->
+								scope.launch { gridState.animateScrollToItem(pack.itemIndex + itemsOffset) }
+							},
+							modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 8.dp),
+						)
+					}
 				}
 				if (items == null) {
 					item(span = { GridItemSpan(maxLineSpan) }) {
@@ -306,7 +333,7 @@ private fun <T> Set<T>.toggled(element: T): Set<T> =
 	if (element in this) this - element else this + element
 
 /**
- * Shows where the loaded stickers came from, how many there are, and when they were last
+ * Shows where the loaded stickers came from and when they were last
  * refreshed. The path itself (with a trailing chevron) opens that folder in the system file
  * browser; the pencil button next to it lets the user pick a different one. [isRefreshing] swaps
  * the trailing refresh button for an inline spinner rather than the app showing any toast.
@@ -315,8 +342,6 @@ private fun <T> Set<T>.toggled(element: T): Set<T> =
 private fun StickerSourceCard(
 	stickerDirDisplayName: String,
 	lastUpdateDate: String,
-	totalStickers: Int,
-	totalPacks: Int,
 	isRefreshing: Boolean,
 	onOpenFolder: () -> Unit,
 	onChangeDirectory: () -> Unit,
@@ -367,22 +392,6 @@ private fun StickerSourceCard(
 			}
 		}
 
-		Row(
-			horizontalArrangement = Arrangement.spacedBy(12.dp),
-			modifier = Modifier.fillMaxWidth(),
-		) {
-			StatTile(
-				value = totalStickers,
-				label = stringResource(R.string.sticker_source_total_stickers_lbl),
-				modifier = Modifier.weight(1f),
-			)
-			StatTile(
-				value = totalPacks,
-				label = stringResource(R.string.sticker_source_total_packs_lbl),
-				modifier = Modifier.weight(1f),
-			)
-		}
-
 		Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
 			Icon(
 				painter = painterResource(R.drawable.ic_recent),
@@ -417,25 +426,78 @@ private fun StickerSourceCard(
 	}
 }
 
-/** A rounded tonal tile showing one big number over a small label - used for the sticker/pack
- * counts, so they read as at-a-glance stats rather than another line of label/value text. */
+private data class PackSummary(
+	val packName: String,
+	val displayName: String,
+	val stickerCount: Int,
+	/** Index of the pack's header within the board items (not the grid). */
+	val itemIndex: Int,
+)
+
+/** Lists every pack as a tile (name over sticker count) in a [PACK_LIST_COLUMNS]-wide grid; tapping a tile calls [onPackClick] so the page
+ * can scroll to that pack's section below. */
 @Composable
-private fun StatTile(value: Int, label: String, modifier: Modifier = Modifier) {
-	Column(
-		modifier = modifier
-			.clip(RoundedCornerShape(16.dp))
-			.background(MaterialTheme.colorScheme.surfaceVariant)
-			.padding(vertical = 12.dp),
-		horizontalAlignment = Alignment.CenterHorizontally,
-	) {
+private fun PackListCard(
+	packs: List<PackSummary>,
+	onPackClick: (PackSummary) -> Unit,
+	modifier: Modifier = Modifier,
+) {
+	SettingsCard(modifier) {
 		Text(
-			text = value.toString(),
-			style = MaterialTheme.typography.titleLarge,
+			text = stringResource(R.string.gallery_pack_list_heading),
+			style = MaterialTheme.typography.titleMedium,
 			fontWeight = FontWeight.Bold,
 			color = MaterialTheme.colorScheme.onSurface,
 		)
+		Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			packs.chunked(PACK_LIST_COLUMNS).forEach { rowPacks ->
+				Row(
+					horizontalArrangement = Arrangement.spacedBy(8.dp),
+					modifier = Modifier.fillMaxWidth(),
+				) {
+					rowPacks.forEach { pack ->
+						PackTile(
+							pack = pack,
+							onClick = { onPackClick(pack) },
+							modifier = Modifier.weight(1f),
+						)
+					}
+					// Keeps the last row's tiles the same width as the full rows above.
+					repeat(PACK_LIST_COLUMNS - rowPacks.size) {
+						Box(modifier = Modifier.weight(1f))
+					}
+				}
+			}
+		}
+	}
+}
+
+private const val PACK_LIST_COLUMNS = 4
+
+/** A rounded tonal tile with the pack name above its sticker count, both centered. */
+@Composable
+private fun PackTile(pack: PackSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
+	Column(
+		modifier = modifier
+			.height(72.dp)
+			.clip(RoundedCornerShape(16.dp))
+			.background(MaterialTheme.colorScheme.surfaceVariant)
+			.clickable(onClick = onClick)
+			.padding(horizontal = 6.dp, vertical = 8.dp),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center,
+	) {
 		Text(
-			text = label,
+			text = pack.displayName,
+			style = MaterialTheme.typography.labelLarge,
+			fontWeight = FontWeight.Bold,
+			color = MaterialTheme.colorScheme.onSurface,
+			textAlign = TextAlign.Center,
+			maxLines = 2,
+			overflow = TextOverflow.Ellipsis,
+		)
+		Text(
+			text = stringResource(R.string.gallery_pack_sticker_count, pack.stickerCount),
 			style = MaterialTheme.typography.labelMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 		)
@@ -582,8 +644,9 @@ private fun GalleryStickerCell(
 	}
 }
 
-/** Same footprint as a sticker cell, so the grid stays aligned, but the tappable circle itself is
- * small and centered - a sticker-sized button here would dwarf the actual stickers around it.
+/** Same footprint as a sticker cell, so the grid stays aligned, but the visible circle itself is
+ * small and centered - a sticker-sized button here would dwarf the actual stickers around it. The
+ * whole cell is tappable, not just the circle.
  * Disabled (but still shown, to keep the grid's layout stable) while a bulk selection is active. */
 @Composable
 private fun GalleryAddPhotoCell(onClick: () -> Unit, enabled: Boolean) {
@@ -591,18 +654,19 @@ private fun GalleryAddPhotoCell(onClick: () -> Unit, enabled: Boolean) {
 	Box(
 		modifier = Modifier
 			.padding(4.dp)
-			.aspectRatio(1f),
+			.aspectRatio(1f)
+			.clip(RoundedCornerShape(10.dp))
+			.clickable(enabled = enabled) {
+				haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+				onClick()
+			},
 		contentAlignment = Alignment.Center,
 	) {
 		Box(
 			modifier = Modifier
 				.size(40.dp)
 				.clip(CircleShape)
-				.background(MaterialTheme.colorScheme.surfaceVariant)
-				.clickable(enabled = enabled) {
-					haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-					onClick()
-				},
+				.background(MaterialTheme.colorScheme.surfaceVariant),
 			contentAlignment = Alignment.Center,
 		) {
 			Icon(
