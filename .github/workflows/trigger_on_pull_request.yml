@@ -41,16 +41,23 @@ jobs:
             with:
               cache-read-only: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
 
-          # Build debug apk
+          # Build debug apk, plus a non-debuggable "perf" apk for judging scroll performance
           - name: Run CLI - Build
             shell: bash
-            run: ./gradlew assembleDebug --no-daemon --build-cache
+            run: ./gradlew assembleDebug assemblePerf --no-daemon --build-cache
 
           # Locate the built apk, since its filename is derived from the app version
           - name: Locate built APK
             id: locate-apk
             run: |
               APK_PATH=$(find app/build/outputs/apk/debug -name '*.apk' | head -n 1)
+              echo "path=$APK_PATH" >> $GITHUB_OUTPUT
+              echo "name=$(basename "$APK_PATH")" >> $GITHUB_OUTPUT
+
+          - name: Locate built perf APK
+            id: locate-perf-apk
+            run: |
+              APK_PATH=$(find app/build/outputs/apk/perf -name '*.apk' | head -n 1)
               echo "path=$APK_PATH" >> $GITHUB_OUTPUT
               echo "name=$(basename "$APK_PATH")" >> $GITHUB_OUTPUT
 
@@ -78,7 +85,7 @@ jobs:
             id: create-release
             uses: ncipollo/release-action@v1
             with:
-              artifacts: "${{ steps.locate-apk.outputs.path }}"
+              artifacts: "${{ steps.locate-apk.outputs.path }},${{ steps.locate-perf-apk.outputs.path }}"
               tag: ${{ steps.generate-tag.outputs.tag }}
               name: "PR Build: ${{ github.head_ref || github.ref_name }}"
               body: "Debug build generated automatically from branch: ${{ github.head_ref || github.ref_name }} at ${{ env.CURRENT_TIME }}"
@@ -93,6 +100,9 @@ jobs:
               message: |
                 App apk at:
                 https://github.com/${{ github.repository }}/releases/download/${{ steps.generate-tag.outputs.tag }}/${{ steps.locate-apk.outputs.name }}
+
+                Perf (non-debuggable, for judging scroll smoothness) apk at:
+                https://github.com/${{ github.repository }}/releases/download/${{ steps.generate-tag.outputs.tag }}/${{ steps.locate-perf-apk.outputs.name }}
 
                 * **Triggered by:** PR Commit `${{ github.sha }}`
                 * **Built at:** ${{ env.CURRENT_TIME }}

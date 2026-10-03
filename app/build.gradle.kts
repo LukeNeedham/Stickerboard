@@ -54,6 +54,14 @@ android {
 			versionNameSuffix = "-debug"
 			signingConfig = signingConfigs.getByName("debug")
 		}
+		// Debug-signed but not debuggable, so it can be installed over the debug build and measured
+		// for scroll performance without Compose's debug-build overhead skewing the result.
+		create("perf") {
+			initWith(getByName("release"))
+			versionNameSuffix = "-perf"
+			signingConfig = signingConfigs.getByName("debug")
+			matchingFallbacks += "release"
+		}
 		getByName("release") {
 			proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
 			isMinifyEnabled = false
