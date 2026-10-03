@@ -74,6 +74,12 @@ android {
 	}
 }
 
+// The perf build exists only to measure performance; skip the release-only "lint vital" gate for it
+// (it's a non-debuggable build type, so lint vital would otherwise fail it on existing lint errors).
+tasks.matching { it.name.startsWith("lintVital") && it.name.endsWith("Perf") }.configureEach {
+	enabled = false
+}
+
 dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
 	implementation("androidx.core:core-ktx:1.15.0")
