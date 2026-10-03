@@ -4,6 +4,8 @@ on:
     workflow_call: # Makes sure this job can be acted.
     workflow_dispatch: {}
     pull_request:
+        # "labeled" lets adding the "perf" label build the perf APK without needing a new push
+        types: [opened, synchronize, reopened, labeled]
         branches:
             # The following branches are worth running the checks on
             - main
@@ -23,7 +25,12 @@ jobs:
     # this job handles all the work related to the outputs of the gradle build,
     # so we don't have to pass large files between jobs.
     build:
+        # Adding an unrelated label shouldn't trigger a whole build
+        if: github.event.action != 'labeled' || github.event.label.name == 'perf'
         runs-on: ubuntu-latest
+        env:
+            # Perf APKs are built on demand only: put the "perf" label on the PR
+            BUILD_PERF: ${{ contains(github.event.pull_request.labels.*.name, 'perf') }}
 
         steps:
           - uses: actions/checkout@v4
@@ -41,10 +48,14 @@ jobs:
             with:
               cache-read-only: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
 
-          # Build debug apk, plus a non-debuggable "perf" apk for judging scroll performance
+          # Build debug apk, plus (only with the "perf" PR label) a non-debuggable "perf" apk
+          # for judging scroll performance
           - name: Run CLI - Build
             shell: bash
-            run: ./gradlew assembleDebug assemblePerf --no-daemon --build-cache
+            run: |
+              TASKS="assembleDebug"
+              if [ "$BUILD_PERF" = "true" ]; then TASKS="$TASKS assemblePerf"; fi
+              ./gradlew $TASKS --no-daemon --build-cache
 
           # Locate the built apk, since its filename is derived from the app version
           - name: Locate built APK
@@ -56,6 +67,7 @@ jobs:
 
           - name: Locate built perf APK
             id: locate-perf-apk
+            if: env.BUILD_PERF == 'true'
             run: |
               APK_PATH=$(find app/build/outputs/apk/perf -name '*.apk' | head -n 1)
               echo "path=$APK_PATH" >> $GITHUB_OUTPUT
@@ -80,12 +92,23 @@ jobs:
 
               echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
 
+          # Extra PR comment text, only present when a perf APK was built
+          - name: Compose perf APK comment
+            if: env.BUILD_PERF == 'true'
+            run: |
+              {
+                echo "PERF_COMMENT<<EOF"
+                echo "Perf (non-debuggable, for judging scroll smoothness) apk at:"
+                echo "https://github.com/${{ github.repository }}/releases/download/${{ steps.generate-tag.outputs.tag }}/${{ steps.locate-perf-apk.outputs.name }}"
+                echo "EOF"
+              } >> "$GITHUB_ENV"
+
           # Create a unique GitHub Release and upload the APK
           - name: Create Release and Upload APK
             id: create-release
             uses: ncipollo/release-action@v1
             with:
-              artifacts: "${{ steps.locate-apk.outputs.path }},${{ steps.locate-perf-apk.outputs.path }}"
+              artifacts: "${{ steps.locate-apk.outputs.path }}${{ steps.locate-perf-apk.outputs.path && format(',{0}', steps.locate-perf-apk.outputs.path) || '' }}"
               tag: ${{ steps.generate-tag.outputs.tag }}
               name: "PR Build: ${{ github.head_ref || github.ref_name }}"
               body: "Debug build generated automatically from branch: ${{ github.head_ref || github.ref_name }} at ${{ env.CURRENT_TIME }}"
@@ -101,8 +124,7 @@ jobs:
                 App apk at:
                 https://github.com/${{ github.repository }}/releases/download/${{ steps.generate-tag.outputs.tag }}/${{ steps.locate-apk.outputs.name }}
 
-                Perf (non-debuggable, for judging scroll smoothness) apk at:
-                https://github.com/${{ github.repository }}/releases/download/${{ steps.generate-tag.outputs.tag }}/${{ steps.locate-perf-apk.outputs.name }}
+                ${{ env.PERF_COMMENT }}
 
                 * **Triggered by:** PR Commit `${{ github.sha }}`
                 * **Built at:** ${{ env.CURRENT_TIME }}
