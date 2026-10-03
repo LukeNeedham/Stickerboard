@@ -5,7 +5,11 @@ import java.io.File
 /** Helper class to provide pack-related information A "Pack" is informally represented as a File */
 class StickerPack(packDir: File) {
 	private val stickers: Array<File>? =
-		packDir.listFiles { obj: File -> obj.isFile }?.sortedArray()
+			packDir.listFiles { obj: File -> obj.isFile }
+				// Oldest first, so newly added stickers land at the end and a rename (which keeps the
+				// file's modified time) never moves a sticker. Name only breaks ties.
+				?.sortedWith(compareBy<File>({ it.lastModified() }, { it.name }))
+				?.toTypedArray()
 
 	/** Get the pack name (name of the pack directory) */
 	internal val name: String = packDir.name
