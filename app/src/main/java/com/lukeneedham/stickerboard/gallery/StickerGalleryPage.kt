@@ -2,6 +2,9 @@
 
 package com.lukeneedham.stickerboard.gallery
 
+import com.lukeneedham.stickerboard.utilities.StickerFiles
+import com.lukeneedham.stickerboard.utilities.StickerMedia
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -75,13 +78,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
-import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
-import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
-import com.lukeneedham.stickerboard.utilities.isAnimatedSticker
-import com.lukeneedham.stickerboard.utilities.renamedStickerFile
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -494,7 +493,7 @@ private fun GalleryStickerCell(
 	onLongClick: () -> Unit,
 ) {
 	val haptic = LocalHapticFeedback.current
-	val isAnimated by produceState(false, file) { value = withContext(Dispatchers.IO) { isAnimatedSticker(file) } }
+	val isAnimated by produceState(false, file) { value = withContext(Dispatchers.IO) { StickerMedia.isAnimated(file) } }
 	Box(
 		modifier = Modifier
 			.padding(4.dp)
@@ -669,7 +668,7 @@ private fun StickerPreviewSheet(
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
 				Text(
-					text = prettifyPackName(current.parentFile?.name.orEmpty()),
+					text = StickerNames.prettifyPackName(current.parentFile?.name.orEmpty()),
 					style = MaterialTheme.typography.titleMedium,
 					fontWeight = FontWeight.Bold,
 					color = MaterialTheme.colorScheme.primary,
@@ -679,7 +678,7 @@ private fun StickerPreviewSheet(
 				)
 				Row(verticalAlignment = Alignment.CenterVertically) {
 					Text(
-						text = trimString(current.name),
+						text = StickerNames.trim(current.name),
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onSurfaceVariant,
 						maxLines = 1,
@@ -713,7 +712,7 @@ private fun StickerPreviewSheet(
 					val sticker = stickers[page]
 					StickerImage(
 						file = sticker,
-						contentDescription = trimString(sticker.name),
+						contentDescription = StickerNames.trim(sticker.name),
 						modifier = Modifier.fillMaxSize(),
 					)
 				}
@@ -741,7 +740,7 @@ private fun RenameStickerDialog(
 	onDismiss: () -> Unit,
 ) {
 	var name by remember(sticker) { mutableStateOf(sticker.nameWithoutExtension) }
-	val target = renamedStickerFile(sticker, name)
+	val target = StickerFiles.renamed(sticker, name)
 	val isValid = target != null && (target == sticker || !target.exists())
 	AlertDialog(
 		onDismissRequest = onDismiss,

@@ -23,19 +23,6 @@ import kotlinx.coroutines.runBlocking
  */
 private val Context.prefsDataStore: DataStore<Preferences> by preferencesDataStore(name = "prefs")
 
-private object Keys {
-	val STICKER_DIR_SIGNATURE = stringPreferencesKey("stickerDirSignature")
-	val STICKER_DIR_PATH = stringPreferencesKey("stickerDirPath")
-	val LAST_UPDATE_EPOCH_MILLIS = longPreferencesKey("lastUpdateEpochMillis")
-	val RECENT_CACHE = stringPreferencesKey("recentCache")
-	val COMPAT_CACHE = stringPreferencesKey("compatCache")
-	val ACTIVE_PACK = stringPreferencesKey("activePack")
-	val NUM_STICKERS_IMPORTED = intPreferencesKey("numStickersImported")
-	val ONBOARDING_COMPLETE = booleanPreferencesKey("onboardingComplete")
-	val ICONS_PER_X = intPreferencesKey("iconsPerX")
-	val KEYBOARD_HEIGHT = intPreferencesKey("keyboardHeight")
-}
-
 /**
  * Wraps the app's [prefsDataStore] behind one small, typed API, replacing the raw SharedPreferences
  * + bare string keys every call site used to duplicate. Reads block on [runBlocking]: several call
@@ -46,6 +33,21 @@ private object Keys {
  * background, matching SharedPreferences.Editor's own `apply()`.
  */
 class AppPreferences(context: Context) {
+	companion object {
+		private object Keys {
+			val STICKER_DIR_SIGNATURE = stringPreferencesKey("stickerDirSignature")
+			val STICKER_DIR_PATH = stringPreferencesKey("stickerDirPath")
+			val LAST_UPDATE_EPOCH_MILLIS = longPreferencesKey("lastUpdateEpochMillis")
+			val RECENT_CACHE = stringPreferencesKey("recentCache")
+			val COMPAT_CACHE = stringPreferencesKey("compatCache")
+			val ACTIVE_PACK = stringPreferencesKey("activePack")
+			val NUM_STICKERS_IMPORTED = intPreferencesKey("numStickersImported")
+			val ONBOARDING_COMPLETE = booleanPreferencesKey("onboardingComplete")
+			val ICONS_PER_X = intPreferencesKey("iconsPerX")
+			val KEYBOARD_HEIGHT = intPreferencesKey("keyboardHeight")
+		}
+	}
+
 	private val appContext = context.applicationContext
 	private val dataStore get() = appContext.prefsDataStore
 	private val writeScope = CoroutineScope(Dispatchers.IO)

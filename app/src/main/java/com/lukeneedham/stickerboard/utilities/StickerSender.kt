@@ -100,7 +100,7 @@ class StickerSender(
 	 * opening a share sheet
 	 */
 	fun sendSticker(file: File) {
-		val stickerType = Utils.getMimeType(file) ?: "__unknown__"
+		val stickerType = StickerMedia.getMimeType(file) ?: "__unknown__"
 
 		// Try and only send as is if the app explicitly supports it
 		// Note: Many apps do not support svg, so send as png regardless!

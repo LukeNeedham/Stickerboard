@@ -28,7 +28,7 @@ fun StickerImage(
 	val context = LocalContext.current
 	val model = remember(file, animate) {
 		val builder = ImageRequest.Builder(context).data(file)
-		if (!animate && file.extension.lowercase() in STATIC_DECODABLE_EXTENSIONS) {
+		if (!animate && file.extension.lowercase() in StickerImageConstants.STATIC_DECODABLE_EXTENSIONS) {
 			builder.decoderFactory(BitmapFactoryDecoder.Factory())
 			// Coil's default cache key ignores the decoder, so without its own key this static frame
 			// would be served from the memory cache to animated renders of the same file (e.g. the
@@ -45,4 +45,7 @@ fun StickerImage(
 	)
 }
 
-private val STATIC_DECODABLE_EXTENSIONS = setOf("gif", "webp", "png", "jpg", "jpeg", "bmp", "avif")
+private object StickerImageConstants {
+	val STATIC_DECODABLE_EXTENSIONS = setOf("gif", "webp", "png", "jpg", "jpeg", "bmp", "avif")
+}
+

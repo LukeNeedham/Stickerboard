@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard
 
+import com.lukeneedham.stickerboard.utilities.SetupStatus
 import android.content.Context
 import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -28,15 +29,17 @@ import com.lukeneedham.stickerboard.settings.SettingsRoute
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import com.lukeneedham.stickerboard.share.ShareImportRoute
 
-private val SLIDE_SPEC = tween<IntOffset>(durationMillis = 300)
+private object StickerBoardAppConstants {
+	val SLIDE_SPEC = tween<IntOffset>(durationMillis = 300)
+}
 
 /** Incoming page slides in from the right, outgoing page slides out to the left. */
 private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideForward() =
-	slideInHorizontally(SLIDE_SPEC) { it } togetherWith slideOutHorizontally(SLIDE_SPEC) { -it }
+	slideInHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { it } togetherWith slideOutHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { -it }
 
 /** Incoming page slides in from the left, outgoing page slides out to the right. */
 private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideBackward() =
-	slideInHorizontally(SLIDE_SPEC) { -it } togetherWith slideOutHorizontally(SLIDE_SPEC) { it }
+	slideInHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { -it } togetherWith slideOutHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { it }
 
 /**
  * The single activity's nav host - decides whether to land on onboarding, settings, or (when
@@ -52,10 +55,10 @@ fun StickerBoardApp(
 	val context = LocalContext.current
 	val startRoute = remember(sharedImageUris) {
 		when {
-			sharedImageUris.isNotEmpty() && isOnboardingComplete(context) ->
+			sharedImageUris.isNotEmpty() && SetupStatus.isOnboardingComplete(context) ->
 				Route.ShareImport(sharedImageUris.map { it.toString() })
 
-			isOnboardingComplete(context) -> Route.Settings
+			SetupStatus.isOnboardingComplete(context) -> Route.Settings
 			else -> Route.Onboarding
 		}
 	}
@@ -134,21 +137,4 @@ fun StickerBoardApp(
 			)
 		}
 	}
-}
-
-/**
- * Checks whether the user has completed the onboarding flow. Installs that already had a sticker
- * directory configured before onboarding existed are treated as already onboarded, so existing
- * users aren't sent through it retroactively.
- */
-private fun isOnboardingComplete(context: Context): Boolean {
-	val prefs = AppPreferences(context)
-	if (prefs.onboardingComplete) {
-		return true
-	}
-	if (prefs.stickerDirPath != null) {
-		prefs.onboardingComplete = true
-		return true
-	}
-	return false
 }

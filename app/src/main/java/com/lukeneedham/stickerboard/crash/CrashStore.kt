@@ -5,15 +5,17 @@ import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 
-/** Max number of crashes kept on disk - older crashes are deleted once this limit is exceeded. */
-private const val MAX_CRASHES = 50
-
 /**
  * Persists crashes to disk (as one file per crash under `filesDir/crashes`), and lists/reads them
  * back. Shared by the app's activities and the keyboard service, since both run in the same
  * process and can both crash.
  */
 class CrashStore(context: Context) {
+	companion object {
+		/** Max number of crashes kept on disk - older crashes are deleted once this limit is exceeded. */
+		private const val MAX_CRASHES = 50
+	}
+
 	private val dir = File(context.applicationContext.filesDir, "crashes")
 
 	/** Persists [throwable] as a new crash record. Never throws. */

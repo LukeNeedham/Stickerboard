@@ -2,6 +2,7 @@
 
 package com.lukeneedham.stickerboard.share
 
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +36,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
-import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
@@ -128,7 +128,7 @@ private fun PackRow(packName: String, onClick: () -> Unit, modifier: Modifier = 
 				modifier = Modifier.size(22.dp),
 			)
 			Text(
-				text = prettifyPackName(packName),
+				text = StickerNames.prettifyPackName(packName),
 				style = MaterialTheme.typography.titleMedium,
 				color = MaterialTheme.colorScheme.onSurface,
 				modifier = Modifier.padding(start = 10.dp),

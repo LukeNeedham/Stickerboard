@@ -11,13 +11,11 @@ import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
-import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.utilities.StickerImporter
+import com.lukeneedham.stickerboard.utilities.LastRefreshedFormat
+import com.lukeneedham.stickerboard.utilities.StickerFiles
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import com.lukeneedham.stickerboard.utilities.Toaster
-import com.lukeneedham.stickerboard.utilities.deleteStickerFiles
-import com.lukeneedham.stickerboard.utilities.importPhotosToPack
-import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
-import com.lukeneedham.stickerboard.utilities.renameStickerFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,18 +31,6 @@ import java.util.Date
 import java.util.Locale
 import kotlin.system.measureTimeMillis
 import android.text.format.DateFormat as AndroidDateFormat
-
-/** Bounds for iconsPerX, matching the settings page's SeekBar range. */
-private const val MIN_ICONS_PER_X = 2
-private const val MAX_ICONS_PER_X = 6
-
-/**
- * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
- * [com.lukeneedham.stickerboard.keyboard.KeyboardView]'s BoardGrid: without this floor, a
- * refresh that finishes within a single frame can flip true then false before PullToRefreshBox
- * observes a transition to animate, leaving the indicator stuck wherever the pull released it.
- */
-private const val MIN_REFRESH_INDICATOR_MS = 500L
 
 /** Everything [StickerGalleryPage] needs to render, besides the fixed [GalleryViewModel.columns]
  * setting, which doesn't change within the page's lifetime. */
@@ -68,6 +54,21 @@ data class GalleryUiState(
  * newly-added gallery photos into a pack (and best-effort into that external source directory).
  */
 class GalleryViewModel(application: Application) : AndroidViewModel(application) {
+	companion object {
+		/** Bounds for iconsPerX, matching the settings page's SeekBar range. */
+		private const val MIN_ICONS_PER_X = 2
+
+		private const val MAX_ICONS_PER_X = 6
+
+		/**
+		 * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
+		 * [com.lukeneedham.stickerboard.keyboard.KeyboardView]'s BoardGrid: without this floor, a
+		 * refresh that finishes within a single frame can flip true then false before PullToRefreshBox
+		 * observes a transition to animate, leaving the indicator stuck wherever the pull released it.
+		 */
+		private const val MIN_REFRESH_INDICATOR_MS = 500L
+	}
+
 	private val prefs = AppPreferences(application)
 
 	// Only ever passed through to StickerImporter, which logs warnings on it as it works - never
@@ -90,7 +91,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		if (epochMillis < 0) {
 			return getApplication<Application>().getString(R.string.update_sticker_pack_info_date)
 		}
-		return formatLastRefreshed(epochMillis)
+		return LastRefreshedFormat.format(epochMillis)
 	}
 
 	/** The chosen source folder's path relative to its storage volume's own root (e.g.
@@ -146,7 +147,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 			result.add(item)
 		}
 		for ((packName, pending) in remaining) {
-			result.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			result.add(BoardItem.Header(packName, StickerNames.prettifyPackName(packName)))
 			pending.forEach { result.add(BoardItem.Loading(it.token, packName)) }
 		}
 		return result
@@ -155,7 +156,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	private fun sortedPackNames(loadedPacks: Map<String, StickerPack>): List<String> =
 		// By the name shown in the header, ignoring case, so "apple" doesn't sort after "Zebra".
 		loadedPacks.keys.sortedWith(
-			compareBy<String, String>(String.CASE_INSENSITIVE_ORDER) { prettifyPackName(it) }
+			compareBy<String, String>(String.CASE_INSENSITIVE_ORDER) { StickerNames.prettifyPackName(it) }
 				.thenBy { it },
 		)
 
@@ -176,7 +177,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		val items = mutableListOf<BoardItem>()
 		for (packName in sortedPackNames(loadedPacks)) {
 			val stickers = loadedPacks[packName]?.stickerList ?: continue
-			items.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			items.add(BoardItem.Header(packName, StickerNames.prettifyPackName(packName)))
 			for (sticker in stickers) {
 				items.add(BoardItem.Sticker(sticker, packName))
 			}
@@ -215,7 +216,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		_uiState.update { it.copy(items = mergeWithPendingAdds(rawItems, pendingAdds)) }
 
 		viewModelScope.launch(Dispatchers.IO) {
-			val addedFiles = importPhotosToPack(getApplication(), packName, uris)
+			val addedFiles = StickerFiles.importPhotosToPack(getApplication(), packName, uris)
 			val refreshedBoardItems = computeBoardItems()
 
 			withContext(Dispatchers.Main) {
@@ -239,7 +240,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		if (files.isEmpty()) return
 		_uiState.update { it.copy(deletingStickers = it.deletingStickers + files) }
 		viewModelScope.launch(Dispatchers.IO) {
-			deleteStickerFiles(getApplication(), files)
+			StickerFiles.delete(getApplication(), files)
 			val items = computeBoardItems()
 			withContext(Dispatchers.Main) {
 				rawItems = items
@@ -259,7 +260,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 */
 	fun renameSticker(file: File, newBaseName: String, onResult: (File?) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
-			val renamed = renameStickerFile(getApplication(), file, newBaseName)
+			val renamed = StickerFiles.rename(getApplication(), file, newBaseName)
 			val items = if (renamed != null) computeBoardItems() else null
 			withContext(Dispatchers.Main) {
 				if (items != null) {
@@ -294,7 +295,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		}
 		viewModelScope.launch {
 			val addedFiles = withContext(Dispatchers.IO) {
-				importPhotosToPack(getApplication(), packName, uris)
+				StickerFiles.importPhotosToPack(getApplication(), packName, uris)
 			}
 			if (addedFiles.isNotEmpty()) prefs.numStickersImported += addedFiles.size
 			val items = withContext(Dispatchers.IO) { computeBoardItems() }
@@ -374,7 +375,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 * same reload the keyboard's own pull-to-refresh performs - then rescans internal storage. */
 	fun refreshStickers() {
 		val path = prefs.stickerDirPath ?: return
-		runRefresh { reimportStickersIfChanged(getApplication(), toaster, path) }
+		runRefresh { StickerFiles.reimportIfChanged(getApplication(), toaster, path) }
 	}
 
 	/** Switches the sticker source to [path] and does a full (re)import from it, since it's new. */
@@ -400,29 +401,4 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		prefs.compatCache = ""
 		changeStickerDirectory(stickerDirPath)
 	}
-}
-
-/**
- * Formats [epochMillis] as a short, always-local time - just hours and minutes, with the date
- * prepended only if it isn't today, and the year only added to that date if it isn't this year.
- * Uses [AndroidDateFormat.getBestDateTimePattern] so the result still respects the user's own
- * locale (e.g. 12h vs 24h clock, day/month order) despite dropping seconds and the full date.
- */
-private fun formatLastRefreshed(epochMillis: Long): String {
-	val locale = Locale.getDefault()
-	val then = Calendar.getInstance().apply { timeInMillis = epochMillis }
-	val now = Calendar.getInstance()
-
-	val timePattern = AndroidDateFormat.getBestDateTimePattern(locale, "Hm")
-	val timeText = SimpleDateFormat(timePattern, locale).format(Date(epochMillis))
-
-	val sameDay = then.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-		then.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
-	if (sameDay) return timeText
-
-	val sameYear = then.get(Calendar.YEAR) == now.get(Calendar.YEAR)
-	val dateSkeleton = if (sameYear) "MMMd" else "yMMMd"
-	val datePattern = AndroidDateFormat.getBestDateTimePattern(locale, dateSkeleton)
-	val dateText = SimpleDateFormat(datePattern, locale).format(Date(epochMillis))
-	return "$dateText $timeText"
 }

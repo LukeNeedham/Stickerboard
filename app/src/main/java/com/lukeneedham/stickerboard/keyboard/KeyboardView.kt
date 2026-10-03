@@ -2,6 +2,7 @@
 
 package com.lukeneedham.stickerboard.keyboard
 
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -70,8 +71,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
-import com.lukeneedham.stickerboard.prettifyPackName
-import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -82,26 +81,28 @@ import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 
-/** Cumulative pinch scale factor needed to change iconsPerX by one column. */
-private const val PINCH_STEP_THRESHOLD = 1.15f
+private object KeyboardViewConstants {
+	/** Cumulative pinch scale factor needed to change iconsPerX by one column. */
+	const val PINCH_STEP_THRESHOLD = 1.15f
 
-/** The search keyboard's widest row - determines the per-key width all other rows share. */
-private const val QWERTY_TOP_ROW = "qwertyuiop"
+	/** The search keyboard's widest row - determines the per-key width all other rows share. */
+	const val QWERTY_TOP_ROW = "qwertyuiop"
 
-/** How long the search bar's text-cursor stays visible, then invisible, each half of its blink cycle. */
-private const val CURSOR_BLINK_HALF_PERIOD_MS = 500L
+	/** How long the search bar's text-cursor stays visible, then invisible, each half of its blink cycle. */
+	const val CURSOR_BLINK_HALF_PERIOD_MS = 500L
 
-/**
- * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
- * re-scan can finish within a single frame, and PullToRefreshBox's animation only reacts when it
- * observes isRefreshing actually change between recompositions - without this floor, a fast
- * enough refresh can flip true then false before that happens, so the indicator never sees a
- * transition to animate away and is left stuck wherever the pull gesture released it.
- */
-private const val MIN_REFRESH_INDICATOR_MS = 500L
+	/**
+	 * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state. The sticker
+	 * re-scan can finish within a single frame, and PullToRefreshBox's animation only reacts when it
+	 * observes isRefreshing actually change between recompositions - without this floor, a fast
+	 * enough refresh can flip true then false before that happens, so the indicator never sees a
+	 * transition to animate away and is left stuck wherever the pull gesture released it.
+	 */
+	const val MIN_REFRESH_INDICATOR_MS = 500L
 
-/** How long the [StatusBanner] (e.g. "Cannot send image") stays on screen before auto-dismissing. */
-private const val STATUS_MESSAGE_DURATION_MS = 2500L
+	/** How long the [StatusBanner] (e.g. "Cannot send image") stays on screen before auto-dismissing. */
+	const val STATUS_MESSAGE_DURATION_MS = 2500L
+}
 
 /** Which content is currently showing below the pull bar. */
 private sealed interface Mode {
@@ -159,7 +160,7 @@ fun KeyboardView(
 					withContext(Dispatchers.IO) { dataSource.refreshStickers() }
 					refreshBoard()
 				}
-				delay((MIN_REFRESH_INDICATOR_MS - elapsedMs).coerceAtLeast(0))
+				delay((KeyboardViewConstants.MIN_REFRESH_INDICATOR_MS - elapsedMs).coerceAtLeast(0))
 			} finally {
 				isRefreshingStickers = false
 			}
@@ -280,7 +281,7 @@ fun KeyboardView(
 			val statusMessage: String? = dataSource.statusMessage.value
 			if (statusMessage != null) {
 				LaunchedEffect(statusMessage) {
-					delay(STATUS_MESSAGE_DURATION_MS)
+					delay(KeyboardViewConstants.STATUS_MESSAGE_DURATION_MS)
 					dataSource.onStatusMessageShown()
 				}
 				StatusBanner(
@@ -642,7 +643,7 @@ private fun SearchContent(
 				.padding(bottom = 10.dp),
 		) {
 			// The widest row's keys share maxWidth evenly, with no margin between them.
-			val keyWidth = maxWidth / QWERTY_TOP_ROW.length
+			val keyWidth = maxWidth / KeyboardViewConstants.QWERTY_TOP_ROW.length
 			QwertyKeyboard(
 				keyWidth = keyWidth,
 				keyHeight = keyWidth * 1.3f,
@@ -665,7 +666,7 @@ private fun SearchQueryBar(query: String) {
 	var cursorVisible by remember { mutableStateOf(true) }
 	LaunchedEffect(Unit) {
 		while (true) {
-			delay(CURSOR_BLINK_HALF_PERIOD_MS)
+			delay(KeyboardViewConstants.CURSOR_BLINK_HALF_PERIOD_MS)
 			cursorVisible = !cursorVisible
 		}
 	}
@@ -712,7 +713,7 @@ private fun QwertyKeyboard(
 ) {
 	Column(Modifier.fillMaxWidth()) {
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-			QwertyRowKeys(keyWidth, keyHeight, QWERTY_TOP_ROW, onKeyTap)
+			QwertyRowKeys(keyWidth, keyHeight, KeyboardViewConstants.QWERTY_TOP_ROW, onKeyTap)
 		}
 		Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
 			QwertyRowKeys(keyWidth, keyHeight, "asdfghjkl", onKeyTap)
@@ -806,7 +807,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			BasicText(
-				text = prettifyPackName(sticker.parent?.split('/')?.last() ?: ""),
+				text = StickerNames.prettifyPackName(sticker.parent?.split('/')?.last() ?: ""),
 				style = TextStyle(
 					color = LocalAppTheme.current.accent,
 					fontWeight = FontWeight.Bold,
@@ -816,7 +817,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 				overflow = TextOverflow.Ellipsis,
 			)
 			BasicText(
-				text = trimString(sticker.name),
+				text = StickerNames.trim(sticker.name),
 				style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 10.sp), // tiny caption size
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
@@ -860,10 +861,10 @@ private fun Modifier.boardGestures(onZoomStep: (Int) -> Unit): Modifier = pointe
 				val distance = hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble()).toFloat()
 				if (prevPinchDistance > 0f) {
 					cumulativeZoom *= distance / prevPinchDistance
-					if (cumulativeZoom > PINCH_STEP_THRESHOLD) {
+					if (cumulativeZoom > KeyboardViewConstants.PINCH_STEP_THRESHOLD) {
 						onZoomStep(-1)
 						cumulativeZoom = 1f
-					} else if (cumulativeZoom < 1f / PINCH_STEP_THRESHOLD) {
+					} else if (cumulativeZoom < 1f / KeyboardViewConstants.PINCH_STEP_THRESHOLD) {
 						onZoomStep(1)
 						cumulativeZoom = 1f
 					}

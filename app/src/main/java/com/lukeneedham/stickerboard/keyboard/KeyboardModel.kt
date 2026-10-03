@@ -1,30 +1,16 @@
 package com.lukeneedham.stickerboard.keyboard
 
+import com.lukeneedham.stickerboard.utilities.StickerFiles
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.content.Context
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
-import com.lukeneedham.stickerboard.prettifyPackName
-import com.lukeneedham.stickerboard.splitNameIntoTerms
 import com.lukeneedham.stickerboard.utilities.Cache
 import com.lukeneedham.stickerboard.utilities.Toaster
-import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import java.io.File
-
-/** Bounds for [KeyboardModel.iconsPerX], matching the settings page's SeekBar range. */
-private const val MIN_ICONS_PER_X = 2
-private const val MAX_ICONS_PER_X = 6
-
-/** Synthetic pack name used for the "recently used" section/nav icon. */
-internal const val RECENT_PACK_NAME = "__recentSticker__"
-
-/** Max number of rows the "recently used" section shows, regardless of iconsPerX/zoom level. */
-private const val RECENT_ROW_LIMIT = 2
-
-/** Max number of stickers shown at once in search results. */
-private const val SEARCH_RESULT_LIMIT = 128
 
 /**
  * The "Model" in the keyboard's MVC split (see [com.lukeneedham.stickerboard.KeyboardController]
@@ -36,6 +22,22 @@ private const val SEARCH_RESULT_LIMIT = 128
  * that owns it.
  */
 class KeyboardModel(context: Context) {
+	companion object {
+		/** Bounds for [KeyboardModel.iconsPerX], matching the settings page's SeekBar range. */
+		private const val MIN_ICONS_PER_X = 2
+
+		private const val MAX_ICONS_PER_X = 6
+
+		/** Synthetic pack name used for the "recently used" section/nav icon. */
+		internal const val RECENT_PACK_NAME = "__recentSticker__"
+
+		/** Max number of rows the "recently used" section shows, regardless of iconsPerX/zoom level. */
+		private const val RECENT_ROW_LIMIT = 2
+
+		/** Max number of stickers shown at once in search results. */
+		private const val SEARCH_RESULT_LIMIT = 128
+	}
+
 	private val appContext = context.applicationContext
 	private val internalDir = File(appContext.filesDir, "stickers")
 	private val prefs = AppPreferences(appContext)
@@ -145,7 +147,7 @@ class KeyboardModel(context: Context) {
 			val stickers = loadedPacks[packName]?.stickerList ?: continue
 			if (stickers.isEmpty()) continue
 			newHeaderPositions[packName] = items.size
-			items.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			items.add(BoardItem.Header(packName, StickerNames.prettifyPackName(packName)))
 			for (sticker in stickers) {
 				items.add(BoardItem.Sticker(sticker, packName))
 			}
@@ -179,16 +181,16 @@ class KeyboardModel(context: Context) {
 	suspend fun refreshStickers() {
 		val stickerDirPath = prefs.stickerDirPath
 		if (stickerDirPath != null) {
-			reimportStickersIfChanged(appContext, toaster, stickerDirPath)
+			StickerFiles.reimportIfChanged(appContext, toaster, stickerDirPath)
 		}
 		loadPacks()
 	}
 
 	fun searchStickers(query: String): List<File> {
-		val queryTerms = splitNameIntoTerms(query)
+		val queryTerms = StickerNames.splitNameIntoTerms(query)
 		return allStickers
 			.filter { file ->
-				val terms = stickerSearchTerms(file)
+				val terms = StickerNames.searchTerms(file)
 				queryTerms.all { queryTerm ->
 					terms.any { term -> term.contains(queryTerm, ignoreCase = true) }
 				}
@@ -222,12 +224,3 @@ class KeyboardModel(context: Context) {
 		prefs.persistSessionState(recentCache.toSharedPref(), compatCache.toSharedPref(), activePack)
 	}
 }
-
-/**
- * A sticker's search terms: its file name (without extension) and its pack's directory name,
- * each split into individual words - so e.g. sticker "happy-cat_meme.png" in pack "funny_memes"
- * is searchable by "happy", "cat", "meme", "funny", or "memes" individually, not just as a match
- * against the whole file name.
- */
-private fun stickerSearchTerms(file: File): List<String> =
-	splitNameIntoTerms(file.nameWithoutExtension) + splitNameIntoTerms(file.parentFile?.name ?: "")
