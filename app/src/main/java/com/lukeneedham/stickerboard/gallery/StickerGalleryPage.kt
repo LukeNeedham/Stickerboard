@@ -162,6 +162,19 @@ fun StickerGalleryPage(
 			onRefresh = onRefresh,
 			modifier = Modifier.padding(innerPadding).fillMaxSize(),
 		) {
+			val packSummaries = remember(items) {
+				val boardItems = items.orEmpty()
+				val counts = boardItems.filterIsInstance<BoardItem.Sticker>().groupingBy { it.packName }.eachCount()
+				boardItems.mapIndexedNotNull { index, item ->
+					if (item !is BoardItem.Header) return@mapIndexedNotNull null
+					PackSummary(
+						packName = item.packName,
+						displayName = item.displayName,
+						stickerCount = counts[item.packName] ?: 0,
+						itemIndex = index,
+					)
+				}
+			}
 			LazyVerticalGrid(
 				columns = GridCells.Fixed(columns),
 				state = gridState,
@@ -179,18 +192,6 @@ fun StickerGalleryPage(
 						modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
 					)
 				}
-				val packSummaries = items.orEmpty()
-					.filterIsInstance<BoardItem.Header>()
-					.map { header ->
-						PackSummary(
-							packName = header.packName,
-							displayName = header.displayName,
-							stickerCount = items.orEmpty().count {
-								it is BoardItem.Sticker && it.packName == header.packName
-							},
-							itemIndex = items.orEmpty().indexOf(header),
-						)
-					}
 				// Items after the source card (and the pack list, when present) are offset in the grid.
 				val itemsOffset = if (packSummaries.isEmpty()) 1 else 2
 				if (packSummaries.isNotEmpty()) {
@@ -555,7 +556,9 @@ private fun GalleryStickerCell(
 	onLongClick: () -> Unit,
 ) {
 	val haptic = LocalHapticFeedback.current
-	val isAnimated by produceState(false, file) { value = withContext(Dispatchers.IO) { StickerMedia.isAnimated(file) } }
+	val isAnimated by produceState(StickerMedia.peekIsAnimated(file) ?: false, file) {
+		value = withContext(Dispatchers.IO) { StickerMedia.isAnimated(file) }
+	}
 	Box(
 		modifier = Modifier
 			.padding(4.dp)

@@ -4,6 +4,7 @@ import android.webkit.MimeTypeMap
 import java.io.DataInputStream
 import java.io.File
 import java.io.RandomAccessFile
+import java.util.concurrent.ConcurrentHashMap
 
 /** Sticker media types: mime types and whether a sticker is a moving image. */
 object StickerMedia {
@@ -46,6 +47,19 @@ object StickerMedia {
 	 * it off the main thread.
 	 */
 	fun isAnimated(file: File): Boolean {
+		val modified = file.lastModified()
+		animatedCache[file.path]?.let { if (it.modified == modified) return it.animated }
+		return computeIsAnimated(file).also { animatedCache[file.path] = AnimatedResult(modified, it) }
+	}
+
+	/** The last known result of [isAnimated] for [file], without any file IO; null if not yet known. */
+	fun peekIsAnimated(file: File): Boolean? = animatedCache[file.path]?.animated
+
+	private class AnimatedResult(val modified: Long, val animated: Boolean)
+
+	private val animatedCache = ConcurrentHashMap<String, AnimatedResult>()
+
+	private fun computeIsAnimated(file: File): Boolean {
 		val extension = file.extension.lowercase()
 		return when {
 			extension == "gif" -> runCatching { gifHasMultipleFrames(file) }.getOrDefault(false)
