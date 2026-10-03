@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.lukeneedham.stickerboard.utilities.StickerFiles.BUFFER_SIZE
 import com.lukeneedham.stickerboard.utilities.StickerFiles.MAX_FILES
 import com.lukeneedham.stickerboard.utilities.StickerFiles.MAX_PACK_SIZE
+import com.lukeneedham.stickerboard.utilities.StickerFiles.SourceSticker
 import com.lukeneedham.stickerboard.utilities.StickerFiles.signatureOf
 import com.lukeneedham.stickerboard.utilities.StickerFiles.walkStickers
 

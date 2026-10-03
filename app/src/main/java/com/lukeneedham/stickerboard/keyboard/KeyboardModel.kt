@@ -178,7 +178,7 @@ class KeyboardModel(context: Context) {
 	suspend fun refreshStickers() {
 		val stickerDirPath = prefs.stickerDirPath
 		if (stickerDirPath != null) {
-			reimportStickersIfChanged(appContext, toaster, stickerDirPath)
+			StickerFiles.reimportStickersIfChanged(appContext, toaster, stickerDirPath)
 		}
 		loadPacks()
 	}
