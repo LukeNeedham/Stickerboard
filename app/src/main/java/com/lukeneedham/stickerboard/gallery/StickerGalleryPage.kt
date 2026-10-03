@@ -29,6 +29,8 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -235,13 +237,17 @@ fun StickerGalleryPage(
 		}
 	}
 
-	previewSticker?.let { sticker ->
+	previewSticker?.let { initial ->
+		val stickers = remember(items) {
+			items.orEmpty().filterIsInstance<BoardItem.Sticker>().map { it.file }
+		}
 		StickerPreviewDialog(
-			sticker = sticker,
+			stickers = stickers,
+			initialSticker = initial,
 			onDismiss = { previewSticker = null },
-			onDeleteClick = { stickerPendingDelete = sticker },
+			onDeleteClick = { stickerPendingDelete = it },
 			isRenaming = isRenaming,
-			onRenameClick = { stickerPendingRename = sticker },
+			onRenameClick = { stickerPendingRename = it },
 		)
 	}
 
@@ -250,8 +256,7 @@ fun StickerGalleryPage(
 			sticker = sticker,
 			onConfirm = { newName ->
 				isRenaming = true
-				onRenameSticker(sticker, newName) { renamed ->
-					if (renamed != null && previewSticker == sticker) previewSticker = renamed
+				onRenameSticker(sticker, newName) { _ ->
 					isRenaming = false
 				}
 				stickerPendingRename = null
@@ -591,16 +596,26 @@ private fun GalleryLoadingCell() {
 	}
 }
 
-/** An enlarged preview of a sticker - tap the image (or outside) to dismiss, or tap the delete
- * button in the corner to ask [onDeleteClick] to confirm and delete it. */
+/** An enlarged preview of a sticker, opened on [initialSticker] and swipeable horizontally between
+ * all [stickers] - tap the image (or outside) to dismiss, or tap the delete button in the corner to
+ * ask [onDeleteClick] to confirm and delete the sticker currently showing. */
 @Composable
 private fun StickerPreviewDialog(
-	sticker: File,
+	stickers: List<File>,
+	initialSticker: File,
 	onDismiss: () -> Unit,
-	onDeleteClick: () -> Unit,
+	onDeleteClick: (File) -> Unit,
 	isRenaming: Boolean,
-	onRenameClick: () -> Unit,
+	onRenameClick: (File) -> Unit,
 ) {
+	if (stickers.isEmpty()) {
+		LaunchedEffect(Unit) { onDismiss() }
+		return
+	}
+	val pagerState = rememberPagerState(
+		initialPage = stickers.indexOf(initialSticker).coerceAtLeast(0),
+		pageCount = { stickers.size },
+	)
 	Dialog(
 		onDismissRequest = onDismiss,
 		properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -610,61 +625,68 @@ private fun StickerPreviewDialog(
 				.fillMaxSize()
 				.background(MaterialTheme.colorScheme.background),
 		) {
-			Column(
-				modifier = Modifier
-					.fillMaxSize()
-					.clickable(onClick = onDismiss)
-					.padding(20.dp),
-				horizontalAlignment = Alignment.CenterHorizontally,
-			) {
-				Text(
-					text = prettifyPackName(sticker.parentFile?.name.orEmpty()),
-					style = MaterialTheme.typography.titleMedium,
-					fontWeight = FontWeight.Bold,
-					color = MaterialTheme.colorScheme.primary,
-					maxLines = 1,
-					overflow = TextOverflow.Ellipsis,
-				)
-				Row(verticalAlignment = Alignment.CenterVertically) {
+			HorizontalPager(
+				state = pagerState,
+				key = { stickers[it].path },
+				modifier = Modifier.fillMaxSize(),
+			) { page ->
+				val sticker = stickers[page]
+				Column(
+					modifier = Modifier
+						.fillMaxSize()
+						.clickable(onClick = onDismiss)
+						.padding(20.dp),
+					horizontalAlignment = Alignment.CenterHorizontally,
+				) {
 					Text(
-						text = trimString(sticker.name),
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
+						text = prettifyPackName(sticker.parentFile?.name.orEmpty()),
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.Bold,
+						color = MaterialTheme.colorScheme.primary,
 						maxLines = 1,
 						overflow = TextOverflow.Ellipsis,
-						modifier = Modifier.weight(1f, fill = false),
 					)
-					if (isRenaming) {
-						Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
-							CircularProgressIndicator(
-								modifier = Modifier.size(16.dp),
-								strokeWidth = 2.dp,
-								color = MaterialTheme.colorScheme.primary,
-							)
-						}
-					} else {
-						IconButton(onClick = onRenameClick, modifier = Modifier.size(32.dp)) {
-							Icon(
-								painter = painterResource(R.drawable.ic_edit),
-								contentDescription = stringResource(R.string.rename_sticker_button),
-								tint = MaterialTheme.colorScheme.onSurfaceVariant,
-								modifier = Modifier.size(16.dp),
-							)
+					Row(verticalAlignment = Alignment.CenterVertically) {
+						Text(
+							text = trimString(sticker.name),
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onSurfaceVariant,
+							maxLines = 1,
+							overflow = TextOverflow.Ellipsis,
+							modifier = Modifier.weight(1f, fill = false),
+						)
+						if (isRenaming) {
+							Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+								CircularProgressIndicator(
+									modifier = Modifier.size(16.dp),
+									strokeWidth = 2.dp,
+									color = MaterialTheme.colorScheme.primary,
+								)
+							}
+						} else {
+							IconButton(onClick = { onRenameClick(sticker) }, modifier = Modifier.size(32.dp)) {
+								Icon(
+									painter = painterResource(R.drawable.ic_edit),
+									contentDescription = stringResource(R.string.rename_sticker_button),
+									tint = MaterialTheme.colorScheme.onSurfaceVariant,
+									modifier = Modifier.size(16.dp),
+								)
+							}
 						}
 					}
+					StickerImage(
+						file = sticker,
+						contentDescription = trimString(sticker.name),
+						modifier = Modifier
+							.weight(1f)
+							.fillMaxWidth()
+							.padding(top = 16.dp)
+							.clickable(onClick = onDismiss),
+					)
 				}
-				StickerImage(
-					file = sticker,
-					contentDescription = trimString(sticker.name),
-					modifier = Modifier
-						.weight(1f)
-						.fillMaxWidth()
-						.padding(top = 16.dp)
-						.clickable(onClick = onDismiss),
-				)
 			}
 			IconButton(
-				onClick = onDeleteClick,
+				onClick = { stickers.getOrNull(pagerState.currentPage)?.let(onDeleteClick) },
 				modifier = Modifier
 					.align(Alignment.TopEnd)
 					.padding(12.dp),
