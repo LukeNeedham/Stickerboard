@@ -48,11 +48,17 @@ import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.TonalActionButton
 import kotlinx.coroutines.launch
 
-private const val PAGE_WELCOME = 0
-private const val PAGE_KEYBOARD = 1
-private const val PAGE_FOLDER = 2
-private const val PAGE_COUNT = 3
-private const val LAST_PAGE_INDEX = PAGE_FOLDER
+private object OnboardingPageConstants {
+	const val PAGE_WELCOME = 0
+
+	const val PAGE_KEYBOARD = 1
+
+	const val PAGE_FOLDER = 2
+
+	const val PAGE_COUNT = 3
+
+	const val LAST_PAGE_INDEX = PAGE_FOLDER
+}
 
 /** Everything the onboarding page needs to render - plain state, matching the rest of the app. */
 data class OnboardingUiState(
@@ -77,8 +83,8 @@ fun OnboardingPage(
 	modifier: Modifier = Modifier,
 ) {
 	fun isPageRequirementMet(page: Int): Boolean = when (page) {
-		PAGE_KEYBOARD -> state.keyboardEnabled
-		PAGE_FOLDER -> state.loadedStickerCount != null
+		OnboardingPageConstants.PAGE_KEYBOARD -> state.keyboardEnabled
+		OnboardingPageConstants.PAGE_FOLDER -> state.loadedStickerCount != null
 		else -> true
 	}
 
@@ -87,10 +93,10 @@ fun OnboardingPage(
 	// swiped to before its predecessor's requirement is met: there's simply no further page yet for
 	// the gesture to move to.
 	fun firstUnmetPage(): Int {
-		for (page in PAGE_WELCOME until LAST_PAGE_INDEX) {
+		for (page in OnboardingPageConstants.PAGE_WELCOME until OnboardingPageConstants.LAST_PAGE_INDEX) {
 			if (!isPageRequirementMet(page)) return page
 		}
-		return LAST_PAGE_INDEX
+		return OnboardingPageConstants.LAST_PAGE_INDEX
 	}
 
 	val pagerState = rememberPagerState(pageCount = { firstUnmetPage() + 1 })
@@ -106,13 +112,13 @@ fun OnboardingPage(
 	) {
 		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
 			when (page) {
-				PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
-				PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, state.loadedStickerCount, onChooseDir)
+				OnboardingPageConstants.PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
+				OnboardingPageConstants.PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, state.loadedStickerCount, onChooseDir)
 				else -> OnboardingWelcomePage()
 			}
 		}
 		Text(
-			text = stringResource(R.string.onboarding_step_label, pagerState.currentPage + 1, PAGE_COUNT),
+			text = stringResource(R.string.onboarding_step_label, pagerState.currentPage + 1, OnboardingPageConstants.PAGE_COUNT),
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 			textAlign = TextAlign.Center,
@@ -122,7 +128,7 @@ fun OnboardingPage(
 			modifier = Modifier.fillMaxWidth().padding(20.dp),
 			horizontalArrangement = Arrangement.spacedBy(20.dp),
 		) {
-			if (pagerState.currentPage != PAGE_WELCOME) {
+			if (pagerState.currentPage != OnboardingPageConstants.PAGE_WELCOME) {
 				TonalActionButton(
 					text = stringResource(R.string.onboarding_back_button),
 					onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
@@ -130,14 +136,14 @@ fun OnboardingPage(
 				)
 			}
 			FilledActionButton(
-				text = if (pagerState.currentPage == LAST_PAGE_INDEX) {
+				text = if (pagerState.currentPage == OnboardingPageConstants.LAST_PAGE_INDEX) {
 					stringResource(R.string.onboarding_finish_button)
 				} else {
 					stringResource(R.string.onboarding_next_button)
 				},
 				onClick = {
 					val page = pagerState.currentPage
-					if (page >= LAST_PAGE_INDEX) {
+					if (page >= OnboardingPageConstants.LAST_PAGE_INDEX) {
 						onFinish()
 					} else {
 						scope.launch { pagerState.animateScrollToPage(page + 1) }

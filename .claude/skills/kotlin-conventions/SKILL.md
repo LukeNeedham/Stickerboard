@@ -5,14 +5,20 @@ description: Kotlin code conventions for StickerBoard. Use when writing or refac
 
 # Kotlin conventions
 
-## No top-level functions (except extensions)
+## No top-level functions or constants (except extensions)
 
-Do not write top-level `fun`s in Kotlin files. The exceptions are:
+Do not write top-level `fun`s, `val`s or `const val`s in Kotlin files. The exceptions are:
 
 - Extension functions (`fun File.foo()`, `fun Modifier.bar()`).
 - `@Composable` functions. These are conventionally top-level in Compose, and wrapping them in objects would fight that idiom. This exception is deliberate, not an oversight.
 
-Top-level constants and `private val`s are fine.
+- Extension properties that need a top-level delegate (`val Context.prefsDataStore by preferencesDataStore(...)`).
+- Compose `CompositionLocal`s (`val LocalAppTheme = staticCompositionLocalOf { ... }`), like composables, by convention.
+
+## Constants
+
+- In a file with a class, put constants in that class's `companion object`.
+- In a file with no class (e.g. composables only), put them in a `private object <FileName>Constants` in the same file (`internal` if used from other files). Members of that object are not marked `private`, since the object is the access boundary.
 
 ## Utils live in an object named after the file
 

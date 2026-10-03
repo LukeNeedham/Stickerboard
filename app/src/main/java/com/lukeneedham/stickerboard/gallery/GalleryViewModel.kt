@@ -32,18 +32,6 @@ import java.util.Locale
 import kotlin.system.measureTimeMillis
 import android.text.format.DateFormat as AndroidDateFormat
 
-/** Bounds for iconsPerX, matching the settings page's SeekBar range. */
-private const val MIN_ICONS_PER_X = 2
-private const val MAX_ICONS_PER_X = 6
-
-/**
- * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
- * [com.lukeneedham.stickerboard.keyboard.KeyboardView]'s BoardGrid: without this floor, a
- * refresh that finishes within a single frame can flip true then false before PullToRefreshBox
- * observes a transition to animate, leaving the indicator stuck wherever the pull released it.
- */
-private const val MIN_REFRESH_INDICATOR_MS = 500L
-
 /** Everything [StickerGalleryPage] needs to render, besides the fixed [GalleryViewModel.columns]
  * setting, which doesn't change within the page's lifetime. */
 data class GalleryUiState(
@@ -66,6 +54,21 @@ data class GalleryUiState(
  * newly-added gallery photos into a pack (and best-effort into that external source directory).
  */
 class GalleryViewModel(application: Application) : AndroidViewModel(application) {
+	companion object {
+		/** Bounds for iconsPerX, matching the settings page's SeekBar range. */
+		private const val MIN_ICONS_PER_X = 2
+
+		private const val MAX_ICONS_PER_X = 6
+
+		/**
+		 * Minimum time to hold the pull-refresh indicator's `isRefreshing = true` state - mirrors
+		 * [com.lukeneedham.stickerboard.keyboard.KeyboardView]'s BoardGrid: without this floor, a
+		 * refresh that finishes within a single frame can flip true then false before PullToRefreshBox
+		 * observes a transition to animate, leaving the indicator stuck wherever the pull released it.
+		 */
+		private const val MIN_REFRESH_INDICATOR_MS = 500L
+	}
+
 	private val prefs = AppPreferences(application)
 
 	// Only ever passed through to StickerImporter, which logs warnings on it as it works - never

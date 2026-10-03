@@ -29,15 +29,17 @@ import com.lukeneedham.stickerboard.settings.SettingsRoute
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import com.lukeneedham.stickerboard.share.ShareImportRoute
 
-private val SLIDE_SPEC = tween<IntOffset>(durationMillis = 300)
+private object StickerBoardAppConstants {
+	val SLIDE_SPEC = tween<IntOffset>(durationMillis = 300)
+}
 
 /** Incoming page slides in from the right, outgoing page slides out to the left. */
 private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideForward() =
-	slideInHorizontally(SLIDE_SPEC) { it } togetherWith slideOutHorizontally(SLIDE_SPEC) { -it }
+	slideInHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { it } togetherWith slideOutHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { -it }
 
 /** Incoming page slides in from the left, outgoing page slides out to the right. */
 private fun <T : NavKey> AnimatedContentTransitionScope<Scene<T>>.slideBackward() =
-	slideInHorizontally(SLIDE_SPEC) { -it } togetherWith slideOutHorizontally(SLIDE_SPEC) { it }
+	slideInHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { -it } togetherWith slideOutHorizontally(StickerBoardAppConstants.SLIDE_SPEC) { it }
 
 /**
  * The single activity's nav host - decides whether to land on onboarding, settings, or (when

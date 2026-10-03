@@ -12,19 +12,6 @@ import com.lukeneedham.stickerboard.utilities.Cache
 import com.lukeneedham.stickerboard.utilities.Toaster
 import java.io.File
 
-/** Bounds for [KeyboardModel.iconsPerX], matching the settings page's SeekBar range. */
-private const val MIN_ICONS_PER_X = 2
-private const val MAX_ICONS_PER_X = 6
-
-/** Synthetic pack name used for the "recently used" section/nav icon. */
-internal const val RECENT_PACK_NAME = "__recentSticker__"
-
-/** Max number of rows the "recently used" section shows, regardless of iconsPerX/zoom level. */
-private const val RECENT_ROW_LIMIT = 2
-
-/** Max number of stickers shown at once in search results. */
-private const val SEARCH_RESULT_LIMIT = 128
-
 /**
  * The "Model" in the keyboard's MVC split (see [com.lukeneedham.stickerboard.KeyboardController]
  * for why MVC rather than a ViewModel): every piece of data the keyboard shows - loaded packs,
@@ -35,6 +22,22 @@ private const val SEARCH_RESULT_LIMIT = 128
  * that owns it.
  */
 class KeyboardModel(context: Context) {
+	companion object {
+		/** Bounds for [KeyboardModel.iconsPerX], matching the settings page's SeekBar range. */
+		private const val MIN_ICONS_PER_X = 2
+
+		private const val MAX_ICONS_PER_X = 6
+
+		/** Synthetic pack name used for the "recently used" section/nav icon. */
+		internal const val RECENT_PACK_NAME = "__recentSticker__"
+
+		/** Max number of rows the "recently used" section shows, regardless of iconsPerX/zoom level. */
+		private const val RECENT_ROW_LIMIT = 2
+
+		/** Max number of stickers shown at once in search results. */
+		private const val SEARCH_RESULT_LIMIT = 128
+	}
+
 	private val appContext = context.applicationContext
 	private val internalDir = File(appContext.filesDir, "stickers")
 	private val prefs = AppPreferences(appContext)

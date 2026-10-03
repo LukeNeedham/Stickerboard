@@ -23,26 +23,16 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import coil.imageLoader
 import com.elvishew.xlog.XLog
-import com.lukeneedham.stickerboard.keyboard.DarkColors
+import com.lukeneedham.stickerboard.keyboard.AppThemeConstants
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel
+import com.lukeneedham.stickerboard.keyboard.KeyboardModel.Companion.RECENT_PACK_NAME
 import com.lukeneedham.stickerboard.keyboard.KeyboardView
-import com.lukeneedham.stickerboard.keyboard.LightColors
 import com.lukeneedham.stickerboard.keyboard.PackNavIcon
-import com.lukeneedham.stickerboard.keyboard.RECENT_PACK_NAME
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.utilities.KeyboardRefreshSignal
 import com.lukeneedham.stickerboard.utilities.StickerSender
 import java.io.File
-
-/** Default pixel height of the scrollable board viewport. */
-private const val KEYBOARD_HEIGHT_PX = 800
-
-/** Smallest height the board can be dragged down to via the pull bar. */
-private const val MIN_KEYBOARD_HEIGHT_PX = 300
-
-/** Largest height the board can be dragged up to, as a fraction of the screen height. */
-private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
 
 /**
  * KeyboardController is the "Controller" in the keyboard's MVC split: it inherits from
@@ -69,6 +59,17 @@ class KeyboardController :
 	LifecycleOwner,
 	SavedStateRegistryOwner,
 	KeyboardDataSource {
+	companion object {
+		/** Default pixel height of the scrollable board viewport. */
+		private const val KEYBOARD_HEIGHT_PX = 800
+
+		/** Smallest height the board can be dragged down to via the pull bar. */
+		private const val MIN_KEYBOARD_HEIGHT_PX = 300
+
+		/** Largest height the board can be dragged up to, as a fraction of the screen height. */
+		private const val MAX_KEYBOARD_HEIGHT_FRACTION = 0.75f
+	}
+
 	private val lifecycleRegistry = LifecycleRegistry(this)
 	override val lifecycle: Lifecycle get() = lifecycleRegistry
 
@@ -109,7 +110,7 @@ class KeyboardController :
 		// Set directly on the window rather than through Compose: this runs before
 		// onCreateInputView() builds any Compose UI, so LocalAppTheme isn't available yet.
 		val nightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-		val bg = if (nightMode == Configuration.UI_MODE_NIGHT_YES) DarkColors.bg else LightColors.bg
+		val bg = if (nightMode == Configuration.UI_MODE_NIGHT_YES) AppThemeConstants.DarkColors.bg else AppThemeConstants.LightColors.bg
 		window.window?.navigationBarColor = bg.toArgb()
 	}
 
