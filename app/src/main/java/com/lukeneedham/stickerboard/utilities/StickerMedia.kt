@@ -1,11 +1,42 @@
 package com.lukeneedham.stickerboard.utilities
 
+import android.webkit.MimeTypeMap
 import java.io.DataInputStream
 import java.io.File
 import java.io.RandomAccessFile
 
-/** Detects whether sticker files are moving images. */
-object AnimatedSticker {
+/** Sticker media types: mime types and whether a sticker is a moving image. */
+object StickerMedia {
+	/**
+	 * Get the mimetype of a File
+	 *
+	 * @param file File file to get the mimetype of
+	 * @return String? Return the mimetype or none if it cannot be determined
+	 */
+	fun getMimeType(file: File): String? {
+		return MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+	}
+
+	/**
+	 * Return a MutableList of StickerBoard Supported mimetypes
+	 *
+	 * @return MutableList of StickerBoard Supported mimetypes
+	 */
+	fun getSupportedMimes(): MutableList<String> {
+		return mutableListOf(
+			"image/svg+xml",
+			"image/gif",
+			"image/png",
+			"image/webp",
+			"image/jpeg",
+			"image/heif",
+			"video/3gpp",
+			"video/mp4",
+			"video/x-matroska",
+			"video/webm",
+		)
+	}
+
 	private val VIDEO_EXTENSIONS = setOf("mp4", "m4v", "webm", "mkv", "mov", "3gp")
 
 	/**

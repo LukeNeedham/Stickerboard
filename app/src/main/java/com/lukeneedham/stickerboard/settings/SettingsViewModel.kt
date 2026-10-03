@@ -1,6 +1,6 @@
 package com.lukeneedham.stickerboard.settings
 
-import com.lukeneedham.stickerboard.utilities.KeyboardStatus
+import com.lukeneedham.stickerboard.utilities.SetupStatus
 import android.app.Application
 import android.database.ContentObserver
 import android.net.Uri
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.update
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 	private val _uiState = MutableStateFlow(
 		SettingsUiState(
-			keyboardEnabled = KeyboardStatus.isEnabled(application),
+			keyboardEnabled = SetupStatus.isKeyboardEnabled(application),
 			showDebugCard = BuildConfig.DEBUG,
 		),
 	)
@@ -47,7 +47,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 	}
 
 	fun refreshKeyboardEnabled() {
-		_uiState.update { it.copy(keyboardEnabled = KeyboardStatus.isEnabled(getApplication())) }
+		_uiState.update { it.copy(keyboardEnabled = SetupStatus.isKeyboardEnabled(getApplication())) }
 	}
 
 	fun onTryItOutMediaReceived(uri: Uri) {

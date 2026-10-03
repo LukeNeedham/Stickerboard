@@ -3,7 +3,7 @@
 package com.lukeneedham.stickerboard.gallery
 
 import com.lukeneedham.stickerboard.utilities.StickerFiles
-import com.lukeneedham.stickerboard.utilities.AnimatedSticker
+import com.lukeneedham.stickerboard.utilities.StickerMedia
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.app.Activity
 import android.content.Intent
@@ -493,7 +493,7 @@ private fun GalleryStickerCell(
 	onLongClick: () -> Unit,
 ) {
 	val haptic = LocalHapticFeedback.current
-	val isAnimated by produceState(false, file) { value = withContext(Dispatchers.IO) { AnimatedSticker.isAnimated(file) } }
+	val isAnimated by produceState(false, file) { value = withContext(Dispatchers.IO) { StickerMedia.isAnimated(file) } }
 	Box(
 		modifier = Modifier
 			.padding(4.dp)

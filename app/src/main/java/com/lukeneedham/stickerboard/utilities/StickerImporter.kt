@@ -43,7 +43,7 @@ class StickerImporter(
 	private val toaster: Toaster,
 	private val progressBar: LinearProgressIndicator? = null,
 ) {
-	private val supportedMimes = Utils.getSupportedMimes()
+	private val supportedMimes = StickerMedia.getSupportedMimes()
 
 	// Written concurrently from multiple Dispatchers.IO threads (one per in-flight sticker import
 	// in importStickers), so plain mutable collections/counters aren't safe here

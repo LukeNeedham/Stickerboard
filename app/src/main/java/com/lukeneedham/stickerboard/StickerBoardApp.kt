@@ -1,6 +1,6 @@
 package com.lukeneedham.stickerboard
 
-import com.lukeneedham.stickerboard.utilities.OnboardingStatus
+import com.lukeneedham.stickerboard.utilities.SetupStatus
 import android.content.Context
 import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -53,10 +53,10 @@ fun StickerBoardApp(
 	val context = LocalContext.current
 	val startRoute = remember(sharedImageUris) {
 		when {
-			sharedImageUris.isNotEmpty() && OnboardingStatus.isComplete(context) ->
+			sharedImageUris.isNotEmpty() && SetupStatus.isOnboardingComplete(context) ->
 				Route.ShareImport(sharedImageUris.map { it.toString() })
 
-			OnboardingStatus.isComplete(context) -> Route.Settings
+			SetupStatus.isOnboardingComplete(context) -> Route.Settings
 			else -> Route.Onboarding
 		}
 	}

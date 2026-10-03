@@ -1,6 +1,6 @@
 package com.lukeneedham.stickerboard.onboarding
 
-import com.lukeneedham.stickerboard.utilities.KeyboardStatus
+import com.lukeneedham.stickerboard.utilities.SetupStatus
 import android.app.Application
 import android.content.Intent
 import android.database.ContentObserver
@@ -31,7 +31,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 
 	private val _uiState = MutableStateFlow(
 		OnboardingUiState(
-			keyboardEnabled = KeyboardStatus.isEnabled(application),
+			keyboardEnabled = SetupStatus.isKeyboardEnabled(application),
 			isImporting = false,
 			loadedStickerCount = if (prefs.stickerDirPath != null) prefs.numStickersImported else null,
 		),
@@ -58,7 +58,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 	}
 
 	fun refreshRequirements() {
-		_uiState.update { it.copy(keyboardEnabled = KeyboardStatus.isEnabled(getApplication())) }
+		_uiState.update { it.copy(keyboardEnabled = SetupStatus.isKeyboardEnabled(getApplication())) }
 	}
 
 	/**
