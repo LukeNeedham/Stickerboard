@@ -240,7 +240,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		if (files.isEmpty()) return
 		_uiState.update { it.copy(deletingStickers = it.deletingStickers + files) }
 		viewModelScope.launch(Dispatchers.IO) {
-			StickerFiles.deleteStickerFiles(getApplication(), files)
+			StickerFiles.delete(getApplication(), files)
 			val items = computeBoardItems()
 			withContext(Dispatchers.Main) {
 				rawItems = items
@@ -260,7 +260,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 */
 	fun renameSticker(file: File, newBaseName: String, onResult: (File?) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
-			val renamed = StickerFiles.renameStickerFile(getApplication(), file, newBaseName)
+			val renamed = StickerFiles.rename(getApplication(), file, newBaseName)
 			val items = if (renamed != null) computeBoardItems() else null
 			withContext(Dispatchers.Main) {
 				if (items != null) {
@@ -375,7 +375,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 * same reload the keyboard's own pull-to-refresh performs - then rescans internal storage. */
 	fun refreshStickers() {
 		val path = prefs.stickerDirPath ?: return
-		runRefresh { StickerFiles.reimportStickersIfChanged(getApplication(), toaster, path) }
+		runRefresh { StickerFiles.reimportIfChanged(getApplication(), toaster, path) }
 	}
 
 	/** Switches the sticker source to [path] and does a full (re)import from it, since it's new. */

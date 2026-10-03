@@ -740,7 +740,7 @@ private fun RenameStickerDialog(
 	onDismiss: () -> Unit,
 ) {
 	var name by remember(sticker) { mutableStateOf(sticker.nameWithoutExtension) }
-	val target = StickerFiles.renamedStickerFile(sticker, name)
+	val target = StickerFiles.renamed(sticker, name)
 	val isValid = target != null && (target == sticker || !target.exists())
 	AlertDialog(
 		onDismissRequest = onDismiss,

@@ -35,21 +35,21 @@ object StickerFiles {
 	 * (name/size/modified time), so it's cheap enough to call before every reimport, such as from the
 	 * keyboard's pull-to-refresh.
 	 */
-	fun hasStickerSourceChanged(context: Context, stickerDirPath: String): Boolean {
+	fun hasSourceChanged(context: Context, stickerDirPath: String): Boolean {
 		val sourceStickers = walkStickers(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
 		val lastSignature = AppPreferences(context).stickerDirSignature
 		return signatureOf(sourceStickers) != lastSignature
 	}
 
 	/**
-	 * Re-imports from [stickerDirPath] only if [hasStickerSourceChanged] - the "pull to refresh"
+	 * Re-imports from [stickerDirPath] only if [hasSourceChanged] - the "pull to refresh"
 	 * reload shared by the keyboard's own pull-to-refresh and the Stickers page's refresh action, so
 	 * both mean exactly the same thing. A no-op when the source's contents already match what's
 	 * imported, so a refresh with nothing new to pick up doesn't pay for a full wipe-and-copy.
 	 */
-	suspend fun reimportStickersIfChanged(context: Context, toaster: Toaster, stickerDirPath: String) {
+	suspend fun reimportIfChanged(context: Context, toaster: Toaster, stickerDirPath: String) {
 		val changed = try {
-			hasStickerSourceChanged(context, stickerDirPath)
+			hasSourceChanged(context, stickerDirPath)
 		} catch (e: Exception) {
 			XLog.e("Failed to check the sticker source directory for changes")
 			XLog.e(e)
@@ -67,7 +67,7 @@ object StickerFiles {
 	 * page's "add photo" action and image share-to-StickerBoard import; marks [KeyboardRefreshSignal]
 	 * dirty on success so an already-running keyboard picks up the change next time it's shown, and
 	 * resyncs the stored source-directory signature (see [resyncStickerDirSignature]) so a later
-	 * deletion of one of these stickers is still noticed by [hasStickerSourceChanged]. Skips once
+	 * deletion of one of these stickers is still noticed by [hasSourceChanged]. Skips once
 	 * [packName] reaches [MAX_PACK_SIZE] stickers total. Returns the internal-storage copies that were
 	 * actually created, in the order [photoUris] was given.
 	 */
@@ -106,7 +106,7 @@ object StickerFiles {
 	 * re-copy a deleted sticker back in from the external folder. Returns the number of files actually
 	 * deleted.
 	 */
-	suspend fun deleteStickerFiles(context: Context, files: Collection<File>): Int =
+	suspend fun delete(context: Context, files: Collection<File>): Int =
 		withContext(Dispatchers.IO) {
 			var deletedCount = 0
 			for (file in files) {
@@ -127,7 +127,7 @@ object StickerFiles {
 	 * The file [file] would become if renamed to [newBaseName] - keeping its extension, since the user
 	 * edits just the name part. Null if [newBaseName] is blank or contains a path separator.
 	 */
-	fun renamedStickerFile(file: File, newBaseName: String): File? {
+	fun renamed(file: File, newBaseName: String): File? {
 		val baseName = newBaseName.trim()
 		if (baseName.isEmpty() || baseName.contains('/') || baseName.contains('\u0000')) return null
 		val extension = file.extension
@@ -139,12 +139,12 @@ object StickerFiles {
 	 * Renames [file] on disk to [newBaseName] (keeping its extension) - and, best-effort, its matching
 	 * copy in the external sticker source directory, so a future "Reload stickers" doesn't bring the old
 	 * name back. Marks [KeyboardRefreshSignal] dirty and resyncs the stored source-directory signature
-	 * the same way [deleteStickerFiles] does. Returns the renamed file, or null if the name is invalid,
+	 * the same way [delete] does. Returns the renamed file, or null if the name is invalid,
 	 * already taken, or the rename failed.
 	 */
-	suspend fun renameStickerFile(context: Context, file: File, newBaseName: String): File? =
+	suspend fun rename(context: Context, file: File, newBaseName: String): File? =
 		withContext(Dispatchers.IO) {
-			val target = renamedStickerFile(file, newBaseName) ?: return@withContext null
+			val target = renamed(file, newBaseName) ?: return@withContext null
 			if (target == file) return@withContext file
 			val modified = file.lastModified()
 			if (target.exists() || !file.renameTo(target)) return@withContext null
@@ -197,7 +197,7 @@ object StickerFiles {
 	 * [importPhotosToPack] (rather than by a full [StickerImporter.importStickers] pass) would never be
 	 * reflected in the stored signature - so if that sticker were later deleted directly from the
 	 * external folder, its contents would return to exactly matching the older, pre-addition signature,
-	 * [hasStickerSourceChanged] would see no difference, and the stale internal copy would never get
+	 * [hasSourceChanged] would see no difference, and the stale internal copy would never get
 	 * cleaned up by a "Reload stickers"/pull-to-refresh, no matter how many times it's tried.
 	 */
 	private fun resyncStickerDirSignature(context: Context) {
