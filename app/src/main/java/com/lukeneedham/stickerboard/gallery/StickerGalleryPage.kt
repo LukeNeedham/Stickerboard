@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,10 +41,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,8 +68,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,7 +85,7 @@ import java.io.File
 /**
  * Shows every sticker pack using the same section/grid board layout as the keyboard's own board,
  * with an extra "add photo" cell at the end of each pack's section. Tapping a sticker opens an
- * enlarged preview, which has its own delete button; tapping the add-photo cell opens the device's
+ * enlarged preview in a swipeable bottom sheet, which has its own delete button; tapping the add-photo cell opens the device's
  * photo picker. Long-pressing a sticker instead enters multi-select mode, where tapping toggles
  * stickers in/out of the selection and the top bar's delete button removes all of them at once -
  * either way, a confirmation dialog stands between the tap and the actual deletion, and a spinner
@@ -241,7 +243,7 @@ fun StickerGalleryPage(
 		val stickers = remember(items) {
 			items.orEmpty().filterIsInstance<BoardItem.Sticker>().map { it.file }
 		}
-		StickerPreviewDialog(
+		StickerPreviewSheet(
 			stickers = stickers,
 			initialSticker = initial,
 			onDismiss = { previewSticker = null },
@@ -596,11 +598,12 @@ private fun GalleryLoadingCell() {
 	}
 }
 
-/** An enlarged preview of a sticker, opened on [initialSticker] and swipeable horizontally between
- * all [stickers] - tap the image (or outside) to dismiss, or tap the delete button in the corner to
- * ask [onDeleteClick] to confirm and delete the sticker currently showing. */
+/** An enlarged preview of a sticker in a bottom sheet (drag handle, dismissed by dragging it down
+ * or tapping outside it), opened on [initialSticker]. Only the sticker image swipes horizontally
+ * between all [stickers]; the pack name, filename, rename and delete controls stay put and update in
+ * place to describe whichever sticker is showing. */
 @Composable
-private fun StickerPreviewDialog(
+private fun StickerPreviewSheet(
 	stickers: List<File>,
 	initialSticker: File,
 	onDismiss: () -> Unit,
@@ -616,80 +619,69 @@ private fun StickerPreviewDialog(
 		initialPage = stickers.indexOf(initialSticker).coerceAtLeast(0),
 		pageCount = { stickers.size },
 	)
-	Dialog(
+	val current = stickers[pagerState.currentPage.coerceIn(stickers.indices)]
+	ModalBottomSheet(
 		onDismissRequest = onDismiss,
-		properties = DialogProperties(usePlatformDefaultWidth = false),
+		sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 	) {
-		Box(
-			modifier = Modifier
-				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.background),
-		) {
-			HorizontalPager(
-				state = pagerState,
-				key = { stickers[it].path },
-				modifier = Modifier.fillMaxSize(),
-			) { page ->
-				val sticker = stickers[page]
-				Column(
-					modifier = Modifier
-						.fillMaxSize()
-						.clickable(onClick = onDismiss)
-						.padding(20.dp),
-					horizontalAlignment = Alignment.CenterHorizontally,
-				) {
+		Box(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 20.dp)) {
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+				horizontalAlignment = Alignment.CenterHorizontally,
+			) {
+				Text(
+					text = prettifyPackName(current.parentFile?.name.orEmpty()),
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.Bold,
+					color = MaterialTheme.colorScheme.primary,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+					modifier = Modifier.padding(horizontal = 48.dp),
+				)
+				Row(verticalAlignment = Alignment.CenterVertically) {
 					Text(
-						text = prettifyPackName(sticker.parentFile?.name.orEmpty()),
-						style = MaterialTheme.typography.titleMedium,
-						fontWeight = FontWeight.Bold,
-						color = MaterialTheme.colorScheme.primary,
+						text = trimString(current.name),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onSurfaceVariant,
 						maxLines = 1,
 						overflow = TextOverflow.Ellipsis,
+						modifier = Modifier.weight(1f, fill = false),
 					)
-					Row(verticalAlignment = Alignment.CenterVertically) {
-						Text(
-							text = trimString(sticker.name),
-							style = MaterialTheme.typography.bodySmall,
-							color = MaterialTheme.colorScheme.onSurfaceVariant,
-							maxLines = 1,
-							overflow = TextOverflow.Ellipsis,
-							modifier = Modifier.weight(1f, fill = false),
-						)
-						if (isRenaming) {
-							Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
-								CircularProgressIndicator(
-									modifier = Modifier.size(16.dp),
-									strokeWidth = 2.dp,
-									color = MaterialTheme.colorScheme.primary,
-								)
-							}
-						} else {
-							IconButton(onClick = { onRenameClick(sticker) }, modifier = Modifier.size(32.dp)) {
-								Icon(
-									painter = painterResource(R.drawable.ic_edit),
-									contentDescription = stringResource(R.string.rename_sticker_button),
-									tint = MaterialTheme.colorScheme.onSurfaceVariant,
-									modifier = Modifier.size(16.dp),
-								)
-							}
+					if (isRenaming) {
+						Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+							CircularProgressIndicator(
+								modifier = Modifier.size(16.dp),
+								strokeWidth = 2.dp,
+								color = MaterialTheme.colorScheme.primary,
+							)
+						}
+					} else {
+						IconButton(onClick = { onRenameClick(current) }, modifier = Modifier.size(32.dp)) {
+							Icon(
+								painter = painterResource(R.drawable.ic_edit),
+								contentDescription = stringResource(R.string.rename_sticker_button),
+								tint = MaterialTheme.colorScheme.onSurfaceVariant,
+								modifier = Modifier.size(16.dp),
+							)
 						}
 					}
+				}
+				HorizontalPager(
+					state = pagerState,
+					key = { stickers[it].path },
+					modifier = Modifier.fillMaxWidth().height(320.dp).padding(top = 16.dp),
+				) { page ->
+					val sticker = stickers[page]
 					StickerImage(
 						file = sticker,
 						contentDescription = trimString(sticker.name),
-						modifier = Modifier
-							.weight(1f)
-							.fillMaxWidth()
-							.padding(top = 16.dp)
-							.clickable(onClick = onDismiss),
+						modifier = Modifier.fillMaxSize(),
 					)
 				}
 			}
 			IconButton(
-				onClick = { stickers.getOrNull(pagerState.currentPage)?.let(onDeleteClick) },
-				modifier = Modifier
-					.align(Alignment.TopEnd)
-					.padding(12.dp),
+				onClick = { onDeleteClick(current) },
+				modifier = Modifier.align(Alignment.TopEnd).padding(end = 12.dp),
 			) {
 				Icon(
 					painter = painterResource(R.drawable.ic_delete),
