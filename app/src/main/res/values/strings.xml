@@ -61,6 +61,12 @@ Tap the button below to open your keyboard settings, then switch on \"StickerBoa
 	<string name="delete_stickers_confirm_title">Delete %1$d stickers?</string>
 	<string name="delete_stickers_confirm_message">The selected stickers will be permanently deleted.</string>
 	<string name="delete_button">Delete</string>
+	<!-- Rename Stickers -->
+	<string name="rename_sticker_button">Rename sticker</string>
+	<string name="rename_sticker_title">Rename sticker</string>
+	<string name="rename_sticker_label">Name</string>
+	<string name="rename_sticker_error">Name is empty, invalid or already in use</string>
+	<string name="rename_button">Rename</string>
 	<string name="cancel_button">Cancel</string>
 	<string name="selected_count_lbl">%1$d selected</string>
 	<string name="exit_selection_button">Cancel selection</string>
