@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -79,8 +80,11 @@ import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
+import com.lukeneedham.stickerboard.utilities.isAnimatedSticker
 import com.lukeneedham.stickerboard.utilities.renamedStickerFile
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Shows every sticker pack using the same section/grid board layout as the keyboard's own board,
@@ -478,7 +482,7 @@ private fun GallerySectionEmptyMessage(text: String) {
 
 /** [selectionMode] shows a selection badge in the corner (filled and checked when [isSelected]) -
  * long-pressing any cell enters selection mode, after which tapping any cell toggles it instead of
- * opening the full-screen preview. [isDeleting] dims the sticker and overlays a spinner instead,
+ * opening the full-screen preview. Animated stickers (GIF, animated WebP/PNG/AVIF, video) get a small play badge in the bottom-right corner, since they're shown as a static frame here. [isDeleting] dims the sticker and overlays a spinner instead,
  * and disables both taps, for as long as it's still visible here while its delete is in flight. */
 @Composable
 private fun GalleryStickerCell(
@@ -490,6 +494,7 @@ private fun GalleryStickerCell(
 	onLongClick: () -> Unit,
 ) {
 	val haptic = LocalHapticFeedback.current
+	val isAnimated by produceState(false, file) { value = withContext(Dispatchers.IO) { isAnimatedSticker(file) } }
 	Box(
 		modifier = Modifier
 			.padding(4.dp)
@@ -508,6 +513,7 @@ private fun GalleryStickerCell(
 	) {
 		StickerImage(
 			file = file,
+			animate = false,
 			contentDescription = stringResource(R.string.pack_icon),
 			modifier = Modifier
 				.fillMaxSize()
@@ -522,6 +528,24 @@ private fun GalleryStickerCell(
 				}
 				.alpha(if (isDeleting) 0.3f else 1f),
 		)
+		if (isAnimated && !isDeleting) {
+			Box(
+				modifier = Modifier
+					.align(Alignment.BottomEnd)
+					.padding(4.dp)
+					.size(22.dp)
+					.clip(CircleShape)
+					.background(Color.Black.copy(alpha = 0.5f)),
+				contentAlignment = Alignment.Center,
+			) {
+				Icon(
+					painter = painterResource(R.drawable.ic_play),
+					contentDescription = stringResource(R.string.sticker_animated_content_description),
+					tint = Color.White,
+					modifier = Modifier.size(12.dp),
+				)
+			}
+		}
 		if (selectionMode && !isDeleting) {
 			Box(
 				modifier = Modifier

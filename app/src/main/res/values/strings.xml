@@ -71,6 +71,7 @@ Tap the button below to open your keyboard settings, then switch on \"StickerBoa
 	<string name="selected_count_lbl">%1$d selected</string>
 	<string name="exit_selection_button">Cancel selection</string>
 	<string name="sticker_selected_content_description">Selected</string>
+	<string name="sticker_animated_content_description">Animated sticker</string>
 	<!-- Share Import -->
 	<string name="share_import_heading">Add to Sticker Pack</string>
 	<string name="share_import_prompt">Choose a sticker pack to add these to, or create a new one.</string>
