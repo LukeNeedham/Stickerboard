@@ -20,12 +20,6 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import coil.Coil
-import coil.ImageLoader
-import coil.decode.GifDecoder
-import coil.decode.ImageDecoderDecoder
-import coil.decode.SvgDecoder
-import coil.decode.VideoFrameDecoder
 import coil.imageLoader
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.keyboard.DarkColors
@@ -99,7 +93,6 @@ class KeyboardController :
 
 	/**
 	 * When the activity is created...
-	 * - ensure coil can decode (and display) animated images
 	 * - load [model] (which loads packs/caches/prefs itself)
 	 */
 	override fun onCreate() {
@@ -111,21 +104,6 @@ class KeyboardController :
 
 		XLog.i("=".repeat(80))
 		XLog.i("Loaded $packageName:${javaClass.name}")
-
-		// Setup coil
-		val imageLoader =
-			ImageLoader.Builder(baseContext)
-				.components {
-					if (SDK_INT >= 28) {
-						add(ImageDecoderDecoder.Factory())
-					} else {
-						add(GifDecoder.Factory())
-					}
-					add(VideoFrameDecoder.Factory())
-					add(SvgDecoder.Factory())
-				}
-				.build()
-		Coil.setImageLoader(imageLoader)
 
 		model = KeyboardModel(baseContext)
 		// Set directly on the window rather than through Compose: this runs before
