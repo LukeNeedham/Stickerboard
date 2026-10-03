@@ -114,6 +114,7 @@ fun StickerGalleryPage(
 	var selectedStickers by remember { mutableStateOf(setOf<File>()) }
 	var stickerPendingDelete by remember { mutableStateOf<File?>(null) }
 	var stickerPendingRename by remember { mutableStateOf<File?>(null) }
+	var isRenaming by remember { mutableStateOf(false) }
 	var showBulkDeleteConfirm by remember { mutableStateOf(false) }
 
 	BackHandler(enabled = selectedStickers.isNotEmpty()) { selectedStickers = emptySet() }
@@ -239,6 +240,7 @@ fun StickerGalleryPage(
 			sticker = sticker,
 			onDismiss = { previewSticker = null },
 			onDeleteClick = { stickerPendingDelete = sticker },
+			isRenaming = isRenaming,
 			onRenameClick = { stickerPendingRename = sticker },
 		)
 	}
@@ -247,8 +249,10 @@ fun StickerGalleryPage(
 		RenameStickerDialog(
 			sticker = sticker,
 			onConfirm = { newName ->
+				isRenaming = true
 				onRenameSticker(sticker, newName) { renamed ->
 					if (renamed != null && previewSticker == sticker) previewSticker = renamed
+					isRenaming = false
 				}
 				stickerPendingRename = null
 			},
@@ -594,6 +598,7 @@ private fun StickerPreviewDialog(
 	sticker: File,
 	onDismiss: () -> Unit,
 	onDeleteClick: () -> Unit,
+	isRenaming: Boolean,
 	onRenameClick: () -> Unit,
 ) {
 	Dialog(
@@ -629,13 +634,23 @@ private fun StickerPreviewDialog(
 						overflow = TextOverflow.Ellipsis,
 						modifier = Modifier.weight(1f, fill = false),
 					)
-					IconButton(onClick = onRenameClick, modifier = Modifier.size(32.dp)) {
-						Icon(
-							painter = painterResource(R.drawable.ic_edit),
-							contentDescription = stringResource(R.string.rename_sticker_button),
-							tint = MaterialTheme.colorScheme.onSurfaceVariant,
-							modifier = Modifier.size(16.dp),
-						)
+					if (isRenaming) {
+						Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+							CircularProgressIndicator(
+								modifier = Modifier.size(16.dp),
+								strokeWidth = 2.dp,
+								color = MaterialTheme.colorScheme.primary,
+							)
+						}
+					} else {
+						IconButton(onClick = onRenameClick, modifier = Modifier.size(32.dp)) {
+							Icon(
+								painter = painterResource(R.drawable.ic_edit),
+								contentDescription = stringResource(R.string.rename_sticker_button),
+								tint = MaterialTheme.colorScheme.onSurfaceVariant,
+								modifier = Modifier.size(16.dp),
+							)
+						}
 					}
 				}
 				StickerImage(
