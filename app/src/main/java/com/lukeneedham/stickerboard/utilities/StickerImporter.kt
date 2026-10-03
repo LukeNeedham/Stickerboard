@@ -144,7 +144,10 @@ suspend fun renameStickerFile(context: Context, file: File, newBaseName: String)
 	withContext(Dispatchers.IO) {
 		val target = renamedStickerFile(file, newBaseName) ?: return@withContext null
 		if (target == file) return@withContext file
+		val modified = file.lastModified()
 		if (target.exists() || !file.renameTo(target)) return@withContext null
+		// Stickers are ordered by modified time, so keep it to leave the sticker where it was.
+		target.setLastModified(modified)
 		file.parentFile?.name?.let { renameInExternalSourceDir(context, it, file.name, target.name) }
 		KeyboardRefreshSignal.markDirty()
 		resyncStickerDirSignature(context)
