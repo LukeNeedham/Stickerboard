@@ -54,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,6 +85,7 @@ import com.lukeneedham.stickerboard.utilities.isAnimatedSticker
 import com.lukeneedham.stickerboard.utilities.renamedStickerFile
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -125,6 +127,8 @@ fun StickerGalleryPage(
 	var stickerPendingRename by remember { mutableStateOf<File?>(null) }
 	var isRenaming by remember { mutableStateOf(false) }
 	var showBulkDeleteConfirm by remember { mutableStateOf(false) }
+
+	val scope = rememberCoroutineScope()
 
 	BackHandler(enabled = selectedStickers.isNotEmpty()) { selectedStickers = emptySet() }
 
@@ -177,6 +181,31 @@ fun StickerGalleryPage(
 						onRefresh = onRefresh,
 						modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
 					)
+				}
+				val packSummaries = items.orEmpty()
+					.filterIsInstance<BoardItem.Header>()
+					.map { header ->
+						PackSummary(
+							packName = header.packName,
+							displayName = header.displayName,
+							stickerCount = items.orEmpty().count {
+								it is BoardItem.Sticker && it.packName == header.packName
+							},
+							itemIndex = items.orEmpty().indexOf(header),
+						)
+					}
+				// Items after the source card (and the pack list, when present) are offset in the grid.
+				val itemsOffset = if (packSummaries.isEmpty()) 1 else 2
+				if (packSummaries.isNotEmpty()) {
+					item(span = { GridItemSpan(maxLineSpan) }) {
+						PackListCard(
+							packs = packSummaries,
+							onPackClick = { pack ->
+								scope.launch { gridState.animateScrollToItem(pack.itemIndex + itemsOffset) }
+							},
+							modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 8.dp),
+						)
+					}
 				}
 				if (items == null) {
 					item(span = { GridItemSpan(maxLineSpan) }) {
@@ -411,6 +440,59 @@ private fun StickerSourceCard(
 						painter = painterResource(R.drawable.ic_refresh),
 						contentDescription = stringResource(R.string.reload_sticker_pack_button),
 						tint = MaterialTheme.colorScheme.onSurfaceVariant,
+					)
+				}
+			}
+		}
+	}
+}
+
+private data class PackSummary(
+	val packName: String,
+	val displayName: String,
+	val stickerCount: Int,
+	/** Index of the pack's header within the board items (not the grid). */
+	val itemIndex: Int,
+)
+
+/** Lists every pack with its name and sticker count; tapping a row calls [onPackClick] so the page
+ * can scroll to that pack's section below. */
+@Composable
+private fun PackListCard(
+	packs: List<PackSummary>,
+	onPackClick: (PackSummary) -> Unit,
+	modifier: Modifier = Modifier,
+) {
+	SettingsCard(modifier) {
+		Text(
+			text = stringResource(R.string.gallery_pack_list_heading),
+			style = MaterialTheme.typography.titleMedium,
+			fontWeight = FontWeight.Bold,
+			color = MaterialTheme.colorScheme.onSurface,
+		)
+		Column {
+			packs.forEach { pack ->
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					modifier = Modifier
+						.fillMaxWidth()
+						.heightIn(min = 48.dp)
+						.clip(RoundedCornerShape(12.dp))
+						.clickable { onPackClick(pack) },
+				) {
+					Text(
+						text = pack.displayName,
+						style = MaterialTheme.typography.bodyLarge,
+						color = MaterialTheme.colorScheme.onSurface,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+						modifier = Modifier.weight(1f),
+					)
+					Text(
+						text = stringResource(R.string.gallery_pack_sticker_count, pack.stickerCount),
+						style = MaterialTheme.typography.bodyMedium,
+						color = MaterialTheme.colorScheme.onSurfaceVariant,
+						modifier = Modifier.padding(start = 12.dp),
 					)
 				}
 			}
