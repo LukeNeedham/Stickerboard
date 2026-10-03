@@ -30,10 +30,11 @@ fun StickerImage(
 		val builder = ImageRequest.Builder(context).data(file)
 		if (!animate && file.extension.lowercase() in StickerImageConstants.STATIC_DECODABLE_EXTENSIONS) {
 			builder.decoderFactory(BitmapFactoryDecoder.Factory())
-			// Coil's default cache key ignores the decoder, so without its own key this static frame
+			// Coil's default cache key ignores the decoder, so without this extra the static frame
 			// would be served from the memory cache to animated renders of the same file (e.g. the
-			// preview sheet), which then show a frozen GIF.
-			builder.memoryCacheKey("${file.path}:${file.lastModified()}:static")
+			// preview sheet), which then show a frozen GIF. The extra keeps Coil's own file key
+			// (path + last-modified) rather than stat-ing the file here during composition.
+			builder.setParameter("static", true, memoryCacheKey = "static")
 		}
 		builder.build()
 	}

@@ -54,6 +54,14 @@ android {
 			versionNameSuffix = "-debug"
 			signingConfig = signingConfigs.getByName("debug")
 		}
+		// Debug-signed but not debuggable, so it can be installed over the debug build and measured
+		// for scroll performance without Compose's debug-build overhead skewing the result.
+		create("perf") {
+			initWith(getByName("release"))
+			versionNameSuffix = "-perf"
+			signingConfig = signingConfigs.getByName("debug")
+			matchingFallbacks += "release"
+		}
 		getByName("release") {
 			proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
 			isMinifyEnabled = false
@@ -64,6 +72,12 @@ android {
 		sourceCompatibility(JavaVersion.VERSION_17)
 		targetCompatibility(JavaVersion.VERSION_17)
 	}
+}
+
+// The perf build exists only to measure performance; skip the release-only "lint vital" gate for it
+// (it's a non-debuggable build type, so lint vital would otherwise fail it on existing lint errors).
+tasks.matching { it.name.startsWith("lintVital") && it.name.endsWith("Perf") }.configureEach {
+	enabled = false
 }
 
 dependencies {
