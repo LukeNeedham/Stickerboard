@@ -315,20 +315,18 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	}
 
 	/**
-	 * An intent that opens the user's chosen external sticker source directory in their device's
-	 * file browser app, or null if none is configured. Onboarding requires a sticker source
+	 * An intent that opens the user's chosen external sticker source directory - or, if [packName]
+	 * is given, that pack's folder inside it - in their device's file browser app, or null if none is configured. Onboarding requires a sticker source
 	 * directory to be chosen before this page is reachable, so a null path here would be a bug
 	 * rather than something to show the user a message about.
 	 */
-	fun openStickerFolderIntent(): Intent? {
+	fun openStickerFolderIntent(packName: String? = null): Intent? {
 		val path = prefs.stickerDirPath ?: return null
 		return try {
 			val treeUri = Uri.parse(path)
-			val docUri =
-				DocumentsContract.buildDocumentUriUsingTree(
-					treeUri,
-					DocumentsContract.getTreeDocumentId(treeUri),
-				)
+			val rootDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
+			val documentId = if (packName == null) rootDocumentId else "$rootDocumentId/$packName"
+			val docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
 			Intent(Intent.ACTION_VIEW).apply {
 				setDataAndType(docUri, DocumentsContract.Document.MIME_TYPE_DIR)
 				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

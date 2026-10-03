@@ -105,6 +105,7 @@ fun StickerGalleryPage(
 	isRefreshing: Boolean,
 	onBack: () -> Unit,
 	onOpenFolder: () -> Unit,
+	onOpenPackFolder: (packName: String) -> Unit,
 	onChangeDirectory: () -> Unit,
 	onRefresh: () -> Unit,
 	onAddPhotoClick: (packName: String) -> Unit,
@@ -211,7 +212,10 @@ fun StickerGalleryPage(
 						},
 					) { index ->
 						when (val item = items[index]) {
-							is BoardItem.Header -> GallerySectionHeader(item.displayName)
+							is BoardItem.Header -> GallerySectionHeader(
+								text = item.displayName,
+								onClick = { onOpenPackFolder(item.packName) },
+							)
 							is BoardItem.EmptyMessage -> GallerySectionEmptyMessage(item.message)
 							is BoardItem.Sticker -> GalleryStickerCell(
 								file = item.file,
@@ -436,16 +440,27 @@ private fun StatTile(value: Int, label: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun GallerySectionHeader(text: String) {
-	Text(
-		text = text,
-		style = MaterialTheme.typography.titleMedium,
-		color = MaterialTheme.colorScheme.onBackground,
+private fun GallerySectionHeader(text: String, onClick: () -> Unit) {
+	Row(
+		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier
 			.fillMaxWidth()
+			.clickable(onClick = onClick)
 			.padding(horizontal = 20.dp)
 			.padding(top = 14.dp, bottom = 4.dp),
-	)
+	) {
+		Text(
+			text = text,
+			style = MaterialTheme.typography.titleMedium,
+			color = MaterialTheme.colorScheme.onBackground,
+		)
+		Icon(
+			painter = painterResource(R.drawable.ic_chevron_right),
+			contentDescription = null,
+			tint = MaterialTheme.colorScheme.onSurfaceVariant,
+			modifier = Modifier.padding(start = 4.dp).size(18.dp),
+		)
+	}
 }
 
 @Composable
@@ -838,6 +853,9 @@ fun GalleryRoute(
 		isRefreshing = uiState.isRefreshing,
 		onBack = onBack,
 		onOpenFolder = { viewModel.openStickerFolderIntent()?.let { context.startActivity(it) } },
+		onOpenPackFolder = { packName ->
+			viewModel.openStickerFolderIntent(packName)?.let { context.startActivity(it) }
+		},
 		onChangeDirectory = {
 			val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
 				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
