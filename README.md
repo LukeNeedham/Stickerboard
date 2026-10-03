@@ -121,8 +121,23 @@ the UI.
 ### Gradle tasks
 
 - `./gradlew assembleDebug`: build a debug APK
+- `./gradlew assemblePerf`: build a non-debuggable, debug-signed APK for judging performance (see
+  [Performance testing](#performance-testing))
 - `./gradlew ktlintCheck`: run ktlint over the codebase
 - `./gradlew ktlintFormat`: auto-format the codebase with ktlint
+
+### Performance testing
+
+Debug builds are much slower than release builds at things like scrolling Compose lists, so don't
+judge scroll smoothness from a debug APK. The `perf` build type is non-debuggable (and signed with
+the debug key, so it installs over a debug build), which makes it representative.
+
+Pull request CI builds only the debug APK by default. To also get a perf APK, add the **`perf`**
+label to the pull request (create the label in the repo once if it doesn't exist). Adding the label
+triggers a build, and further pushes keep building the perf APK while the label stays. The bot's
+"App apk at" comment then links the perf APK as well. Locally, use `./gradlew assemblePerf`.
+
+The perf build skips `lintVital*`, which would otherwise fail it on existing lint errors.
 
 ### Code style
 
