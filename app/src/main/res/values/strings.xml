@@ -44,8 +44,6 @@ Tap the button below to open your keyboard settings, then switch on \"StickerBoa
 	<string name="update_sticker_pack_info_path">Not Set</string>
 	<string name="update_sticker_pack_info_date">Never</string>
 	<!-- Sticker Source (Stickers page) -->
-	<string name="sticker_source_total_stickers_lbl">Stickers</string>
-	<string name="sticker_source_total_packs_lbl">Packs</string>
 	<string name="sticker_source_last_refreshed">Last refreshed: %1$s</string>
 	<string name="sticker_source_change_button">Change</string>
 	<!-- View Stickers -->

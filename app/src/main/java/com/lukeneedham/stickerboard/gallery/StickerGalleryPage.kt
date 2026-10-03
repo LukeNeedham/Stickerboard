@@ -173,8 +173,6 @@ fun StickerGalleryPage(
 					StickerSourceCard(
 						stickerDirDisplayName = stickerDirDisplayName,
 						lastUpdateDate = lastUpdateDate,
-						totalStickers = items?.count { it is BoardItem.Sticker } ?: 0,
-						totalPacks = items?.count { it is BoardItem.Header } ?: 0,
 						isRefreshing = isRefreshing,
 						onOpenFolder = onOpenFolder,
 						onChangeDirectory = onChangeDirectory,
@@ -336,7 +334,7 @@ private fun <T> Set<T>.toggled(element: T): Set<T> =
 	if (element in this) this - element else this + element
 
 /**
- * Shows where the loaded stickers came from, how many there are, and when they were last
+ * Shows where the loaded stickers came from and when they were last
  * refreshed. The path itself (with a trailing chevron) opens that folder in the system file
  * browser; the pencil button next to it lets the user pick a different one. [isRefreshing] swaps
  * the trailing refresh button for an inline spinner rather than the app showing any toast.
@@ -345,8 +343,6 @@ private fun <T> Set<T>.toggled(element: T): Set<T> =
 private fun StickerSourceCard(
 	stickerDirDisplayName: String,
 	lastUpdateDate: String,
-	totalStickers: Int,
-	totalPacks: Int,
 	isRefreshing: Boolean,
 	onOpenFolder: () -> Unit,
 	onChangeDirectory: () -> Unit,
@@ -395,22 +391,6 @@ private fun StickerSourceCard(
 					modifier = Modifier.size(20.dp),
 				)
 			}
-		}
-
-		Row(
-			horizontalArrangement = Arrangement.spacedBy(12.dp),
-			modifier = Modifier.fillMaxWidth(),
-		) {
-			StatTile(
-				value = totalStickers,
-				label = stringResource(R.string.sticker_source_total_stickers_lbl),
-				modifier = Modifier.weight(1f),
-			)
-			StatTile(
-				value = totalPacks,
-				label = stringResource(R.string.sticker_source_total_packs_lbl),
-				modifier = Modifier.weight(1f),
-			)
 		}
 
 		Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -495,7 +475,7 @@ private fun PackListCard(
 
 private const val PACK_LIST_COLUMNS = 4
 
-/** A tonal tile styled like [StatTile], with the pack name above its sticker count, both centered. */
+/** A rounded tonal tile with the pack name above its sticker count, both centered. */
 @Composable
 private fun PackTile(pack: PackSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
 	Column(
@@ -519,31 +499,6 @@ private fun PackTile(pack: PackSummary, onClick: () -> Unit, modifier: Modifier 
 		)
 		Text(
 			text = stringResource(R.string.gallery_pack_sticker_count, pack.stickerCount),
-			style = MaterialTheme.typography.labelMedium,
-			color = MaterialTheme.colorScheme.onSurfaceVariant,
-		)
-	}
-}
-
-/** A rounded tonal tile showing one big number over a small label - used for the sticker/pack
- * counts, so they read as at-a-glance stats rather than another line of label/value text. */
-@Composable
-private fun StatTile(value: Int, label: String, modifier: Modifier = Modifier) {
-	Column(
-		modifier = modifier
-			.clip(RoundedCornerShape(16.dp))
-			.background(MaterialTheme.colorScheme.surfaceVariant)
-			.padding(vertical = 12.dp),
-		horizontalAlignment = Alignment.CenterHorizontally,
-	) {
-		Text(
-			text = value.toString(),
-			style = MaterialTheme.typography.titleLarge,
-			fontWeight = FontWeight.Bold,
-			color = MaterialTheme.colorScheme.onSurface,
-		)
-		Text(
-			text = label,
 			style = MaterialTheme.typography.labelMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 		)
