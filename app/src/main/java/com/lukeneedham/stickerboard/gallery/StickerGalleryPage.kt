@@ -493,6 +493,7 @@ private fun GalleryStickerCell(
 	) {
 		StickerImage(
 			file = file,
+			animate = false,
 			contentDescription = stringResource(R.string.pack_icon),
 			modifier = Modifier
 				.fillMaxSize()
