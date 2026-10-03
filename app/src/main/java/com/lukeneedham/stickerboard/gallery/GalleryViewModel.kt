@@ -153,7 +153,11 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	}
 
 	private fun sortedPackNames(loadedPacks: Map<String, StickerPack>): List<String> =
-		loadedPacks.keys.sorted()
+		// By the name shown in the header, ignoring case, so "apple" doesn't sort after "Zebra".
+		loadedPacks.keys.sortedWith(
+			compareBy<String, String>(String.CASE_INSENSITIVE_ORDER) { prettifyPackName(it) }
+				.thenBy { it },
+		)
 
 	private fun computeBoardItems(): List<BoardItem> {
 		val packs =
