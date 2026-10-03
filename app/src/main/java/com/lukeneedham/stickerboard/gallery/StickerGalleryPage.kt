@@ -455,7 +455,7 @@ private data class PackSummary(
 	val itemIndex: Int,
 )
 
-/** Lists every pack with its name and sticker count; tapping a row calls [onPackClick] so the page
+/** Lists every pack as a tile (name over sticker count) in a [PACK_LIST_COLUMNS]-wide grid; tapping a tile calls [onPackClick] so the page
  * can scroll to that pack's section below. */
 @Composable
 private fun PackListCard(
@@ -470,33 +470,58 @@ private fun PackListCard(
 			fontWeight = FontWeight.Bold,
 			color = MaterialTheme.colorScheme.onSurface,
 		)
-		Column {
-			packs.forEach { pack ->
+		Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			packs.chunked(PACK_LIST_COLUMNS).forEach { rowPacks ->
 				Row(
-					verticalAlignment = Alignment.CenterVertically,
-					modifier = Modifier
-						.fillMaxWidth()
-						.heightIn(min = 48.dp)
-						.clip(RoundedCornerShape(12.dp))
-						.clickable { onPackClick(pack) },
+					horizontalArrangement = Arrangement.spacedBy(8.dp),
+					modifier = Modifier.fillMaxWidth(),
 				) {
-					Text(
-						text = pack.displayName,
-						style = MaterialTheme.typography.bodyLarge,
-						color = MaterialTheme.colorScheme.onSurface,
-						maxLines = 1,
-						overflow = TextOverflow.Ellipsis,
-						modifier = Modifier.weight(1f),
-					)
-					Text(
-						text = stringResource(R.string.gallery_pack_sticker_count, pack.stickerCount),
-						style = MaterialTheme.typography.bodyMedium,
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
-						modifier = Modifier.padding(start = 12.dp),
-					)
+					rowPacks.forEach { pack ->
+						PackTile(
+							pack = pack,
+							onClick = { onPackClick(pack) },
+							modifier = Modifier.weight(1f),
+						)
+					}
+					// Keeps the last row's tiles the same width as the full rows above.
+					repeat(PACK_LIST_COLUMNS - rowPacks.size) {
+						Box(modifier = Modifier.weight(1f))
+					}
 				}
 			}
 		}
+	}
+}
+
+private const val PACK_LIST_COLUMNS = 4
+
+/** A tonal tile styled like [StatTile], with the pack name above its sticker count, both centered. */
+@Composable
+private fun PackTile(pack: PackSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
+	Column(
+		modifier = modifier
+			.height(72.dp)
+			.clip(RoundedCornerShape(16.dp))
+			.background(MaterialTheme.colorScheme.surfaceVariant)
+			.clickable(onClick = onClick)
+			.padding(horizontal = 6.dp, vertical = 8.dp),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center,
+	) {
+		Text(
+			text = pack.displayName,
+			style = MaterialTheme.typography.labelLarge,
+			fontWeight = FontWeight.Bold,
+			color = MaterialTheme.colorScheme.onSurface,
+			textAlign = TextAlign.Center,
+			maxLines = 2,
+			overflow = TextOverflow.Ellipsis,
+		)
+		Text(
+			text = stringResource(R.string.gallery_pack_sticker_count, pack.stickerCount),
+			style = MaterialTheme.typography.labelMedium,
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+		)
 	}
 }
 
