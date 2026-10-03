@@ -16,13 +16,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-/**
- * `android:allowBackup="false"` in the manifest already disables Android's cloud backup and
- * device-transfer for the whole app, so this file is never a candidate for either regardless of
- * its name - nothing extra to opt out of here.
- */
-private val Context.prefsDataStore: DataStore<Preferences> by preferencesDataStore(name = "prefs")
-
 private object Keys {
 	val STICKER_DIR_SIGNATURE = stringPreferencesKey("stickerDirSignature")
 	val STICKER_DIR_PATH = stringPreferencesKey("stickerDirPath")
@@ -46,6 +39,15 @@ private object Keys {
  * background, matching SharedPreferences.Editor's own `apply()`.
  */
 class AppPreferences(context: Context) {
+	companion object {
+		/**
+		 * `android:allowBackup="false"` in the manifest already disables Android's cloud backup and
+		 * device-transfer for the whole app, so this file is never a candidate for either regardless of
+		 * its name - nothing extra to opt out of here.
+		 */
+		private val Context.prefsDataStore: DataStore<Preferences> by preferencesDataStore(name = "prefs")
+	}
+
 	private val appContext = context.applicationContext
 	private val dataStore get() = appContext.prefsDataStore
 	private val writeScope = CoroutineScope(Dispatchers.IO)

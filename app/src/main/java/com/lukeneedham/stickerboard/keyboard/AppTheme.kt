@@ -38,19 +38,18 @@ internal object AppThemeConstants {
 		onAccent = Color(0xFFE6E6E6),
 		pullHandle = Color(0x66888888),
 	)
-}
 
-/**
- * Defaults to [AppThemeConstants.LightColors], so a composable read outside [AppTheme] (a `@Preview`,
- * most likely)
- * gets a sensible value instead of crashing.
- */
-val LocalAppTheme = staticCompositionLocalOf { AppThemeConstants.LightColors }
+	/**
+	 * Defaults to [LightColors], so a composable read outside [AppTheme] (a `@Preview`,
+	 * most likely) gets a sensible value instead of crashing.
+	 */
+	val LocalAppTheme = staticCompositionLocalOf { LightColors }
+}
 
 /** Provides [LocalAppTheme], light/dark aware. Installed at the root of both the keyboard IME's own
  * UI ([KeyboardView]) and the settings app's UI ([com.lukeneedham.stickerboard.StickerBoardApp]). */
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
 	val colors = if (isSystemInDarkTheme()) AppThemeConstants.DarkColors else AppThemeConstants.LightColors
-	CompositionLocalProvider(LocalAppTheme provides colors, content = content)
+	CompositionLocalProvider(AppThemeConstants.LocalAppTheme provides colors, content = content)
 }
