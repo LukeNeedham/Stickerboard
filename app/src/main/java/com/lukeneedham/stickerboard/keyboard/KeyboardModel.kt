@@ -1,16 +1,15 @@
 package com.lukeneedham.stickerboard.keyboard
 
+import com.lukeneedham.stickerboard.utilities.StickerFiles
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.content.Context
 import com.elvishew.xlog.XLog
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
-import com.lukeneedham.stickerboard.prettifyPackName
-import com.lukeneedham.stickerboard.splitNameIntoTerms
 import com.lukeneedham.stickerboard.utilities.Cache
 import com.lukeneedham.stickerboard.utilities.Toaster
-import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
 import java.io.File
 
 /** Bounds for [KeyboardModel.iconsPerX], matching the settings page's SeekBar range. */
@@ -145,7 +144,7 @@ class KeyboardModel(context: Context) {
 			val stickers = loadedPacks[packName]?.stickerList ?: continue
 			if (stickers.isEmpty()) continue
 			newHeaderPositions[packName] = items.size
-			items.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			items.add(BoardItem.Header(packName, StickerNames.prettifyPackName(packName)))
 			for (sticker in stickers) {
 				items.add(BoardItem.Sticker(sticker, packName))
 			}
@@ -185,10 +184,10 @@ class KeyboardModel(context: Context) {
 	}
 
 	fun searchStickers(query: String): List<File> {
-		val queryTerms = splitNameIntoTerms(query)
+		val queryTerms = StickerNames.splitNameIntoTerms(query)
 		return allStickers
 			.filter { file ->
-				val terms = stickerSearchTerms(file)
+				val terms = StickerNames.searchTerms(file)
 				queryTerms.all { queryTerm ->
 					terms.any { term -> term.contains(queryTerm, ignoreCase = true) }
 				}
@@ -222,12 +221,3 @@ class KeyboardModel(context: Context) {
 		prefs.persistSessionState(recentCache.toSharedPref(), compatCache.toSharedPref(), activePack)
 	}
 }
-
-/**
- * A sticker's search terms: its file name (without extension) and its pack's directory name,
- * each split into individual words - so e.g. sticker "happy-cat_meme.png" in pack "funny_memes"
- * is searchable by "happy", "cat", "meme", "funny", or "memes" individually, not just as a match
- * against the whole file name.
- */
-private fun stickerSearchTerms(file: File): List<String> =
-	splitNameIntoTerms(file.nameWithoutExtension) + splitNameIntoTerms(file.parentFile?.name ?: "")

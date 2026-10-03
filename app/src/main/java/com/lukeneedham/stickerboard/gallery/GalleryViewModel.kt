@@ -11,13 +11,11 @@ import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.model.StickerPack
-import com.lukeneedham.stickerboard.prettifyPackName
 import com.lukeneedham.stickerboard.utilities.StickerImporter
+import com.lukeneedham.stickerboard.utilities.LastRefreshedFormat
+import com.lukeneedham.stickerboard.utilities.StickerFiles
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import com.lukeneedham.stickerboard.utilities.Toaster
-import com.lukeneedham.stickerboard.utilities.deleteStickerFiles
-import com.lukeneedham.stickerboard.utilities.importPhotosToPack
-import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
-import com.lukeneedham.stickerboard.utilities.renameStickerFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,7 +88,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		if (epochMillis < 0) {
 			return getApplication<Application>().getString(R.string.update_sticker_pack_info_date)
 		}
-		return formatLastRefreshed(epochMillis)
+		return LastRefreshedFormat.format(epochMillis)
 	}
 
 	/** The chosen source folder's path relative to its storage volume's own root (e.g.
@@ -146,7 +144,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 			result.add(item)
 		}
 		for ((packName, pending) in remaining) {
-			result.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			result.add(BoardItem.Header(packName, StickerNames.prettifyPackName(packName)))
 			pending.forEach { result.add(BoardItem.Loading(it.token, packName)) }
 		}
 		return result
@@ -172,7 +170,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		val items = mutableListOf<BoardItem>()
 		for (packName in sortedPackNames(loadedPacks)) {
 			val stickers = loadedPacks[packName]?.stickerList ?: continue
-			items.add(BoardItem.Header(packName, prettifyPackName(packName)))
+			items.add(BoardItem.Header(packName, StickerNames.prettifyPackName(packName)))
 			for (sticker in stickers) {
 				items.add(BoardItem.Sticker(sticker, packName))
 			}
@@ -211,7 +209,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		_uiState.update { it.copy(items = mergeWithPendingAdds(rawItems, pendingAdds)) }
 
 		viewModelScope.launch(Dispatchers.IO) {
-			val addedFiles = importPhotosToPack(getApplication(), packName, uris)
+			val addedFiles = StickerFiles.importPhotosToPack(getApplication(), packName, uris)
 			val refreshedBoardItems = computeBoardItems()
 
 			withContext(Dispatchers.Main) {
@@ -235,7 +233,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		if (files.isEmpty()) return
 		_uiState.update { it.copy(deletingStickers = it.deletingStickers + files) }
 		viewModelScope.launch(Dispatchers.IO) {
-			deleteStickerFiles(getApplication(), files)
+			StickerFiles.deleteStickerFiles(getApplication(), files)
 			val items = computeBoardItems()
 			withContext(Dispatchers.Main) {
 				rawItems = items
@@ -255,7 +253,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 */
 	fun renameSticker(file: File, newBaseName: String, onResult: (File?) -> Unit) {
 		viewModelScope.launch(Dispatchers.IO) {
-			val renamed = renameStickerFile(getApplication(), file, newBaseName)
+			val renamed = StickerFiles.renameStickerFile(getApplication(), file, newBaseName)
 			val items = if (renamed != null) computeBoardItems() else null
 			withContext(Dispatchers.Main) {
 				if (items != null) {
@@ -290,7 +288,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		}
 		viewModelScope.launch {
 			val addedFiles = withContext(Dispatchers.IO) {
-				importPhotosToPack(getApplication(), packName, uris)
+				StickerFiles.importPhotosToPack(getApplication(), packName, uris)
 			}
 			if (addedFiles.isNotEmpty()) prefs.numStickersImported += addedFiles.size
 			val items = withContext(Dispatchers.IO) { computeBoardItems() }
@@ -370,7 +368,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	 * same reload the keyboard's own pull-to-refresh performs - then rescans internal storage. */
 	fun refreshStickers() {
 		val path = prefs.stickerDirPath ?: return
-		runRefresh { reimportStickersIfChanged(getApplication(), toaster, path) }
+		runRefresh { StickerFiles.reimportStickersIfChanged(getApplication(), toaster, path) }
 	}
 
 	/** Switches the sticker source to [path] and does a full (re)import from it, since it's new. */
@@ -396,29 +394,4 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		prefs.compatCache = ""
 		changeStickerDirectory(stickerDirPath)
 	}
-}
-
-/**
- * Formats [epochMillis] as a short, always-local time - just hours and minutes, with the date
- * prepended only if it isn't today, and the year only added to that date if it isn't this year.
- * Uses [AndroidDateFormat.getBestDateTimePattern] so the result still respects the user's own
- * locale (e.g. 12h vs 24h clock, day/month order) despite dropping seconds and the full date.
- */
-private fun formatLastRefreshed(epochMillis: Long): String {
-	val locale = Locale.getDefault()
-	val then = Calendar.getInstance().apply { timeInMillis = epochMillis }
-	val now = Calendar.getInstance()
-
-	val timePattern = AndroidDateFormat.getBestDateTimePattern(locale, "Hm")
-	val timeText = SimpleDateFormat(timePattern, locale).format(Date(epochMillis))
-
-	val sameDay = then.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-		then.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
-	if (sameDay) return timeText
-
-	val sameYear = then.get(Calendar.YEAR) == now.get(Calendar.YEAR)
-	val dateSkeleton = if (sameYear) "MMMd" else "yMMMd"
-	val datePattern = AndroidDateFormat.getBestDateTimePattern(locale, dateSkeleton)
-	val dateText = SimpleDateFormat(datePattern, locale).format(Date(epochMillis))
-	return "$dateText $timeText"
 }

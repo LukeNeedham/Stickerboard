@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard
 
+import com.lukeneedham.stickerboard.utilities.StartLogger
 import android.app.Application
 import android.os.Build.VERSION.SDK_INT
 import coil.ImageLoader
@@ -9,7 +10,6 @@ import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
 import coil.decode.VideoFrameDecoder
 import com.lukeneedham.stickerboard.crash.CrashHandler
-import com.lukeneedham.stickerboard.utilities.startLogger
 
 /**
  * Installs the global crash handler as early as possible - before any activity or the keyboard
@@ -22,7 +22,7 @@ import com.lukeneedham.stickerboard.utilities.startLogger
 class StickerBoardApplication : Application(), ImageLoaderFactory {
 	override fun onCreate() {
 		super.onCreate()
-		startLogger(filesDir)
+		StartLogger.start(filesDir)
 		CrashHandler.install(this)
 	}
 

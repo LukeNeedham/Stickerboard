@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard
 
+import com.lukeneedham.stickerboard.utilities.StartLogger
 import android.content.Intent
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
@@ -32,7 +33,6 @@ import com.lukeneedham.stickerboard.keyboard.RECENT_PACK_NAME
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.utilities.KeyboardRefreshSignal
 import com.lukeneedham.stickerboard.utilities.StickerSender
-import com.lukeneedham.stickerboard.utilities.startLogger
 import java.io.File
 
 /** Default pixel height of the scrollable board viewport. */
@@ -100,7 +100,7 @@ class KeyboardController :
 		super.onCreate()
 		savedStateRegistryController.performRestore(null)
 		lifecycleRegistry.currentState = Lifecycle.State.CREATED
-		startLogger(filesDir)
+		StartLogger.start(filesDir)
 
 		XLog.i("=".repeat(80))
 		XLog.i("Loaded $packageName:${javaClass.name}")
@@ -288,44 +288,4 @@ class KeyboardController :
 				).showInputMethodPicker()
 		}
 	}
-}
-
-/**
- * trimString
- *
- * for strings longer than 32 chars, trim to 32 chars and add ellipsis ...
- *
- *  @param str: String
- *  @return String
- */
-fun trimString(str: String?): String {
-	if (str == null) {
-		return "null"
-	}
-	if (str.length > 32) {
-		return str.substring(0, 32) + "..."
-	}
-	return str
-}
-
-/**
- * Split a name (a sticker filename or pack directory name) into individual words on hyphens,
- * underscores, and spaces - so e.g. "happy-cat_meme" becomes ["happy", "cat", "meme"]. Shared by
- * every call site that needs a name's constituent terms, for both search and display.
- */
-fun splitNameIntoTerms(name: String): List<String> {
-	return name.split('-', '_', ' ').filter { it.isNotEmpty() }
-}
-
-/**
- * prettifyPackName
- *
- * Turn a sticker pack's directory name into a readable section header, e.g. "cat_memes" ->
- * "Cat Memes"
- *
- *  @param name: String
- *  @return String
- */
-fun prettifyPackName(name: String): String {
-	return splitNameIntoTerms(name).joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
 }

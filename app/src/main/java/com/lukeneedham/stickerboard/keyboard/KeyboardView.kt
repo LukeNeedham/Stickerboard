@@ -2,6 +2,7 @@
 
 package com.lukeneedham.stickerboard.keyboard
 
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -70,8 +71,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
-import com.lukeneedham.stickerboard.prettifyPackName
-import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -806,7 +805,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			BasicText(
-				text = prettifyPackName(sticker.parent?.split('/')?.last() ?: ""),
+				text = StickerNames.prettifyPackName(sticker.parent?.split('/')?.last() ?: ""),
 				style = TextStyle(
 					color = LocalAppTheme.current.accent,
 					fontWeight = FontWeight.Bold,
@@ -816,7 +815,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 				overflow = TextOverflow.Ellipsis,
 			)
 			BasicText(
-				text = trimString(sticker.name),
+				text = StickerNames.trim(sticker.name),
 				style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 10.sp), // tiny caption size
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,

@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard
 
+import com.lukeneedham.stickerboard.utilities.OnboardingStatus
 import android.content.Context
 import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -52,10 +53,10 @@ fun StickerBoardApp(
 	val context = LocalContext.current
 	val startRoute = remember(sharedImageUris) {
 		when {
-			sharedImageUris.isNotEmpty() && isOnboardingComplete(context) ->
+			sharedImageUris.isNotEmpty() && OnboardingStatus.isComplete(context) ->
 				Route.ShareImport(sharedImageUris.map { it.toString() })
 
-			isOnboardingComplete(context) -> Route.Settings
+			OnboardingStatus.isComplete(context) -> Route.Settings
 			else -> Route.Onboarding
 		}
 	}
@@ -134,21 +135,4 @@ fun StickerBoardApp(
 			)
 		}
 	}
-}
-
-/**
- * Checks whether the user has completed the onboarding flow. Installs that already had a sticker
- * directory configured before onboarding existed are treated as already onboarded, so existing
- * users aren't sent through it retroactively.
- */
-private fun isOnboardingComplete(context: Context): Boolean {
-	val prefs = AppPreferences(context)
-	if (prefs.onboardingComplete) {
-		return true
-	}
-	if (prefs.stickerDirPath != null) {
-		prefs.onboardingComplete = true
-		return true
-	}
-	return false
 }
