@@ -467,7 +467,7 @@ private fun GallerySectionEmptyMessage(text: String) {
 
 /** [selectionMode] shows a selection badge in the corner (filled and checked when [isSelected]) -
  * long-pressing any cell enters selection mode, after which tapping any cell toggles it instead of
- * opening the full-screen preview. Animated stickers (GIF, animated WebP/PNG/AVIF, video) get a small play badge in the bottom-left corner, since they're shown as a static frame here. [isDeleting] dims the sticker and overlays a spinner instead,
+ * opening the full-screen preview. Animated stickers (GIF, animated WebP/PNG/AVIF, video) get a small play badge in the bottom-right corner, since they're shown as a static frame here. [isDeleting] dims the sticker and overlays a spinner instead,
  * and disables both taps, for as long as it's still visible here while its delete is in flight. */
 @Composable
 private fun GalleryStickerCell(
@@ -516,7 +516,7 @@ private fun GalleryStickerCell(
 		if (isAnimated && !isDeleting) {
 			Box(
 				modifier = Modifier
-					.align(Alignment.BottomStart)
+					.align(Alignment.BottomEnd)
 					.padding(4.dp)
 					.size(22.dp)
 					.clip(CircleShape)
