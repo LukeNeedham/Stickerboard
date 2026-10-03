@@ -37,6 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -74,6 +75,7 @@ import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import com.lukeneedham.stickerboard.trimString
 import com.lukeneedham.stickerboard.utilities.StickerImage
+import com.lukeneedham.stickerboard.utilities.renamedStickerFile
 import java.io.File
 
 /**
@@ -103,6 +105,7 @@ fun StickerGalleryPage(
 	onRefresh: () -> Unit,
 	onAddPhotoClick: (packName: String) -> Unit,
 	onDeleteStickers: (Set<File>) -> Unit,
+	onRenameSticker: (file: File, newBaseName: String, onResult: (File?) -> Unit) -> Unit,
 	deletingStickers: Set<File>,
 	modifier: Modifier = Modifier,
 	gridState: LazyGridState = rememberLazyGridState(),
@@ -110,6 +113,8 @@ fun StickerGalleryPage(
 	var previewSticker by remember { mutableStateOf<File?>(null) }
 	var selectedStickers by remember { mutableStateOf(setOf<File>()) }
 	var stickerPendingDelete by remember { mutableStateOf<File?>(null) }
+	var stickerPendingRename by remember { mutableStateOf<File?>(null) }
+	var isRenaming by remember { mutableStateOf(false) }
 	var showBulkDeleteConfirm by remember { mutableStateOf(false) }
 
 	BackHandler(enabled = selectedStickers.isNotEmpty()) { selectedStickers = emptySet() }
@@ -235,6 +240,23 @@ fun StickerGalleryPage(
 			sticker = sticker,
 			onDismiss = { previewSticker = null },
 			onDeleteClick = { stickerPendingDelete = sticker },
+			isRenaming = isRenaming,
+			onRenameClick = { stickerPendingRename = sticker },
+		)
+	}
+
+	stickerPendingRename?.let { sticker ->
+		RenameStickerDialog(
+			sticker = sticker,
+			onConfirm = { newName ->
+				isRenaming = true
+				onRenameSticker(sticker, newName) { renamed ->
+					if (renamed != null && previewSticker == sticker) previewSticker = renamed
+					isRenaming = false
+				}
+				stickerPendingRename = null
+			},
+			onDismiss = { stickerPendingRename = null },
 		)
 	}
 
@@ -572,7 +594,13 @@ private fun GalleryLoadingCell() {
 /** An enlarged preview of a sticker - tap the image (or outside) to dismiss, or tap the delete
  * button in the corner to ask [onDeleteClick] to confirm and delete it. */
 @Composable
-private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit, onDeleteClick: () -> Unit) {
+private fun StickerPreviewDialog(
+	sticker: File,
+	onDismiss: () -> Unit,
+	onDeleteClick: () -> Unit,
+	isRenaming: Boolean,
+	onRenameClick: () -> Unit,
+) {
 	Dialog(
 		onDismissRequest = onDismiss,
 		properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -597,13 +625,34 @@ private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit, onDeleteC
 					maxLines = 1,
 					overflow = TextOverflow.Ellipsis,
 				)
-				Text(
-					text = trimString(sticker.name),
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSurfaceVariant,
-					maxLines = 1,
-					overflow = TextOverflow.Ellipsis,
-				)
+				Row(verticalAlignment = Alignment.CenterVertically) {
+					Text(
+						text = trimString(sticker.name),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onSurfaceVariant,
+						maxLines = 1,
+						overflow = TextOverflow.Ellipsis,
+						modifier = Modifier.weight(1f, fill = false),
+					)
+					if (isRenaming) {
+						Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+							CircularProgressIndicator(
+								modifier = Modifier.size(16.dp),
+								strokeWidth = 2.dp,
+								color = MaterialTheme.colorScheme.primary,
+							)
+						}
+					} else {
+						IconButton(onClick = onRenameClick, modifier = Modifier.size(32.dp)) {
+							Icon(
+								painter = painterResource(R.drawable.ic_edit),
+								contentDescription = stringResource(R.string.rename_sticker_button),
+								tint = MaterialTheme.colorScheme.onSurfaceVariant,
+								modifier = Modifier.size(16.dp),
+							)
+						}
+					}
+				}
 				StickerImage(
 					file = sticker,
 					contentDescription = trimString(sticker.name),
@@ -628,6 +677,45 @@ private fun StickerPreviewDialog(sticker: File, onDismiss: () -> Unit, onDeleteC
 			}
 		}
 	}
+}
+
+/** Edits [sticker]'s name (without its extension). Confirm is disabled until the new name is valid
+ * and not already taken by another file in the same pack. */
+@Composable
+private fun RenameStickerDialog(
+	sticker: File,
+	onConfirm: (String) -> Unit,
+	onDismiss: () -> Unit,
+) {
+	var name by remember(sticker) { mutableStateOf(sticker.nameWithoutExtension) }
+	val target = renamedStickerFile(sticker, name)
+	val isValid = target != null && (target == sticker || !target.exists())
+	AlertDialog(
+		onDismissRequest = onDismiss,
+		title = { Text(stringResource(R.string.rename_sticker_title)) },
+		text = {
+			OutlinedTextField(
+				value = name,
+				onValueChange = { name = it },
+				label = { Text(stringResource(R.string.rename_sticker_label)) },
+				singleLine = true,
+				isError = !isValid,
+				supportingText = if (!isValid) {
+					{ Text(stringResource(R.string.rename_sticker_error)) }
+				} else {
+					null
+				},
+			)
+		},
+		confirmButton = {
+			TextButton(onClick = { onConfirm(name) }, enabled = isValid) {
+				Text(stringResource(R.string.rename_button))
+			}
+		},
+		dismissButton = {
+			TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel_button)) }
+		},
+	)
 }
 
 /** A destructive-action confirmation dialog shared by the single-sticker and bulk deletes. */
@@ -751,6 +839,7 @@ fun GalleryRoute(
 			)
 		},
 		onDeleteStickers = { files -> viewModel.deleteStickers(files) },
+		onRenameSticker = { file, name, onResult -> viewModel.renameSticker(file, name, onResult) },
 		deletingStickers = uiState.deletingStickers,
 		modifier = modifier,
 		gridState = gridState,

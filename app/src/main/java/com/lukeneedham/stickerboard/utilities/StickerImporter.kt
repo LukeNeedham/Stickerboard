@@ -122,6 +122,54 @@ suspend fun deleteStickerFiles(context: Context, files: Collection<File>): Int =
 	}
 
 /**
+ * The file [file] would become if renamed to [newBaseName] - keeping its extension, since the user
+ * edits just the name part. Null if [newBaseName] is blank or contains a path separator.
+ */
+fun renamedStickerFile(file: File, newBaseName: String): File? {
+	val baseName = newBaseName.trim()
+	if (baseName.isEmpty() || baseName.contains('/') || baseName.contains('\u0000')) return null
+	val extension = file.extension
+	val newName = if (extension.isEmpty()) baseName else "$baseName.$extension"
+	return File(file.parentFile ?: return null, newName)
+}
+
+/**
+ * Renames [file] on disk to [newBaseName] (keeping its extension) - and, best-effort, its matching
+ * copy in the external sticker source directory, so a future "Reload stickers" doesn't bring the old
+ * name back. Marks [KeyboardRefreshSignal] dirty and resyncs the stored source-directory signature
+ * the same way [deleteStickerFiles] does. Returns the renamed file, or null if the name is invalid,
+ * already taken, or the rename failed.
+ */
+suspend fun renameStickerFile(context: Context, file: File, newBaseName: String): File? =
+	withContext(Dispatchers.IO) {
+		val target = renamedStickerFile(file, newBaseName) ?: return@withContext null
+		if (target == file) return@withContext file
+		if (target.exists() || !file.renameTo(target)) return@withContext null
+		file.parentFile?.name?.let { renameInExternalSourceDir(context, it, file.name, target.name) }
+		KeyboardRefreshSignal.markDirty()
+		resyncStickerDirSignature(context)
+		target
+	}
+
+/** Best-effort rename of [oldName] to [newName] in [packName]'s external source folder, if any. */
+private fun renameInExternalSourceDir(
+	context: Context,
+	packName: String,
+	oldName: String,
+	newName: String,
+) {
+	val path = AppPreferences(context).stickerDirPath ?: return
+	try {
+		val rootDir = DocumentFile.fromTreeUri(context, Uri.parse(path)) ?: return
+		val packDocDir = rootDir.findFile(packName) ?: return
+		packDocDir.findFile(oldName)?.renameTo(newName)
+	} catch (e: Exception) {
+		XLog.e("There was an error renaming a photo in the external sticker source directory!")
+		XLog.e(e)
+	}
+}
+
+/**
  * Best-effort deletion of [fileName] from [packName]'s folder in the external sticker source
  * directory, if one is configured - silently does nothing/fails otherwise, since the internal
  * copy is already gone regardless.

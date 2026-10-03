@@ -17,6 +17,7 @@ import com.lukeneedham.stickerboard.utilities.Toaster
 import com.lukeneedham.stickerboard.utilities.deleteStickerFiles
 import com.lukeneedham.stickerboard.utilities.importPhotosToPack
 import com.lukeneedham.stickerboard.utilities.reimportStickersIfChanged
+import com.lukeneedham.stickerboard.utilities.renameStickerFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -244,6 +245,24 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 						deletingStickers = it.deletingStickers - files,
 					)
 				}
+			}
+		}
+	}
+
+	/**
+	 * Renames [file] to [newBaseName] (extension kept) on disk, then rescans so the grid shows the
+	 * new name immediately. [onResult] gets the renamed file on the main thread, or null on failure.
+	 */
+	fun renameSticker(file: File, newBaseName: String, onResult: (File?) -> Unit) {
+		viewModelScope.launch(Dispatchers.IO) {
+			val renamed = renameStickerFile(getApplication(), file, newBaseName)
+			val items = if (renamed != null) computeBoardItems() else null
+			withContext(Dispatchers.Main) {
+				if (items != null) {
+					rawItems = items
+					_uiState.update { it.copy(items = mergeWithPendingAdds(rawItems, pendingAdds)) }
+				}
+				onResult(renamed)
 			}
 		}
 	}
