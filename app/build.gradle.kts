@@ -31,7 +31,9 @@ android {
 		versionCode = 20250217
 		versionName = "20250217"
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-		setProperty("archivesBaseName", "$applicationId-$versionName")
+		// Fixed name so the APK is always at app/build/outputs/apk/<variant>/app-<variant>.apk, which
+		// the shared CI workflow relies on (the version is not part of the file name)
+		setProperty("archivesBaseName", "app")
 	}
 
 	signingConfigs {
