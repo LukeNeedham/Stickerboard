@@ -14,5 +14,7 @@
   `LukeNeedham/ci-workflows` (`@main`): it builds the debug APK on PRs, publishes it as a GitHub
   pre-release, comments the download link, and deletes the PR's pre-releases when the PR is closed.
   Its logic lives in the shared repo, so make changes there.
+- `.github/workflows/delete_prereleases.yml` (manual) calls the shared `delete_prereleases.yml`, which
+  deletes every pre-release and tag. Use it to clear old PR builds.
 - The APK is built to a fixed path, `app/build/outputs/apk/debug/app-debug.apk` (see
   `archivesBaseName` in `app/build.gradle.kts`), because the shared workflow needs a fixed `apk-path`.
