@@ -1,6 +1,6 @@
 package com.lukeneedham.stickerboard.utilities
 
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import java.util.Collections
 
 /**
@@ -18,7 +18,7 @@ class Toaster {
 	 * Set a message
 	 **/
 	fun setMessage(message: String) {
-		XLog.i("Adding message: '$message' to toaster")
+		Logger.i("Adding message: '$message' to toaster")
 		this.messages.add(message)
 	}
 }

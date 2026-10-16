@@ -1,6 +1,5 @@
 package com.lukeneedham.stickerboard
 
-import com.lukeneedham.stickerboard.utilities.StartLogger
 import android.app.Application
 import android.os.Build.VERSION.SDK_INT
 import coil.ImageLoader
@@ -9,11 +8,13 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
 import coil.decode.VideoFrameDecoder
-import com.lukeneedham.stickerboard.crash.CrashHandler
+import com.lukeneedham.common.DebugKit
+import com.lukeneedham.common.DebugKitConfig
 
 /**
- * Installs the global crash handler as early as possible - before any activity or the keyboard
- * service is created - so that a crash during their startup is still caught.
+ * Starts the shared debug kit (logger, crash handler) as early as possible - before any activity
+ * or the keyboard service is created - so that a crash during their startup is still caught.
+ * The debug UI is only enabled in debug builds (not in the non-debuggable `perf` build).
  *
  * Also provides the process-wide coil [ImageLoader], so animated images (GIF etc.) decode
  * correctly in every entry point (gallery activity, settings, keyboard service), regardless of
@@ -22,8 +23,7 @@ import com.lukeneedham.stickerboard.crash.CrashHandler
 class StickerBoardApplication : Application(), ImageLoaderFactory {
 	override fun onCreate() {
 		super.onCreate()
-		StartLogger.start(filesDir)
-		CrashHandler.install(this)
+		DebugKit.init(DebugKitConfig(enabled = BuildConfig.DEBUG))
 	}
 
 	override fun newImageLoader(): ImageLoader =

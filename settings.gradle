@@ -10,6 +10,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://lukeneedham.github.io/ci-workflows/maven")
+            content { includeGroup("com.lukeneedham") } // only ask it for the shared library
+        }
     }
 }
 rootProject.name = "StickerBoard"

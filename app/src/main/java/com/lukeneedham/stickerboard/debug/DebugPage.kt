@@ -1,65 +1,36 @@
 package com.lukeneedham.stickerboard.debug
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import com.lukeneedham.common.ui.DebugPage
 import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.CardHeading
 import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
-import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
-/** Debug-only tools page, reachable from the settings page only in debug builds. */
+/** StickerBoard's own debug tools, shown below the shared debug page's content. */
 @Composable
-fun DebugPage(
-	onBack: () -> Unit,
-	onOpenCrashes: () -> Unit,
-	onOpenOnboarding: () -> Unit,
-	modifier: Modifier = Modifier,
-) {
-	Scaffold(
-		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
-		topBar = { SettingsTopBar(stringResource(R.string.debug_heading), onBack) },
-	) { innerPadding ->
-		Column(
-			modifier = Modifier
-				.padding(innerPadding)
-				.fillMaxWidth()
-				.padding(horizontal = 20.dp, vertical = 8.dp),
-			verticalArrangement = Arrangement.spacedBy(16.dp),
-		) {
-			SettingsCard {
-				CardHeading(R.drawable.ic_search, stringResource(R.string.debug_crashes_heading))
-				CardBody(stringResource(R.string.debug_crashes_info))
-				FilledActionButton(stringResource(R.string.debug_crashes_button), onOpenCrashes)
-			}
-			SettingsCard {
-				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_onboarding_heading))
-				CardBody(stringResource(R.string.debug_onboarding_info))
-				FilledActionButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding)
-			}
-		}
+private fun ColumnScope.DebugExtraContent(onOpenOnboarding: () -> Unit) {
+	SettingsCard {
+		CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_onboarding_heading))
+		CardBody(stringResource(R.string.debug_onboarding_info))
+		FilledActionButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding)
 	}
 }
 
 /**
- * Guards [DebugPage] behind [BuildConfig.DEBUG] - the nav-host destination that used to be
- * DebugActivity, which bailed out the same way in case it was ever reachable in a release build.
+ * The shared debug page (animation speed, logs, crashes) plus the app's own tools. Guarded behind
+ * [BuildConfig.DEBUG] in case it is ever reachable in a release build.
  */
 @Composable
 fun DebugRoute(
 	onBack: () -> Unit,
+	onOpenLogs: () -> Unit,
 	onOpenCrashes: () -> Unit,
 	onOpenOnboarding: () -> Unit,
 	modifier: Modifier = Modifier,
@@ -70,8 +41,9 @@ fun DebugRoute(
 	}
 	DebugPage(
 		onBack = onBack,
+		onOpenLogs = onOpenLogs,
 		onOpenCrashes = onOpenCrashes,
-		onOpenOnboarding = onOpenOnboarding,
 		modifier = modifier,
+		extraContent = { DebugExtraContent(onOpenOnboarding) },
 	)
 }

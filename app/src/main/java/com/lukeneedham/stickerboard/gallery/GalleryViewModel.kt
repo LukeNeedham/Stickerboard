@@ -6,7 +6,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
@@ -104,8 +104,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 			val documentId = DocumentsContract.getTreeDocumentId(Uri.parse(path))
 			"/" + documentId.substringAfter(':', missingDelimiterValue = documentId)
 		} catch (e: Exception) {
-			XLog.e("Failed to resolve a friendly path for the sticker source directory")
-			XLog.e(e)
+			Logger.e("Failed to resolve a friendly path for the sticker source directory", e)
 			path
 		}
 	}
@@ -337,8 +336,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 			}
 		} catch (e: Exception) {
-			XLog.e("Failed to open the sticker source directory in a file browser app")
-			XLog.e(e)
+			Logger.e("Failed to open the sticker source directory in a file browser app", e)
 			null
 		}
 	}

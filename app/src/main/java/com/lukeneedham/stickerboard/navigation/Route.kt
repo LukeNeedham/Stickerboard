@@ -31,8 +31,8 @@ sealed interface Route : NavKey {
 	data object Debug : Route
 
 	@Serializable
-	data object Crashes : Route
+	data object Logs : Route
 
 	@Serializable
-	data class CrashDetail(val crashId: String) : Route
+	data object Crashes : Route
 }

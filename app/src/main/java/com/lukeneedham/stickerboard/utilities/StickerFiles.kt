@@ -7,7 +7,7 @@ import android.os.Looper
 import android.view.View
 import android.webkit.MimeTypeMap
 import androidx.documentfile.provider.DocumentFile
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 
@@ -51,12 +51,11 @@ object StickerFiles {
 		val changed = try {
 			hasSourceChanged(context, stickerDirPath)
 		} catch (e: Exception) {
-			XLog.e("Failed to check the sticker source directory for changes")
-			XLog.e(e)
+			Logger.e("Failed to check the sticker source directory for changes", e)
 			return
 		}
 		if (!changed) return
-		XLog.i("Sticker source directory changed, reimporting...")
+		Logger.i("Sticker source directory changed, reimporting...")
 		StickerImporter(context, toaster).importStickers(stickerDirPath)
 	}
 
@@ -169,8 +168,7 @@ object StickerFiles {
 			val packDocDir = rootDir.findFile(packName) ?: return
 			packDocDir.findFile(oldName)?.renameTo(newName)
 		} catch (e: Exception) {
-			XLog.e("There was an error renaming a photo in the external sticker source directory!")
-			XLog.e(e)
+			Logger.e("There was an error renaming a photo in the external sticker source directory!", e)
 		}
 	}
 
@@ -186,8 +184,7 @@ object StickerFiles {
 			val packDocDir = rootDir.findFile(packName) ?: return
 			packDocDir.findFile(fileName)?.delete()
 		} catch (e: Exception) {
-			XLog.e("There was an error deleting a photo from the external sticker source directory!")
-			XLog.e(e)
+			Logger.e("There was an error deleting a photo from the external sticker source directory!", e)
 		}
 	}
 
@@ -207,8 +204,7 @@ object StickerFiles {
 			val sourceStickers = walkStickers(DocumentFile.fromTreeUri(context, Uri.parse(path)))
 			prefs.stickerDirSignature = signatureOf(sourceStickers)
 		} catch (e: Exception) {
-			XLog.e("Failed to resync the sticker source directory signature after an add-photo import")
-			XLog.e(e)
+			Logger.e("Failed to resync the sticker source directory signature after an add-photo import", e)
 		}
 	}
 
@@ -236,8 +232,7 @@ object StickerFiles {
 			copyToExternalSourceDir(context, packName, fileName, bytes)
 			destFile
 		} catch (e: IOException) {
-			XLog.e("There was an IOException when copying a photo into '$packName'!")
-			XLog.e(e)
+			Logger.e("There was an IOException when copying a photo into '$packName'!", e)
 			null
 		}
 	}
@@ -260,8 +255,7 @@ object StickerFiles {
 			val newFile = packDocDir.createFile("application/octet-stream", fileName) ?: return
 			context.contentResolver.openOutputStream(newFile.uri)?.use { it.write(bytes) }
 		} catch (e: Exception) {
-			XLog.e("There was an error copying a photo into the external sticker source directory!")
-			XLog.e(e)
+			Logger.e("There was an error copying a photo into the external sticker source directory!", e)
 		}
 	}
 
