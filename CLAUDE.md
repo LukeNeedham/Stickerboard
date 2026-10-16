@@ -26,6 +26,9 @@
   maven repo is declared in `settings.gradle`; the version is in `app/build.gradle.kts`.
 - `StickerBoardApplication.onCreate` calls `DebugKit.init(DebugKitConfig(enabled = BuildConfig.DEBUG))`
   first, so the non-debuggable `perf` build has the debug UI off (crashes are still saved).
+- `StickerBoardApp` wraps the UI in `ProvideDebugSettings` (the library's single provider of debug composition
+  locals). Keep it wrapped so a debug setting added to the library later reaches every screen; read them through
+  `LocalDebugSettings` / `LocalAnimationSpeed`.
 - Log with `Logger.d/i/w/e(msg, throwable)` from `com.lukeneedham.common.logger`; never `Log`,
   `println` or another logger. There is no app-specific crash handler or logger any more.
 - Debug pages: `Route.Debug` / `Logs` / `Crashes` in `StickerBoardApp`, opened from the Settings

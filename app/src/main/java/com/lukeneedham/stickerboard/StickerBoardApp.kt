@@ -22,7 +22,7 @@ import com.lukeneedham.common.debug.scale
 import com.lukeneedham.common.ui.CrashesPage
 import com.lukeneedham.common.ui.LocalAnimationSpeed
 import com.lukeneedham.common.ui.LogsPage
-import com.lukeneedham.common.ui.ProvideAnimationSpeed
+import com.lukeneedham.common.ui.ProvideDebugSettings
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.debug.DebugRoute
 import com.lukeneedham.stickerboard.gallery.GalleryRoute
@@ -72,7 +72,7 @@ fun StickerBoardApp(
 
 	AppTheme {
 		StickerBoardSettingsTheme {
-			ProvideAnimationSpeed {
+			ProvideDebugSettings {
 				val animationSpeed = LocalAnimationSpeed.current
 				val slideSpec = remember(animationSpeed) {
 					tween<IntOffset>(
