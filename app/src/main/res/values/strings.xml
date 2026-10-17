@@ -90,14 +90,10 @@ Tap the button below to open your keyboard settings, then switch on \"StickerBoa
 	<string name="debug_heading">Debug</string>
 	<string name="debug_info">Tools for debugging StickerBoard. Only shown in debug builds.</string>
 	<string name="debug_open_button">Debug</string>
-	<string name="debug_crashes_heading">Crashes</string>
-	<string name="debug_crashes_info">View the last crashes recorded by the app or the keyboard.</string>
-	<string name="debug_crashes_button">Crashes</string>
+	<string name="debug_sdk_heading">SDK debug</string>
+	<string name="debug_sdk_info">Animation speed, logs and crashes, from the shared debug library.</string>
+	<string name="debug_sdk_button">Open SDK debug</string>
 	<string name="debug_onboarding_heading">Onboarding</string>
 	<string name="debug_onboarding_info">Re-run the onboarding flow without resetting the app, for testing.</string>
 	<string name="debug_onboarding_button">Open Onboarding</string>
-	<!-- Crashes -->
-	<string name="crashes_heading">Crashes</string>
-	<string name="crashes_empty">No crashes recorded yet.</string>
-	<string name="crash_detail_heading">Crash Detail</string>
 </resources>

@@ -7,7 +7,7 @@ import android.os.Looper
 import android.view.View
 import android.webkit.MimeTypeMap
 import androidx.documentfile.provider.DocumentFile
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 
@@ -66,17 +66,17 @@ class StickerImporter(
 	 * @param stickerDirPath a URI to the stickers directory to import into StickerBoard
 	 */
 	suspend fun importStickers(stickerDirPath: String): Int {
-		XLog.i("Removing old stickers...")
+		Logger.i("Removing old stickers...")
 		File(context.filesDir, "stickers").deleteRecursively()
 		withContext(Dispatchers.Main) {
 			progressBar?.visibility = View.VISIBLE
 			progressBar?.isIndeterminate = true
 		}
 
-		XLog.i("Walking $stickerDirPath...")
+		Logger.i("Walking $stickerDirPath...")
 		val sourceStickers = walkStickers(DocumentFile.fromTreeUri(context, Uri.parse(stickerDirPath)))
 		if (sourceStickers.size > MAX_FILES) {
-			XLog.w("Found more than $MAX_FILES stickers, notify user")
+			Logger.w("Found more than $MAX_FILES stickers, notify user")
 			toaster.setMessage(context.getString(R.string.imported_031, MAX_FILES))
 		}
 		AppPreferences(context).stickerDirSignature = signatureOf(sourceStickers)
@@ -86,7 +86,7 @@ class StickerImporter(
 		}
 
 		// Perform concurrent file copy operations
-		XLog.i("Perform concurrent file copy operations...")
+		Logger.i("Perform concurrent file copy operations...")
 		withContext(Dispatchers.IO) {
 			sourceStickers.take(MAX_FILES).mapIndexed { index, sourceSticker ->
 				async {
@@ -102,7 +102,7 @@ class StickerImporter(
 			progressBar?.visibility = View.GONE
 		}
 
-		XLog.i("Copied ${totalStickers.get()} / ${sourceStickers.size}")
+		Logger.i("Copied ${totalStickers.get()} / ${sourceStickers.size}")
 
 		return totalStickers.get()
 	}
@@ -119,12 +119,12 @@ class StickerImporter(
 		val packName = sourceSticker.packName
 		val packSize = packSizes[packName] ?: 0
 		if (packSize > MAX_PACK_SIZE) {
-			XLog.w("Found more than $MAX_PACK_SIZE stickers in '$packName', notify user")
+			Logger.w("Found more than $MAX_PACK_SIZE stickers in '$packName', notify user")
 			toaster.setMessage(context.getString(R.string.imported_032, MAX_PACK_SIZE, packName))
 			return
 		}
 		if (sticker.type !in supportedMimes) {
-			XLog.w("'$packName/${sticker.name}' is not a supported mimetype (${sticker.type}), notify user")
+			Logger.w("'$packName/${sticker.name}' is not a supported mimetype (${sticker.type}), notify user")
 			toaster.setMessage(
 				context.getString(
 					R.string.imported_033,
@@ -157,8 +157,7 @@ class StickerImporter(
 				totalStickers.incrementAndGet()
 			}
 		} catch (e: IOException) {
-			XLog.e("There was an IOException when copying '${packName}/${sticker.name}'!")
-			XLog.e(e)
+			Logger.e("There was an IOException when copying '${packName}/${sticker.name}'!", e)
 		}
 	}
 }

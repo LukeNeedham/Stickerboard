@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -19,30 +21,40 @@ import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
-/** Debug-only tools page, reachable from the settings page only in debug builds. */
+/**
+ * StickerBoard's own debug page: its own tools, and a card that opens the shared debug library's page
+ * (animation speed, logs, crashes). That page shows only the library's things and has no slot for
+ * anything else, so app-specific tools go here. Guarded behind [BuildConfig.DEBUG] in case it is ever
+ * reachable in a release build.
+ */
 @Composable
-fun DebugPage(
+fun DebugRoute(
 	onBack: () -> Unit,
-	onOpenCrashes: () -> Unit,
+	onOpenSdkDebug: () -> Unit,
 	onOpenOnboarding: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
+	if (!BuildConfig.DEBUG) {
+		LaunchedEffect(Unit) { onBack() }
+		return
+	}
 	Scaffold(
 		modifier = modifier,
 		containerColor = MaterialTheme.colorScheme.background,
-		topBar = { SettingsTopBar(stringResource(R.string.debug_heading), onBack) },
+		topBar = { SettingsTopBar(title = stringResource(R.string.debug_heading), onBack = onBack) },
 	) { innerPadding ->
 		Column(
 			modifier = Modifier
 				.padding(innerPadding)
+				.verticalScroll(rememberScrollState())
 				.fillMaxWidth()
 				.padding(horizontal = 20.dp, vertical = 8.dp),
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
 			SettingsCard {
-				CardHeading(R.drawable.ic_search, stringResource(R.string.debug_crashes_heading))
-				CardBody(stringResource(R.string.debug_crashes_info))
-				FilledActionButton(stringResource(R.string.debug_crashes_button), onOpenCrashes)
+				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_sdk_heading))
+				CardBody(stringResource(R.string.debug_sdk_info))
+				FilledActionButton(stringResource(R.string.debug_sdk_button), onOpenSdkDebug)
 			}
 			SettingsCard {
 				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_onboarding_heading))
@@ -51,27 +63,4 @@ fun DebugPage(
 			}
 		}
 	}
-}
-
-/**
- * Guards [DebugPage] behind [BuildConfig.DEBUG] - the nav-host destination that used to be
- * DebugActivity, which bailed out the same way in case it was ever reachable in a release build.
- */
-@Composable
-fun DebugRoute(
-	onBack: () -> Unit,
-	onOpenCrashes: () -> Unit,
-	onOpenOnboarding: () -> Unit,
-	modifier: Modifier = Modifier,
-) {
-	if (!BuildConfig.DEBUG) {
-		LaunchedEffect(Unit) { onBack() }
-		return
-	}
-	DebugPage(
-		onBack = onBack,
-		onOpenCrashes = onOpenCrashes,
-		onOpenOnboarding = onOpenOnboarding,
-		modifier = modifier,
-	)
 }

@@ -3,7 +3,7 @@ package com.lukeneedham.stickerboard.keyboard
 import com.lukeneedham.stickerboard.utilities.StickerFiles
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.content.Context
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.model.BoardItem
@@ -111,7 +111,7 @@ class KeyboardModel(context: Context) {
 		}
 		loadedPacks = newLoadedPacks
 		allStickers = newAllStickers
-		XLog.i("Loaded all packs: [${loadedPacks.keys.joinToString(", ")}]")
+		Logger.i("Loaded all packs: [${loadedPacks.keys.joinToString(", ")}]")
 	}
 
 	/** Pack names in nav-bar/board order. */
@@ -220,7 +220,7 @@ class KeyboardModel(context: Context) {
 
 	/** Persists everything that needs to survive to the next [android.view.inputmethod.InputConnection]. */
 	fun persistSessionState() {
-		XLog.i("Persisting preferences based on use, and closing...")
+		Logger.i("Persisting preferences based on use, and closing...")
 		prefs.persistSessionState(recentCache.toSharedPref(), compatCache.toSharedPref(), activePack)
 	}
 }

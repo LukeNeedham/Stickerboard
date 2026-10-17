@@ -4,9 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import com.lukeneedham.stickerboard.utilities.ShareIntents
-import com.lukeneedham.stickerboard.utilities.StartLogger
 
 /**
  * The app's single activity. Every page - settings, onboarding, the sticker gallery, and the
@@ -30,10 +29,9 @@ class MainActivity : ComponentActivity() {
 		// No status/navigation bar color is themed (see styles.xml) - the app draws fully
 		// edge-to-edge, with each page's own composable responsible for padding around system bars.
 		enableEdgeToEdge()
-		StartLogger.start(filesDir)
 
-		XLog.i("=".repeat(80))
-		XLog.i("Loaded $packageName:$localClassName")
+		Logger.i("=".repeat(80))
+		Logger.i("Loaded $packageName:$localClassName")
 
 		val sharedImageUris = ShareIntents.extractImageUris(intent)
 

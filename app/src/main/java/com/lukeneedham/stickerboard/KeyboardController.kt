@@ -1,6 +1,5 @@
 package com.lukeneedham.stickerboard
 
-import com.lukeneedham.stickerboard.utilities.StartLogger
 import android.content.Intent
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
@@ -22,7 +21,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import coil.imageLoader
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import com.lukeneedham.stickerboard.keyboard.AppThemeConstants
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel
@@ -101,10 +100,9 @@ class KeyboardController :
 		super.onCreate()
 		savedStateRegistryController.performRestore(null)
 		lifecycleRegistry.currentState = Lifecycle.State.CREATED
-		StartLogger.start(filesDir)
 
-		XLog.i("=".repeat(80))
-		XLog.i("Loaded $packageName:${javaClass.name}")
+		Logger.i("=".repeat(80))
+		Logger.i("Loaded $packageName:${javaClass.name}")
 
 		model = KeyboardModel(baseContext)
 		// Set directly on the window rather than through Compose: this runs before

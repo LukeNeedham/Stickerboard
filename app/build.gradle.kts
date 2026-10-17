@@ -11,10 +11,6 @@ android {
 	buildToolsVersion = "36.0.0"
 	namespace = "com.lukeneedham.stickerboard"
 
-	kotlinOptions {
-		jvmTarget = "17"
-	}
-
 	androidResources {
 		generateLocaleConfig = true
 	}
@@ -76,6 +72,12 @@ android {
 	}
 }
 
+kotlin {
+	compilerOptions {
+		jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+	}
+}
+
 // The perf build exists only to measure performance; skip the release-only "lint vital" gate for it
 // (it's a non-debuggable build type, so lint vital would otherwise fail it on existing lint errors).
 tasks.matching { it.name.startsWith("lintVital") && it.name.endsWith("Perf") }.configureEach {
@@ -83,7 +85,7 @@ tasks.matching { it.name.startsWith("lintVital") && it.name.endsWith("Perf") }.c
 }
 
 dependencies {
-	implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
+	implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.21")
 	implementation("androidx.core:core-ktx:1.15.0")
 	implementation("androidx.appcompat:appcompat:1.7.0")
 	implementation("com.google.android.material:material:1.12.0")
@@ -107,7 +109,7 @@ dependencies {
 	implementation("androidx.navigation3:navigation3-ui:1.0.1")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
 	implementation("androidx.gridlayout:gridlayout:1.0.0")
-	implementation("com.elvishew:xlog:1.11.1")
+	implementation("com.lukeneedham:common:0.4.0")
 	androidTestImplementation("junit:junit:4.13.2")
 	androidTestImplementation("androidx.test:core:1.6.1")
 	androidTestImplementation("androidx.test.ext:junit:1.2.1")

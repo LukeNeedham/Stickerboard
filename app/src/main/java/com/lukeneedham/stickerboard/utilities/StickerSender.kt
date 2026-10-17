@@ -12,7 +12,7 @@ import androidx.core.view.inputmethod.InputConnectionCompat
 import androidx.core.view.inputmethod.InputContentInfoCompat
 import coil.ImageLoader
 import coil.request.ImageRequest
-import com.elvishew.xlog.XLog
+import com.lukeneedham.common.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,7 +50,7 @@ class StickerSender(
 	private val packageName = this.currentInputEditorInfo?.packageName
 
 	init {
-		XLog.i("Connecting to $packageName which supports [${supportedMimes.joinToString(", ")}]")
+		Logger.i("Connecting to $packageName which supports [${supportedMimes.joinToString(", ")}]")
 	}
 
 	/**
@@ -64,7 +64,7 @@ class StickerSender(
 		val compatSticker = File(internalDir, "__compatSticker__/$compatStickerName.png")
 
 		if (!compatSticker.exists()) {
-			XLog.i("Create a fallback png sticker '__compatSticker__/$compatStickerName.png'")
+			Logger.i("Create a fallback png sticker '__compatSticker__/$compatStickerName.png'")
 
 			compatSticker.parentFile?.mkdirs()
 			try {
@@ -81,8 +81,7 @@ class StickerSender(
 					.build()
 				imageLoader.execute(request)
 			} catch (e: IOException) {
-				XLog.e("Unexpected IOException when converting sticker '${file.name}' to a fallback png")
-				XLog.e(e)
+				Logger.e("Unexpected IOException when converting sticker '${file.name}' to a fallback png", e)
 				return null
 			}
 		}
@@ -130,7 +129,7 @@ class StickerSender(
 	 * @return success Boolean
 	 */
 	private fun doCommitContent(mimeType: String, file: File): Boolean {
-		XLog.i("Sending ${file.name} ($mimeType) to ${this.packageName}")
+		Logger.i("Sending ${file.name} ($mimeType) to ${this.packageName}")
 		val inputContentInfoCompat = InputContentInfoCompat(
 			FileProvider.getUriForFile(
 				context,
@@ -201,12 +200,12 @@ class StickerSender(
 		}
 
 		if (shareIntent.resolveActivity(context.packageManager) == null) {
-			XLog.i("$packageName has no component that can receive a shared $mimeType, giving up")
+			Logger.i("$packageName has no component that can receive a shared $mimeType, giving up")
 			onCannotSend()
 			return
 		}
 
-		XLog.i("$packageName reports that is doesn't support png over its InputConnectionCompat, so open a share sheet")
+		Logger.i("$packageName reports that is doesn't support png over its InputConnectionCompat, so open a share sheet")
 		val chooserIntent = Intent.createChooser(shareIntent, "Share Sticker")
 		chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 		context.startActivity(chooserIntent)
