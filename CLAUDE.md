@@ -36,3 +36,5 @@
   page shows only the library's things and has no slot for anything else, so add app-specific debug tools to `DebugRoute`, never to the library's page.
 - Animation durations go through `LocalAnimationSpeed.current.scale(ms)` (see the page slide in
   `StickerBoardApp`) so the Debug page's animation speed applies.
+
+Before starting work, check that `.claude/skills/lukeneedham-conventions` matches `skills/lukeneedham-conventions` on `main` of `LukeNeedham/ci-workflows`; if not, copy it over and include that in this work's PR. See that repo's `docs/skill.md`.
