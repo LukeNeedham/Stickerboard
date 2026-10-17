@@ -27,8 +27,13 @@ sealed interface Route : NavKey {
 	@Serializable
 	data class ShareImport(val imageUris: List<String>) : Route
 
+	/** The app's own debug page, which opens [SdkDebug]. */
 	@Serializable
 	data object Debug : Route
+
+	/** The shared debug library's page (animation speed, links to its logs and crashes pages). */
+	@Serializable
+	data object SdkDebug : Route
 
 	@Serializable
 	data object Logs : Route

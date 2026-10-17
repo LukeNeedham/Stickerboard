@@ -20,6 +20,7 @@ import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.NavDisplay
 import com.lukeneedham.common.debug.scale
 import com.lukeneedham.common.ui.CrashesPage
+import com.lukeneedham.common.ui.DebugPage
 import com.lukeneedham.common.ui.LocalAnimationSpeed
 import com.lukeneedham.common.ui.LogsPage
 import com.lukeneedham.common.ui.ProvideDebugSettings
@@ -133,9 +134,15 @@ fun StickerBoardApp(
 						entry<Route.Debug> {
 							DebugRoute(
 								onBack = { backStack.removeLastOrNull() },
+								onOpenSdkDebug = { backStack.add(Route.SdkDebug) },
+								onOpenOnboarding = { backStack.add(Route.Onboarding) },
+							)
+						}
+						entry<Route.SdkDebug> {
+							DebugPage(
+								onBack = { backStack.removeLastOrNull() },
 								onOpenLogs = { backStack.add(Route.Logs) },
 								onOpenCrashes = { backStack.add(Route.Crashes) },
-								onOpenOnboarding = { backStack.add(Route.Onboarding) },
 							)
 						}
 						entry<Route.Logs> {
