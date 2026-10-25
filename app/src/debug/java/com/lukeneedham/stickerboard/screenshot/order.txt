@@ -1,4 +1,3 @@
-# the order of the README: the setup, the home page, then the pages it opens
 OnboardingPage
 SettingsPage
 GalleryPage
