@@ -9,18 +9,9 @@ An Android keyboard for sending your own stickers, GIFs and short videos in any 
 
 ## Description
 
-StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any app, built from a
-folder of images you choose yourself. It started life as a fork of
-[EweSticker](https://github.com/FredHappyface/Android.EweSticker).
+StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any app. 
 
-It works as a normal keyboard, so it sends stickers straight into any app's text field, falling back to a PNG and
-then to the share sheet where an app can't take them directly. It handles gif, png, webp, jpeg, heif and svg images
-and 3gpp, mp4, mkv and webm video. Point it at any folder on your device and it copies the contents in, with every
-sub-folder becoming a sticker pack (up to 4096 stickers, 128 per pack); pull down on the keyboard or the Stickers
-page to re-scan for changes. Recently used stickers get their own section, a built-in search finds stickers by file
-or pack name, pinching changes how many fit in a row, dragging the handle at the top resizes the keyboard, and a
-long press previews a sticker before it is sent. The gallery in the app browses every pack and adds photos from
-your gallery into any of them, and the UI is translated into fourteen languages.
+Recently used stickers get their own section, a built-in search finds stickers by file or pack name, keyboard is fully resizable, and a long press previews a sticker before it is sent. The gallery in the app browses every pack and adds photos from your gallery into any of them.
 
 ## Screenshots
 
@@ -51,6 +42,8 @@ cd Stickerboard
 Every pull request is built by CI, which comments on it with a link to install the APK.
 
 Like all my apps, it follows the shared architecture and conventions (single activity, Jetpack Compose, Navigation 3, MVVM with every page split into a `Page` and a `PageContent`, Koin): see [ci-workflows](https://github.com/LukeNeedham/ci-workflows/blob/main/docs/new-app.md).
+
+This app started life as a fork of [EweSticker](https://github.com/FredHappyface/Android.EweSticker).
 
 `./gradlew assemblePerf` builds a non-debuggable, debug-signed APK for judging performance (debug builds are much
 slower at things like scrolling Compose lists); pull request CI builds only the debug APK, so build it locally.
