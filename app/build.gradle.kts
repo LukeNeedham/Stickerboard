@@ -111,7 +111,7 @@ dependencies {
 	implementation("androidx.navigation3:navigation3-ui:1.0.1")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
 	implementation("androidx.gridlayout:gridlayout:1.0.0")
-	implementation("com.lukeneedham:common:0.7.0")
+	implementation("com.lukeneedham:common:0.8.0")
 	androidTestImplementation("junit:junit:4.13.2")
 	androidTestImplementation("androidx.test:core:1.6.1")
 	androidTestImplementation("androidx.test.ext:junit:1.2.1")
