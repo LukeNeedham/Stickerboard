@@ -2,6 +2,8 @@
 
 package com.lukeneedham.stickerboard.share
 
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -48,7 +50,7 @@ import com.lukeneedham.stickerboard.settings.SettingsTopBar
  * showing its own loading indicator while it does.
  */
 @Composable
-fun ShareImportPage(
+internal fun ShareImportPageContent(
 	imageUris: List<Uri>,
 	packNames: List<String>,
 	onBack: () -> Unit,
@@ -166,13 +168,13 @@ private fun NewPackRow(
 }
 
 /**
- * Wires [ShareImportPage] up with [ShareImportViewModel] - the nav-host destination reached from
- * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. Picking a pack calls [onPackChosen]
+ * Wires [ShareImportPageContent] up with [ShareImportViewModel] - the nav-host destination reached from
+ * [com.lukeneedham.stickerboard.navigation.ShareImportNavKey]. Picking a pack calls [onPackChosen]
  * immediately, before anything is actually copied - the caller is expected to navigate to the
  * Stickers page and run the import there. Backing out before picking a pack calls [onCancel] instead.
  */
 @Composable
-fun ShareImportRoute(
+fun ShareImportPage(
 	imageUris: List<Uri>,
 	onCancel: () -> Unit,
 	onPackChosen: (packName: String) -> Unit,
@@ -181,11 +183,24 @@ fun ShareImportRoute(
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-	ShareImportPage(
+	ShareImportPageContent(
 		imageUris = imageUris,
 		packNames = uiState.packNames,
 		onBack = onCancel,
 		onPackSelected = onPackChosen,
 		modifier = modifier,
 	)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+	StickerBoardSettingsTheme {
+		ShareImportPageContent(
+			imageUris = emptyList(),
+			packNames = listOf("Cats", "Memes"),
+			onBack = {},
+			onPackSelected = {},
+		)
+	}
 }

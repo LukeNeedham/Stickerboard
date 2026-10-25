@@ -25,14 +25,21 @@ import com.lukeneedham.common.ui.LocalAnimationSpeed
 import com.lukeneedham.common.ui.LogsPage
 import com.lukeneedham.stickerboard.settings.ProvideAppDebugSettings
 import com.lukeneedham.stickerboard.data.AppPreferences
-import com.lukeneedham.stickerboard.debug.DebugRoute
-import com.lukeneedham.stickerboard.gallery.GalleryRoute
+import com.lukeneedham.stickerboard.debug.AppDebugPage
+import com.lukeneedham.stickerboard.gallery.GalleryPage
 import com.lukeneedham.stickerboard.keyboard.AppTheme
-import com.lukeneedham.stickerboard.navigation.Route
-import com.lukeneedham.stickerboard.onboarding.OnboardingRoute
-import com.lukeneedham.stickerboard.settings.SettingsRoute
+import com.lukeneedham.stickerboard.navigation.AppDebugNavKey
+import com.lukeneedham.stickerboard.navigation.CrashesNavKey
+import com.lukeneedham.stickerboard.navigation.DebugNavKey
+import com.lukeneedham.stickerboard.navigation.GalleryNavKey
+import com.lukeneedham.stickerboard.navigation.LogsNavKey
+import com.lukeneedham.stickerboard.navigation.OnboardingNavKey
+import com.lukeneedham.stickerboard.navigation.SettingsNavKey
+import com.lukeneedham.stickerboard.navigation.ShareImportNavKey
+import com.lukeneedham.stickerboard.onboarding.OnboardingPage
+import com.lukeneedham.stickerboard.settings.SettingsPage
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
-import com.lukeneedham.stickerboard.share.ShareImportRoute
+import com.lukeneedham.stickerboard.share.ShareImportPage
 
 private object StickerBoardAppConstants {
 	const val SLIDE_DURATION_MS = 300
@@ -63,10 +70,10 @@ fun StickerBoardApp(
 	val startRoute = remember(sharedImageUris) {
 		when {
 			sharedImageUris.isNotEmpty() && SetupStatus.isOnboardingComplete(context) ->
-				Route.ShareImport(sharedImageUris.map { it.toString() })
+				ShareImportNavKey(sharedImageUris.map { it.toString() })
 
-			SetupStatus.isOnboardingComplete(context) -> Route.Settings
-			else -> Route.Onboarding
+			SetupStatus.isOnboardingComplete(context) -> SettingsNavKey
+			else -> OnboardingNavKey
 		}
 	}
 	val backStack = rememberNavBackStack(startRoute)
@@ -87,29 +94,29 @@ fun StickerBoardApp(
 					popTransitionSpec = { slideBackward(slideSpec) },
 					predictivePopTransitionSpec = { slideBackward(slideSpec) },
 					entryProvider = entryProvider {
-						entry<Route.Onboarding> {
-							OnboardingRoute(
+						entry<OnboardingNavKey> {
+							OnboardingPage(
 								onFinished = {
 									backStack.clear()
-									backStack.add(Route.Settings)
+									backStack.add(SettingsNavKey)
 								},
 							)
 						}
-						entry<Route.Settings> {
-							SettingsRoute(
-								onViewStickers = { backStack.add(Route.Gallery()) },
-								onOpenDebug = { backStack.add(Route.Debug) },
+						entry<SettingsNavKey> {
+							SettingsPage(
+								onViewStickers = { backStack.add(GalleryNavKey()) },
+								onOpenDebug = { backStack.add(AppDebugNavKey) },
 							)
 						}
-						entry<Route.Gallery> { route ->
-							GalleryRoute(
+						entry<GalleryNavKey> { route ->
+							GalleryPage(
 								onBack = { backStack.removeLastOrNull() },
 								pendingImportPackName = route.pendingImportPackName,
 								pendingImportUris = route.pendingImportUris,
 							)
 						}
-						entry<Route.ShareImport> { route ->
-							ShareImportRoute(
+						entry<ShareImportNavKey> { route ->
+							ShareImportPage(
 								imageUris = route.imageUris.map { Uri.parse(it) },
 								onCancel = onCancelShareImport,
 								onPackChosen = { packName ->
@@ -121,9 +128,9 @@ fun StickerBoardApp(
 									// instead would leave its own back button with nothing left to pop,
 									// crashing NavDisplay ("backstack cannot be empty").
 									backStack.clear()
-									backStack.add(Route.Settings)
+									backStack.add(SettingsNavKey)
 									backStack.add(
-										Route.Gallery(
+										GalleryNavKey(
 											pendingImportPackName = packName,
 											pendingImportUris = route.imageUris,
 										),
@@ -131,24 +138,24 @@ fun StickerBoardApp(
 								},
 							)
 						}
-						entry<Route.Debug> {
-							DebugRoute(
+						entry<AppDebugNavKey> {
+							AppDebugPage(
 								onBack = { backStack.removeLastOrNull() },
-								onOpenSdkDebug = { backStack.add(Route.SdkDebug) },
-								onOpenOnboarding = { backStack.add(Route.Onboarding) },
+								onOpenSdkDebug = { backStack.add(DebugNavKey) },
+								onOpenOnboarding = { backStack.add(OnboardingNavKey) },
 							)
 						}
-						entry<Route.SdkDebug> {
+						entry<DebugNavKey> {
 							DebugPage(
 								onBack = { backStack.removeLastOrNull() },
-								onOpenLogs = { backStack.add(Route.Logs) },
-								onOpenCrashes = { backStack.add(Route.Crashes) },
+								onOpenLogs = { backStack.add(LogsNavKey) },
+								onOpenCrashes = { backStack.add(CrashesNavKey) },
 							)
 						}
-						entry<Route.Logs> {
+						entry<LogsNavKey> {
 							LogsPage(onBack = { backStack.removeLastOrNull() })
 						}
-						entry<Route.Crashes> {
+						entry<CrashesNavKey> {
 							CrashesPage(onBack = { backStack.removeLastOrNull() })
 						}
 					},

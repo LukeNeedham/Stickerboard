@@ -2,6 +2,8 @@
 
 package com.lukeneedham.stickerboard.gallery
 
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerFiles
 import com.lukeneedham.stickerboard.utilities.StickerMedia
 import com.lukeneedham.stickerboard.utilities.StickerNames
@@ -102,7 +104,7 @@ import kotlinx.coroutines.withContext
  * own pull-to-refresh does.
  */
 @Composable
-fun StickerGalleryPage(
+internal fun GalleryPageContent(
 	items: List<BoardItem>?,
 	columns: Int,
 	stickerDirDisplayName: String,
@@ -866,13 +868,13 @@ private fun DeleteConfirmationDialog(
 }
 
 /**
- * Wires [StickerGalleryPage] up with its real dependencies (prefs, the internal sticker dir, the
+ * Wires [GalleryPageContent] up with its real dependencies (prefs, the internal sticker dir, the
  * photo picker, the sticker source directory picker) - the nav-host destination that used to be
  * StickerGalleryActivity, and now also owns choosing/reloading the sticker source directory that
  * used to live on the settings page.
  */
 @Composable
-fun GalleryRoute(
+fun GalleryPage(
 	onBack: () -> Unit,
 	pendingImportPackName: String? = null,
 	pendingImportUris: List<String> = emptyList(),
@@ -935,7 +937,7 @@ fun GalleryRoute(
 		}
 
 	val context = LocalContext.current
-	StickerGalleryPage(
+	GalleryPageContent(
 		items = uiState.items,
 		columns = viewModel.columns,
 		stickerDirDisplayName = uiState.stickerDirDisplayName,
@@ -966,4 +968,31 @@ fun GalleryRoute(
 		modifier = modifier,
 		gridState = gridState,
 	)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+	StickerBoardSettingsTheme {
+		GalleryPageContent(
+			items = listOf(
+				BoardItem.Header("Cats", "Cats"),
+				BoardItem.EmptyMessage("Cats", "No stickers in this pack"),
+				BoardItem.AddPhoto("Cats"),
+			),
+			columns = 3,
+			stickerDirDisplayName = "Stickers",
+			lastUpdateDate = "Today",
+			isRefreshing = false,
+			onBack = {},
+			onOpenFolder = {},
+			onOpenPackFolder = {},
+			onChangeDirectory = {},
+			onRefresh = {},
+			onAddPhotoClick = {},
+			onDeleteStickers = {},
+			onRenameSticker = { _, _, _ -> },
+			deletingStickers = emptySet(),
+		)
+	}
 }

@@ -2,6 +2,8 @@
 
 package com.lukeneedham.stickerboard.settings
 
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import androidx.compose.ui.tooling.preview.Preview
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
@@ -74,7 +76,7 @@ data class SettingsUiState(
  * Stickers page now, alongside its path, sticker/pack counts and last-refreshed time.
  */
 @Composable
-fun SettingsPage(
+internal fun SettingsPageContent(
 	state: SettingsUiState,
 	onEnableKeyboard: () -> Unit,
 	onTryItOutMediaReceived: (Uri) -> Unit,
@@ -360,11 +362,11 @@ internal fun SmallActionButton(text: String, onClick: () -> Unit, modifier: Modi
 }
 
 /**
- * Wires [SettingsPage] up with its real dependencies (the enable-keyboard system intent) and
+ * Wires [SettingsPageContent] up with its real dependencies (the enable-keyboard system intent) and
  * [SettingsViewModel] - the nav-host destination that used to be MainActivity itself.
  */
 @Composable
-fun SettingsRoute(
+fun SettingsPage(
 	onViewStickers: () -> Unit,
 	onOpenDebug: () -> Unit,
 	modifier: Modifier = Modifier,
@@ -375,7 +377,7 @@ fun SettingsRoute(
 
 	LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshKeyboardEnabled() }
 
-	SettingsPage(
+	SettingsPageContent(
 		state = uiState,
 		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
 		onTryItOutMediaReceived = viewModel::onTryItOutMediaReceived,
@@ -383,4 +385,18 @@ fun SettingsRoute(
 		onOpenDebug = onOpenDebug,
 		modifier = modifier,
 	)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+	StickerBoardSettingsTheme {
+		SettingsPageContent(
+			state = SettingsUiState(keyboardEnabled = true),
+			onEnableKeyboard = {},
+			onTryItOutMediaReceived = {},
+			onViewStickers = {},
+			onOpenDebug = {},
+		)
+	}
 }

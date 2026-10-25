@@ -2,6 +2,8 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import androidx.compose.ui.tooling.preview.Preview
 import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
@@ -75,7 +77,7 @@ data class OnboardingUiState(
  * the pager yet - until that page's requirement (if any) is met.
  */
 @Composable
-fun OnboardingPage(
+internal fun OnboardingPageContent(
 	state: OnboardingUiState,
 	onEnableKeyboard: () -> Unit,
 	onChooseDir: () -> Unit,
@@ -241,13 +243,13 @@ private fun OnboardingHeading(text: String) {
 }
 
 /**
- * Wires [OnboardingPage] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
+ * Wires [OnboardingPageContent] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
  * intents - the nav-host destination that used to be OnboardingActivity. [onFinished] replaces
  * this destination with the settings page on the shared back stack so the user can never
  * swipe/back their way back into onboarding.
  */
 @Composable
-fun OnboardingRoute(
+fun OnboardingPage(
 	onFinished: () -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: OnboardingViewModel = viewModel(),
@@ -265,7 +267,7 @@ fun OnboardingRoute(
 		}
 	}
 
-	OnboardingPage(
+	OnboardingPageContent(
 		state = uiState,
 		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
 		onChooseDir = {
@@ -281,4 +283,17 @@ fun OnboardingRoute(
 		},
 		modifier = modifier,
 	)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+	StickerBoardSettingsTheme {
+		OnboardingPageContent(
+			state = OnboardingUiState(keyboardEnabled = false, isImporting = false, loadedStickerCount = null),
+			onEnableKeyboard = {},
+			onChooseDir = {},
+			onFinish = {},
+		)
+	}
 }

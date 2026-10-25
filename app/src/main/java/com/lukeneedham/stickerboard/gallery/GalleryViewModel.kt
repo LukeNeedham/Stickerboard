@@ -32,7 +32,7 @@ import java.util.Locale
 import kotlin.system.measureTimeMillis
 import android.text.format.DateFormat as AndroidDateFormat
 
-/** Everything [StickerGalleryPage] needs to render, besides the fixed [GalleryViewModel.columns]
+/** Everything [GalleryPageContent] needs to render, besides the fixed [GalleryViewModel.columns]
  * setting, which doesn't change within the page's lifetime. */
 data class GalleryUiState(
 	val items: List<BoardItem>? = null,
@@ -43,13 +43,13 @@ data class GalleryUiState(
 	 * [items] reflects it - e.g. one just added by [runPendingImport]. Cleared once consumed. */
 	val scrollToPackName: String? = null,
 	val scrollToFileName: String? = null,
-	/** Stickers whose delete is currently in flight - [StickerGalleryPage] overlays a loading
+	/** Stickers whose delete is currently in flight - [GalleryPageContent] overlays a loading
 	 * indicator on their cell until they actually disappear from [items]. */
 	val deletingStickers: Set<File> = emptySet(),
 )
 
 /**
- * Owns [StickerGalleryPage]'s data and every side effect it triggers: scanning internal storage
+ * Owns [GalleryPageContent]'s data and every side effect it triggers: scanning internal storage
  * for packs/stickers, choosing/reloading the external sticker source directory, and copying
  * newly-added gallery photos into a pack (and best-effort into that external source directory).
  */
@@ -186,7 +186,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	}
 
 	/**
-	 * Re-scans internal storage and refreshes everything [StickerGalleryPage] shows. Lifecycle
+	 * Re-scans internal storage and refreshes everything [GalleryPageContent] shows. Lifecycle
 	 * .Event.ON_RESUME (which this is driven by) replays for a brand new observer, so this alone
 	 * also covers the very first load.
 	 */
@@ -229,10 +229,10 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
 	/**
 	 * Deletes [files] from internal storage (and, best-effort, the external sticker source
-	 * directory), then rescans and refreshes everything [StickerGalleryPage] shows. Used for both
+	 * directory), then rescans and refreshes everything [GalleryPageContent] shows. Used for both
 	 * the single-sticker delete (full-screen preview) and the bulk multi-select delete - a no-op
 	 * if [files] is empty. Adds [files] to [GalleryUiState.deletingStickers] immediately, so
-	 * [StickerGalleryPage] can overlay a loading indicator on them for as long as they're still
+	 * [GalleryPageContent] can overlay a loading indicator on them for as long as they're still
 	 * visible in [items] (i.e. until the rescan below actually removes them).
 	 */
 	fun deleteStickers(files: Set<File>) {
@@ -271,14 +271,14 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 		}
 	}
 
-	// Set once a pending import has been started, so a config change re-composing GalleryRoute (and
+	// Set once a pending import has been started, so a config change re-composing GalleryPage (and
 	// re-running its LaunchedEffect) can't kick off the same import a second time - unlike isRefreshing,
 	// this stays true for the rest of this ViewModel's life, well after the import itself finishes.
 	private var hasStartedPendingImport = false
 
 	/**
 	 * Runs a share-import that was deferred until landing here - see
-	 * [com.lukeneedham.stickerboard.share.ShareImportRoute], which navigates to this page the instant
+	 * [com.lukeneedham.stickerboard.share.ShareImportPage], which navigates to this page the instant
 	 * a pack is picked rather than waiting for the copy itself. Shows the same isRefreshing spinner a
 	 * manual reload does while [uris] are copied into [packName], then sets [GalleryUiState
 	 * .scrollToPackName]/[GalleryUiState.scrollToFileName] to whichever one landed last. A no-op if
@@ -312,7 +312,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 	}
 
 	/** Clears [GalleryUiState.scrollToPackName]/[GalleryUiState.scrollToFileName] once
-	 * [StickerGalleryPage] has scrolled to it, so a later, unrelated items update doesn't scroll
+	 * [GalleryPageContent] has scrolled to it, so a later, unrelated items update doesn't scroll
 	 * there again. */
 	fun onScrolledToTarget() {
 		_uiState.update { it.copy(scrollToPackName = null, scrollToFileName = null) }
@@ -343,7 +343,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
 	/**
 	 * Runs [reimport] (which does the actual disk work, off the main thread) then rescans internal
-	 * storage and refreshes everything [StickerGalleryPage] shows - all under the same
+	 * storage and refreshes everything [GalleryPageContent] shows - all under the same
 	 * isRefreshing spinner, held for at least [MIN_REFRESH_INDICATOR_MS] so the pull-to-refresh
 	 * indicator always gets a visible transition to animate away.
 	 */

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
@@ -19,6 +20,7 @@ import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.CardHeading
 import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
 /**
@@ -28,7 +30,7 @@ import com.lukeneedham.stickerboard.settings.SettingsTopBar
  * reachable in a release build.
  */
 @Composable
-fun DebugRoute(
+fun AppDebugPage(
 	onBack: () -> Unit,
 	onOpenSdkDebug: () -> Unit,
 	onOpenOnboarding: () -> Unit,
@@ -38,6 +40,16 @@ fun DebugRoute(
 		LaunchedEffect(Unit) { onBack() }
 		return
 	}
+	AppDebugPageContent(onBack, onOpenSdkDebug, onOpenOnboarding, modifier)
+}
+
+@Composable
+internal fun AppDebugPageContent(
+	onBack: () -> Unit,
+	onOpenSdkDebug: () -> Unit,
+	onOpenOnboarding: () -> Unit,
+	modifier: Modifier = Modifier,
+) {
 	Scaffold(
 		modifier = modifier,
 		containerColor = MaterialTheme.colorScheme.background,
@@ -62,5 +74,13 @@ fun DebugRoute(
 				FilledActionButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding)
 			}
 		}
+	}
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+	StickerBoardSettingsTheme {
+		AppDebugPageContent(onBack = {}, onOpenSdkDebug = {}, onOpenOnboarding = {})
 	}
 }

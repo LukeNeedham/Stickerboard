@@ -1,0 +1,34 @@
+# The data of this app's README.md. CI renders README.md from it (docs/readme.md in LukeNeedham/ci-workflows):
+# edit this file, never README.md.
+
+name: StickerBoard
+tagline: An Android keyboard for sending your own stickers, GIFs and short videos in any app.
+
+description: |
+  StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any app, built from a
+  folder of images you choose yourself. It started life as a fork of
+  [EweSticker](https://github.com/FredHappyface/Android.EweSticker).
+
+  It works as a normal keyboard, so it sends stickers straight into any app's text field, falling back to a PNG and
+  then to the share sheet where an app can't take them directly. It handles gif, png, webp, jpeg, heif and svg images
+  and 3gpp, mp4, mkv and webm video. Point it at any folder on your device and it copies the contents in, with every
+  sub-folder becoming a sticker pack (up to 4096 stickers, 128 per pack); pull down on the keyboard or the Stickers
+  page to re-scan for changes. Recently used stickers get their own section, a built-in search finds stickers by file
+  or pack name, pinching changes how many fit in a row, dragging the handle at the top resizes the keyboard, and a
+  long press previews a sticker before it is sent. The gallery in the app browses every pack and adds photos from
+  your gallery into any of them, and the UI is translated into fourteen languages.
+
+user:
+  steps:
+    - Open the app and follow the setup: enable the keyboard, then choose the folder your stickers are in.
+    - Switch to StickerBoard from any text field and tap a sticker to send it.
+
+developer:
+  notes: |
+    `./gradlew assemblePerf` builds a non-debuggable, debug-signed APK for judging performance (debug builds are much
+    slower at things like scrolling Compose lists); pull request CI builds only the debug APK, so build it locally.
+    `./gradlew ktlintCheck` and `./gradlew ktlintFormat` check and format the code.
+
+    Code style is enforced with [ktlint](https://github.com/JLLeitschuh/ktlint-gradle), and
+    [pre-commit](https://pre-commit.com/) hooks in `.pre-commit-config.yaml` catch trailing whitespace, oversized
+    images and merge conflict markers before a commit is made.
