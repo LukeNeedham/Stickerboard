@@ -31,8 +31,8 @@
   `LocalDebugSettings` / `LocalAnimationSpeed`.
 - Log with `Logger.d/i/w/e(msg, throwable)` from `com.lukeneedham.common.logger`; never `Log`,
   `println` or another logger. There is no app-specific crash handler or logger any more.
-- Debug pages: `AppDebugNavKey` is the app's own page (`AppDebugPage` in `debug/DebugPage.kt`, opened from the Settings debug card, debug builds
-  only); it has a card that opens the shared library's page (`DebugNavKey`: animation speed, links to Logs and Crashes). The library's
+- Debug pages: `Route.AppDebug` is the app's own page (`AppDebugPage` in `debug/AppDebugPage.kt`, opened from the Settings debug card, debug builds
+  only); it has a card that opens the shared library's page (`Route.Debug`: animation speed, links to Logs and Crashes). The library's
   page shows only the library's things and has no slot for anything else, so add app-specific debug tools to `AppDebugPage`, never to the library's page.
 - Animation durations go through `LocalAnimationSpeed.current.scale(ms)` (see the page slide in
   `StickerBoardApp`) so the Debug page's animation speed applies.

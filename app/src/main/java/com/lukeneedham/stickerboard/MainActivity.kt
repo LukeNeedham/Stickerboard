@@ -10,7 +10,7 @@ import com.lukeneedham.stickerboard.utilities.ShareIntents
 /**
  * The app's single activity. Every page - settings, onboarding, the sticker gallery, and the
  * debug/crash tools - is a Nav3 destination hosted here; see [StickerBoardApp] for the nav host
- * and back stack, and `navigation/NavKeys.kt` for the destinations.
+ * and back stack, and `navigation/Route.kt` for the destinations.
  *
  * Also the target of another app's "Share" action for image(s) (see the extra intent-filters on
  * this activity in the manifest) - [ShareIntents.extractImageUris] pulls the shared image URIs out of

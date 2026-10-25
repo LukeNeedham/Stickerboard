@@ -32,22 +32,6 @@ import java.util.Locale
 import kotlin.system.measureTimeMillis
 import android.text.format.DateFormat as AndroidDateFormat
 
-/** Everything [GalleryPageContent] needs to render, besides the fixed [GalleryViewModel.columns]
- * setting, which doesn't change within the page's lifetime. */
-data class GalleryUiState(
-	val items: List<BoardItem>? = null,
-	val stickerDirDisplayName: String = "",
-	val lastUpdateDate: String = "",
-	val isRefreshing: Boolean = false,
-	/** A sticker (or, if [scrollToFileName] is null, just a pack) to scroll the grid to as soon as
-	 * [items] reflects it - e.g. one just added by [runPendingImport]. Cleared once consumed. */
-	val scrollToPackName: String? = null,
-	val scrollToFileName: String? = null,
-	/** Stickers whose delete is currently in flight - [GalleryPageContent] overlays a loading
-	 * indicator on their cell until they actually disappear from [items]. */
-	val deletingStickers: Set<File> = emptySet(),
-)
-
 /**
  * Owns [GalleryPageContent]'s data and every side effect it triggers: scanning internal storage
  * for packs/stickers, choosing/reloading the external sticker source directory, and copying

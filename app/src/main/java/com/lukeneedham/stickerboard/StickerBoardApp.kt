@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard
 
+import com.lukeneedham.stickerboard.navigation.Route
 import com.lukeneedham.stickerboard.utilities.SetupStatus
 import android.content.Context
 import android.net.Uri
@@ -28,14 +29,6 @@ import com.lukeneedham.stickerboard.data.AppPreferences
 import com.lukeneedham.stickerboard.debug.AppDebugPage
 import com.lukeneedham.stickerboard.gallery.GalleryPage
 import com.lukeneedham.stickerboard.keyboard.AppTheme
-import com.lukeneedham.stickerboard.navigation.AppDebugNavKey
-import com.lukeneedham.stickerboard.navigation.CrashesNavKey
-import com.lukeneedham.stickerboard.navigation.DebugNavKey
-import com.lukeneedham.stickerboard.navigation.GalleryNavKey
-import com.lukeneedham.stickerboard.navigation.LogsNavKey
-import com.lukeneedham.stickerboard.navigation.OnboardingNavKey
-import com.lukeneedham.stickerboard.navigation.SettingsNavKey
-import com.lukeneedham.stickerboard.navigation.ShareImportNavKey
 import com.lukeneedham.stickerboard.onboarding.OnboardingPage
 import com.lukeneedham.stickerboard.settings.SettingsPage
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
@@ -70,10 +63,10 @@ fun StickerBoardApp(
 	val startRoute = remember(sharedImageUris) {
 		when {
 			sharedImageUris.isNotEmpty() && SetupStatus.isOnboardingComplete(context) ->
-				ShareImportNavKey(sharedImageUris.map { it.toString() })
+				Route.ShareImport(sharedImageUris.map { it.toString() })
 
-			SetupStatus.isOnboardingComplete(context) -> SettingsNavKey
-			else -> OnboardingNavKey
+			SetupStatus.isOnboardingComplete(context) -> Route.Settings
+			else -> Route.Onboarding
 		}
 	}
 	val backStack = rememberNavBackStack(startRoute)
@@ -94,28 +87,28 @@ fun StickerBoardApp(
 					popTransitionSpec = { slideBackward(slideSpec) },
 					predictivePopTransitionSpec = { slideBackward(slideSpec) },
 					entryProvider = entryProvider {
-						entry<OnboardingNavKey> {
+						entry<Route.Onboarding> {
 							OnboardingPage(
 								onFinished = {
 									backStack.clear()
-									backStack.add(SettingsNavKey)
+									backStack.add(Route.Settings)
 								},
 							)
 						}
-						entry<SettingsNavKey> {
+						entry<Route.Settings> {
 							SettingsPage(
-								onViewStickers = { backStack.add(GalleryNavKey()) },
-								onOpenDebug = { backStack.add(AppDebugNavKey) },
+								onViewStickers = { backStack.add(Route.Gallery()) },
+								onOpenDebug = { backStack.add(Route.AppDebug) },
 							)
 						}
-						entry<GalleryNavKey> { route ->
+						entry<Route.Gallery> { route ->
 							GalleryPage(
 								onBack = { backStack.removeLastOrNull() },
 								pendingImportPackName = route.pendingImportPackName,
 								pendingImportUris = route.pendingImportUris,
 							)
 						}
-						entry<ShareImportNavKey> { route ->
+						entry<Route.ShareImport> { route ->
 							ShareImportPage(
 								imageUris = route.imageUris.map { Uri.parse(it) },
 								onCancel = onCancelShareImport,
@@ -128,9 +121,9 @@ fun StickerBoardApp(
 									// instead would leave its own back button with nothing left to pop,
 									// crashing NavDisplay ("backstack cannot be empty").
 									backStack.clear()
-									backStack.add(SettingsNavKey)
+									backStack.add(Route.Settings)
 									backStack.add(
-										GalleryNavKey(
+										Route.Gallery(
 											pendingImportPackName = packName,
 											pendingImportUris = route.imageUris,
 										),
@@ -138,24 +131,24 @@ fun StickerBoardApp(
 								},
 							)
 						}
-						entry<AppDebugNavKey> {
+						entry<Route.AppDebug> {
 							AppDebugPage(
 								onBack = { backStack.removeLastOrNull() },
-								onOpenSdkDebug = { backStack.add(DebugNavKey) },
-								onOpenOnboarding = { backStack.add(OnboardingNavKey) },
+								onOpenSdkDebug = { backStack.add(Route.Debug) },
+								onOpenOnboarding = { backStack.add(Route.Onboarding) },
 							)
 						}
-						entry<DebugNavKey> {
+						entry<Route.Debug> {
 							DebugPage(
 								onBack = { backStack.removeLastOrNull() },
-								onOpenLogs = { backStack.add(LogsNavKey) },
-								onOpenCrashes = { backStack.add(CrashesNavKey) },
+								onOpenLogs = { backStack.add(Route.Logs) },
+								onOpenCrashes = { backStack.add(Route.Crashes) },
 							)
 						}
-						entry<LogsNavKey> {
+						entry<Route.Logs> {
 							LogsPage(onBack = { backStack.removeLastOrNull() })
 						}
-						entry<CrashesNavKey> {
+						entry<Route.Crashes> {
 							CrashesPage(onBack = { backStack.removeLastOrNull() })
 						}
 					},
