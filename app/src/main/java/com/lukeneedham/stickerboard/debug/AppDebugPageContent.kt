@@ -1,12 +1,12 @@
 package com.lukeneedham.stickerboard.debug
 
+import com.lukeneedham.stickerboard.theme.AppButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,9 +18,8 @@ import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.CardHeading
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
 @Composable
@@ -32,7 +31,8 @@ internal fun AppDebugPageContent(
 ) {
 	Scaffold(
 		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
+		containerColor = AppTheme.current.colors.background,
+		contentColor = AppTheme.current.colors.onBackground,
 		topBar = { SettingsTopBar(title = stringResource(R.string.debug_heading), onBack = onBack) },
 	) { innerPadding ->
 		Column(
@@ -46,12 +46,12 @@ internal fun AppDebugPageContent(
 			SettingsCard {
 				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_sdk_heading))
 				CardBody(stringResource(R.string.debug_sdk_info))
-				FilledActionButton(stringResource(R.string.debug_sdk_button), onOpenSdkDebug)
+				AppButton(stringResource(R.string.debug_sdk_button), onOpenSdkDebug, Modifier.fillMaxWidth())
 			}
 			SettingsCard {
 				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_onboarding_heading))
 				CardBody(stringResource(R.string.debug_onboarding_info))
-				FilledActionButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding)
+				AppButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding, Modifier.fillMaxWidth())
 			}
 		}
 	}
@@ -60,7 +60,7 @@ internal fun AppDebugPageContent(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		AppDebugPageContent(onBack = {}, onOpenSdkDebug = {}, onOpenOnboarding = {})
 	}
 }

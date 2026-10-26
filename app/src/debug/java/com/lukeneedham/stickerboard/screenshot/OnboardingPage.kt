@@ -2,7 +2,7 @@ package com.lukeneedham.stickerboard.screenshot
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import com.lukeneedham.stickerboard.onboarding.OnboardingPageContent
 import com.lukeneedham.stickerboard.onboarding.OnboardingUiState
 
@@ -10,7 +10,7 @@ import com.lukeneedham.stickerboard.onboarding.OnboardingUiState
 @Preview
 @Composable
 private fun OnboardingPageScreenshot() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		OnboardingPageContent(
 			state = OnboardingUiState(keyboardEnabled = false, isImporting = false, loadedStickerCount = null),
 			onEnableKeyboard = {},

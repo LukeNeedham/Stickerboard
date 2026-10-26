@@ -20,7 +20,7 @@ import com.lukeneedham.common.DebugKitConfig
  * correctly in every entry point (gallery activity, settings, keyboard service), regardless of
  * which one happens to start first.
  */
-class StickerBoardApplication : Application(), ImageLoaderFactory {
+class App : Application(), ImageLoaderFactory {
 	override fun onCreate() {
 		super.onCreate()
 		DebugKit.init(DebugKitConfig(enabled = BuildConfig.DEBUG))

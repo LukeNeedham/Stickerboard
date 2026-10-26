@@ -2,7 +2,7 @@
 
 package com.lukeneedham.stickerboard.share
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 import com.lukeneedham.stickerboard.navigation.Route

@@ -3,6 +3,7 @@
 package com.lukeneedham.stickerboard.keyboard
 
 import com.lukeneedham.stickerboard.utilities.StickerNames
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -201,7 +202,7 @@ fun KeyboardView(
 					.align(Alignment.BottomStart)
 					.fillMaxWidth()
 					.height(with(density) { keyboardHeightPx.toDp() })
-					.background(LocalAppTheme.current.bg),
+					.background(AppTheme.current.keyboardColors.bg),
 			) {
 				PullBar(
 					mode = mode,
@@ -304,7 +305,7 @@ private fun StatusBanner(message: String, modifier: Modifier = Modifier) {
 	Box(
 		modifier
 			.clip(RoundedCornerShape(16.dp))
-			.background(LocalAppTheme.current.accent)
+			.background(AppTheme.current.keyboardColors.accent)
 			.padding(
 				horizontal = 16.dp,
 				vertical = 10.dp,
@@ -312,7 +313,7 @@ private fun StatusBanner(message: String, modifier: Modifier = Modifier) {
 	) {
 		BasicText(
 			text = message,
-			style = TextStyle(color = LocalAppTheme.current.onAccent, fontSize = 16.sp),
+			style = TextStyle(color = AppTheme.current.keyboardColors.onAccent, fontSize = 16.sp),
 		)
 	}
 }
@@ -357,7 +358,7 @@ private fun PullBar(
 				.align(Alignment.Center)
 				.width(36.dp)
 				.height(4.dp)
-				.background(LocalAppTheme.current.pullHandle, RoundedCornerShape(2.dp)),
+				.background(AppTheme.current.keyboardColors.pullHandle, RoundedCornerShape(2.dp)),
 		)
 		Row(
 			Modifier
@@ -430,7 +431,7 @@ private fun CircleIconButton(
 		Image(
 			painter = painterResource(iconRes),
 			contentDescription = contentDescription,
-			colorFilter = ColorFilter.tint(LocalAppTheme.current.fg),
+			colorFilter = ColorFilter.tint(AppTheme.current.keyboardColors.fg),
 			modifier = Modifier.fillMaxSize(),
 		)
 	}
@@ -482,7 +483,7 @@ private fun NavIconButton(
 			Image(
 				painter = painterResource(R.drawable.ic_recent),
 				contentDescription = stringResource(R.string.pack_icon),
-				colorFilter = ColorFilter.tint(LocalAppTheme.current.fg),
+				colorFilter = ColorFilter.tint(AppTheme.current.keyboardColors.fg),
 				modifier = Modifier.fillMaxSize(),
 			)
 		}
@@ -559,7 +560,7 @@ private fun SectionHeader(text: String) {
 	BasicText(
 		text = text,
 		style = TextStyle(
-			color = LocalAppTheme.current.fg,
+			color = AppTheme.current.keyboardColors.fg,
 			fontSize = 16.sp, // the keyboard's standard body text size, also used elsewhere in this file
 			fontWeight = FontWeight.Bold,
 		),
@@ -577,7 +578,7 @@ private fun SectionHeader(text: String) {
 private fun SectionEmptyMessage(text: String) {
 	BasicText(
 		text = text,
-		style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 16.sp),
+		style = TextStyle(color = AppTheme.current.keyboardColors.fg, fontSize = 16.sp),
 		modifier = Modifier
 			.fillMaxWidth()
 			.alpha(0.6f)
@@ -681,7 +682,7 @@ private fun SearchQueryBar(query: String) {
 	) {
 		BasicText(
 			text = query,
-			style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 16.sp),
+			style = TextStyle(color = AppTheme.current.keyboardColors.fg, fontSize = 16.sp),
 		)
 		Box(
 			Modifier
@@ -689,7 +690,7 @@ private fun SearchQueryBar(query: String) {
 				.width(2.dp)
 				.height(20.dp)
 				.alpha(if (cursorVisible) 1f else 0f)
-				.background(LocalAppTheme.current.fg),
+				.background(AppTheme.current.keyboardColors.fg),
 		)
 	}
 }
@@ -780,13 +781,13 @@ private fun QwertyKey(
 			Image(
 				painter = painterResource(iconRes),
 				contentDescription = contentDescription,
-				colorFilter = ColorFilter.tint(LocalAppTheme.current.fg),
+				colorFilter = ColorFilter.tint(AppTheme.current.keyboardColors.fg),
 				modifier = Modifier.size(20.dp),
 			)
 		} else if (text != null) {
 			BasicText(
 				text = text,
-				style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 16.sp),
+				style = TextStyle(color = AppTheme.current.keyboardColors.fg, fontSize = 16.sp),
 			)
 		}
 	}
@@ -809,7 +810,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 			BasicText(
 				text = StickerNames.prettifyPackName(sticker.parent?.split('/')?.last() ?: ""),
 				style = TextStyle(
-					color = LocalAppTheme.current.accent,
+					color = AppTheme.current.keyboardColors.accent,
 					fontWeight = FontWeight.Bold,
 					fontSize = 20.sp, // subheading size
 				),
@@ -818,7 +819,7 @@ private fun PreviewContent(sticker: File, onSend: () -> Unit) {
 			)
 			BasicText(
 				text = StickerNames.trim(sticker.name),
-				style = TextStyle(color = LocalAppTheme.current.fg, fontSize = 10.sp), // tiny caption size
+				style = TextStyle(color = AppTheme.current.keyboardColors.fg, fontSize = 10.sp), // tiny caption size
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 				modifier = Modifier.alpha(0.6f),

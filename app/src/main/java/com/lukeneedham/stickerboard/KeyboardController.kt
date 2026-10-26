@@ -22,7 +22,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import coil.imageLoader
 import com.lukeneedham.common.logger.Logger
-import com.lukeneedham.stickerboard.keyboard.AppThemeConstants
+import com.lukeneedham.stickerboard.theme.KeyboardColors
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel.Companion.RECENT_PACK_NAME
@@ -106,9 +106,9 @@ class KeyboardController :
 
 		model = KeyboardModel(baseContext)
 		// Set directly on the window rather than through Compose: this runs before
-		// onCreateInputView() builds any Compose UI, so LocalAppTheme isn't available yet.
+		// onCreateInputView() builds any Compose UI, so AppTheme.current.keyboardColors isn't available yet.
 		val nightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-		val bg = if (nightMode == Configuration.UI_MODE_NIGHT_YES) AppThemeConstants.DarkColors.bg else AppThemeConstants.LightColors.bg
+		val bg = if (nightMode == Configuration.UI_MODE_NIGHT_YES) KeyboardColors.Dark.bg else KeyboardColors.Light.bg
 		window.window?.navigationBarColor = bg.toArgb()
 	}
 

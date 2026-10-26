@@ -4,7 +4,12 @@
 
 package com.lukeneedham.stickerboard.share
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppButton
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.lukeneedham.stickerboard.theme.AppTheme
+import com.lukeneedham.stickerboard.theme.appTextFieldColors
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
@@ -21,7 +26,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,7 +44,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
@@ -63,7 +66,8 @@ internal fun ShareImportPageContent(
 
 	Scaffold(
 		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
+		containerColor = AppTheme.current.colors.background,
+		contentColor = AppTheme.current.colors.onBackground,
 		topBar = {
 			SettingsTopBar(title = stringResource(R.string.share_import_heading), onBack = onBack)
 		},
@@ -79,8 +83,8 @@ internal fun ShareImportPageContent(
 
 			Text(
 				text = stringResource(R.string.share_import_prompt),
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				fontSize = 14.sp, lineHeight = 20.sp,
+				color = AppTheme.current.colors.textMuted,
 			)
 
 			NewPackRow(
@@ -128,13 +132,13 @@ private fun PackRow(packName: String, onClick: () -> Unit, modifier: Modifier = 
 			Icon(
 				painter = painterResource(R.drawable.ic_folder),
 				contentDescription = null,
-				tint = MaterialTheme.colorScheme.primary,
+				tint = AppTheme.current.colors.accent,
 				modifier = Modifier.size(22.dp),
 			)
 			Text(
 				text = StickerNames.prettifyPackName(packName),
-				style = MaterialTheme.typography.titleMedium,
-				color = MaterialTheme.colorScheme.onSurface,
+				fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold,
+				color = AppTheme.current.colors.onSurface,
 				modifier = Modifier.padding(start = 10.dp),
 			)
 		}
@@ -158,9 +162,11 @@ private fun NewPackRow(
 			onValueChange = onPackNameChange,
 			label = { Text(stringResource(R.string.share_import_new_pack_hint)) },
 			singleLine = true,
+			colors = appTextFieldColors(),
+			textStyle = TextStyle(fontSize = 16.sp, lineHeight = 22.sp),
 			modifier = Modifier.weight(1f),
 		)
-		FilledActionButton(
+		AppButton(
 			text = stringResource(R.string.share_import_new_pack_button),
 			onClick = onAdd,
 			enabled = packName.isNotBlank(),
@@ -172,7 +178,7 @@ private fun NewPackRow(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		ShareImportPageContent(
 			imageUris = emptyList(),
 			packNames = listOf("Cats", "Memes"),

@@ -9,12 +9,12 @@ import com.lukeneedham.stickerboard.utilities.ShareIntents
 
 /**
  * The app's single activity. Every page - settings, onboarding, the sticker gallery, and the
- * debug/crash tools - is a Nav3 destination hosted here; see [StickerBoardApp] for the nav host
+ * debug/crash tools - is a Nav3 destination hosted here; see [AppNavigation] for the nav host
  * and back stack, and `navigation/Route.kt` for the destinations.
  *
  * Also the target of another app's "Share" action for image(s) (see the extra intent-filters on
  * this activity in the manifest) - [ShareIntents.extractImageUris] pulls the shared image URIs out of
- * that intent, and [StickerBoardApp] routes straight to [com.lukeneedham.stickerboard.share.ShareImportPage]
+ * that intent, and [AppNavigation] routes straight to [com.lukeneedham.stickerboard.share.ShareImportPage]
  * when there are any.
  *
  * Plain ComponentActivity, not AppCompatActivity: NavDisplay's predictive-back handling looks up
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 		val sharedImageUris = ShareIntents.extractImageUris(intent)
 
 		setContent {
-			StickerBoardApp(
+			Root(
 				sharedImageUris = sharedImageUris,
 				onCancelShareImport = { finish() },
 			)

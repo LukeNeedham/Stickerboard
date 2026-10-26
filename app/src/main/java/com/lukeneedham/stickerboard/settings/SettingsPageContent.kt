@@ -2,7 +2,11 @@
 
 package com.lukeneedham.stickerboard.settings
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppButtonStyle
+import com.lukeneedham.stickerboard.theme.AppButton
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
@@ -33,7 +37,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -50,7 +53,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -79,18 +81,21 @@ internal fun SettingsPageContent(
 ) {
 	Scaffold(
 		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
+		containerColor = AppTheme.current.colors.background,
+		contentColor = AppTheme.current.colors.onBackground,
 		topBar = {
 			TopAppBar(
 				title = {
 					Text(
 						text = stringResource(R.string.app_name),
-						fontWeight = FontWeight.Bold,
+						fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold,
 					)
 				},
 				colors = TopAppBarDefaults.topAppBarColors(
-					containerColor = MaterialTheme.colorScheme.background,
-					titleContentColor = MaterialTheme.colorScheme.onBackground,
+					containerColor = AppTheme.current.colors.background,
+					titleContentColor = AppTheme.current.colors.onBackground,
+					navigationIconContentColor = AppTheme.current.colors.onBackground,
+					actionIconContentColor = AppTheme.current.colors.onBackground,
 				),
 			)
 		},
@@ -123,7 +128,7 @@ internal fun SettingsCard(
 	Card(
 		modifier = modifier.fillMaxWidth(),
 		shape = RoundedCornerShape(24.dp),
-		colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+		colors = CardDefaults.cardColors(containerColor = AppTheme.current.colors.surface, contentColor = AppTheme.current.colors.onSurface),
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
 	) {
 		Column(
@@ -140,14 +145,14 @@ internal fun CardHeading(iconRes: Int, text: String) {
 		Image(
 			painter = painterResource(iconRes),
 			contentDescription = null,
-			colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+			colorFilter = ColorFilter.tint(AppTheme.current.colors.accent),
 			modifier = Modifier.size(22.dp),
 		)
 		Spacer(Modifier.width(10.dp))
 		Text(
 			text = text,
-			style = MaterialTheme.typography.titleMedium,
-			color = MaterialTheme.colorScheme.onSurface,
+			fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold,
+			color = AppTheme.current.colors.onSurface,
 		)
 	}
 }
@@ -156,8 +161,8 @@ internal fun CardHeading(iconRes: Int, text: String) {
 internal fun CardBody(text: String) {
 	Text(
 		text = text,
-		style = MaterialTheme.typography.bodyMedium,
-		color = MaterialTheme.colorScheme.onSurfaceVariant,
+		fontSize = 14.sp, lineHeight = 20.sp,
+		color = AppTheme.current.colors.textMuted,
 	)
 }
 
@@ -172,12 +177,17 @@ private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () ->
 		) {
 			KeyboardStatusIndicator(keyboardEnabled)
 			if (keyboardEnabled) {
-				SmallActionButton(stringResource(R.string.enable_keyboard_settings_button), onEnableKeyboard)
+				AppButton(
+					text = stringResource(R.string.enable_keyboard_settings_button),
+					onClick = onEnableKeyboard,
+					style = AppButtonStyle.Secondary,
+					compact = true,
+				)
 			}
 		}
 		if (!keyboardEnabled) {
 			CardBody(stringResource(R.string.enable_keyboard_info))
-			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
+			AppButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard, Modifier.fillMaxWidth())
 		}
 	}
 }
@@ -185,7 +195,7 @@ private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () ->
 /** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
 @Composable
 internal fun KeyboardStatusIndicator(enabled: Boolean) {
-	val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+	val color = if (enabled) AppTheme.current.colors.accent else AppTheme.current.colors.error
 	val label = stringResource(
 		if (enabled) {
 			R.string.keyboard_status_enabled
@@ -198,7 +208,7 @@ internal fun KeyboardStatusIndicator(enabled: Boolean) {
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 	) {
 		Box(Modifier.size(10.dp).background(color, CircleShape))
-		Text(text = label, style = MaterialTheme.typography.bodyMedium, color = color)
+		Text(text = label, fontSize = 14.sp, lineHeight = 20.sp, color = color)
 	}
 }
 
@@ -235,14 +245,14 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 	} else {
 		Box(
 			modifier = boxModifier
-				.background(MaterialTheme.colorScheme.surfaceVariant)
+				.background(AppTheme.current.colors.placeholder)
 				.padding(vertical = 16.dp),
 			contentAlignment = Alignment.Center,
 		) {
 			Text(
 				text = stringResource(R.string.try_it_out_placeholder_text),
-				style = MaterialTheme.typography.labelSmall,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				fontSize = 11.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium,
+				color = AppTheme.current.colors.textMuted,
 				textAlign = TextAlign.Center,
 				modifier = Modifier.padding(horizontal = 4.dp),
 			)
@@ -254,9 +264,9 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifier = Modifier) {
 	val hint = stringResource(R.string.try_it_out_hint)
 	val currentOnMediaReceived by rememberUpdatedState(onMediaReceived)
-	val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
-	val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
-	val backgroundColor = MaterialTheme.colorScheme.surfaceVariant.toArgb()
+	val textColor = AppTheme.current.colors.onSurface.toArgb()
+	val hintColor = AppTheme.current.colors.textMuted.toArgb()
+	val backgroundColor = AppTheme.current.colors.placeholder.toArgb()
 	val paddingPx = with(LocalDensity.current) { 16.dp.roundToPx() }
 	AndroidView(
 		modifier = modifier.fillMaxWidth(),
@@ -293,7 +303,7 @@ private fun ViewStickersCard(onViewStickers: () -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_recent, stringResource(R.string.view_stickers_heading))
 		CardBody(stringResource(R.string.view_stickers_info))
-		FilledActionButton(stringResource(R.string.view_stickers_button), onViewStickers)
+		AppButton(stringResource(R.string.view_stickers_button), onViewStickers, Modifier.fillMaxWidth())
 	}
 }
 
@@ -302,62 +312,14 @@ private fun DebugCard(onOpenDebug: () -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_search, stringResource(R.string.debug_heading))
 		CardBody(stringResource(R.string.debug_info))
-		TonalActionButton(stringResource(R.string.debug_open_button), onOpenDebug)
-	}
-}
-
-@Composable
-internal fun FilledActionButton(
-	text: String,
-	onClick: () -> Unit,
-	enabled: Boolean = true,
-	modifier: Modifier = Modifier,
-) {
-	Button(
-		onClick = onClick,
-		enabled = enabled,
-		shape = RoundedCornerShape(16.dp),
-		modifier = modifier.fillMaxWidth(),
-	) {
-		Text(text)
-	}
-}
-
-@Composable
-internal fun TonalActionButton(
-	text: String,
-	onClick: () -> Unit,
-	enabled: Boolean = true,
-	modifier: Modifier = Modifier,
-) {
-	FilledTonalButton(
-		onClick = onClick,
-		enabled = enabled,
-		shape = RoundedCornerShape(16.dp),
-		modifier = modifier.fillMaxWidth(),
-	) {
-		Text(text)
-	}
-}
-
-/** A compact, content-width button - for inline use alongside other content, unlike the
- * full-width [FilledActionButton]/[TonalActionButton] used for a card's primary action. */
-@Composable
-internal fun SmallActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-	FilledTonalButton(
-		onClick = onClick,
-		shape = RoundedCornerShape(12.dp),
-		contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-		modifier = modifier,
-	) {
-		Text(text, style = MaterialTheme.typography.labelLarge)
+		AppButton(stringResource(R.string.debug_open_button), onOpenDebug, Modifier.fillMaxWidth(), AppButtonStyle.Secondary)
 	}
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		SettingsPageContent(
 			state = SettingsUiState(keyboardEnabled = true),
 			onEnableKeyboard = {},
