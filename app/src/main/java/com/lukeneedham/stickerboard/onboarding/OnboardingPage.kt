@@ -43,10 +43,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.KeyboardStatusIndicator
 import com.lukeneedham.stickerboard.settings.SettingsCard
-import com.lukeneedham.stickerboard.settings.TonalActionButton
 import kotlinx.coroutines.launch
 
 /**

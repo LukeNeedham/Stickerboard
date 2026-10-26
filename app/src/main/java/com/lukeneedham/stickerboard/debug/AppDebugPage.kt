@@ -18,7 +18,6 @@ import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.CardHeading
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 

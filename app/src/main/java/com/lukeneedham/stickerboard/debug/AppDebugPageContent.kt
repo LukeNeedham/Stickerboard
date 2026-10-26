@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard.debug
 
+import com.lukeneedham.stickerboard.theme.AppButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +18,6 @@ import com.lukeneedham.stickerboard.BuildConfig
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.CardHeading
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.theme.AppTheme
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
@@ -31,8 +31,8 @@ internal fun AppDebugPageContent(
 ) {
 	Scaffold(
 		modifier = modifier,
-		containerColor = AppTheme.colors.background,
-		contentColor = AppTheme.colors.onBackground,
+		containerColor = AppTheme.current.colors.background,
+		contentColor = AppTheme.current.colors.onBackground,
 		topBar = { SettingsTopBar(title = stringResource(R.string.debug_heading), onBack = onBack) },
 	) { innerPadding ->
 		Column(
@@ -46,12 +46,12 @@ internal fun AppDebugPageContent(
 			SettingsCard {
 				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_sdk_heading))
 				CardBody(stringResource(R.string.debug_sdk_info))
-				FilledActionButton(stringResource(R.string.debug_sdk_button), onOpenSdkDebug)
+				AppButton(stringResource(R.string.debug_sdk_button), onOpenSdkDebug, Modifier.fillMaxWidth())
 			}
 			SettingsCard {
 				CardHeading(R.drawable.ic_settings, stringResource(R.string.debug_onboarding_heading))
 				CardBody(stringResource(R.string.debug_onboarding_info))
-				FilledActionButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding)
+				AppButton(stringResource(R.string.debug_onboarding_button), onOpenOnboarding, Modifier.fillMaxWidth())
 			}
 		}
 	}

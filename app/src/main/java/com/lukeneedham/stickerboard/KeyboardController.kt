@@ -106,7 +106,7 @@ class KeyboardController :
 
 		model = KeyboardModel(baseContext)
 		// Set directly on the window rather than through Compose: this runs before
-		// onCreateInputView() builds any Compose UI, so AppTheme.keyboardColors isn't available yet.
+		// onCreateInputView() builds any Compose UI, so AppTheme.current.keyboardColors isn't available yet.
 		val nightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
 		val bg = if (nightMode == Configuration.UI_MODE_NIGHT_YES) KeyboardColors.Dark.bg else KeyboardColors.Light.bg
 		window.window?.navigationBarColor = bg.toArgb()

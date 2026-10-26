@@ -2,9 +2,11 @@
 
 package com.lukeneedham.stickerboard.settings
 
+import com.lukeneedham.stickerboard.theme.AppButtonStyle
+import com.lukeneedham.stickerboard.theme.AppButton
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.lukeneedham.stickerboard.theme.AppTheme
-import com.lukeneedham.stickerboard.theme.appTonalButtonColors
-import com.lukeneedham.stickerboard.theme.appButtonColors
 import androidx.compose.ui.tooling.preview.Preview
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
@@ -79,21 +81,21 @@ internal fun SettingsPageContent(
 ) {
 	Scaffold(
 		modifier = modifier,
-		containerColor = AppTheme.colors.background,
-		contentColor = AppTheme.colors.onBackground,
+		containerColor = AppTheme.current.colors.background,
+		contentColor = AppTheme.current.colors.onBackground,
 		topBar = {
 			TopAppBar(
 				title = {
 					Text(
 						text = stringResource(R.string.app_name),
-						style = AppTheme.typography.titleLarge,
+						fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold,
 					)
 				},
 				colors = TopAppBarDefaults.topAppBarColors(
-					containerColor = AppTheme.colors.background,
-					titleContentColor = AppTheme.colors.onBackground,
-					navigationIconContentColor = AppTheme.colors.onBackground,
-					actionIconContentColor = AppTheme.colors.onBackground,
+					containerColor = AppTheme.current.colors.background,
+					titleContentColor = AppTheme.current.colors.onBackground,
+					navigationIconContentColor = AppTheme.current.colors.onBackground,
+					actionIconContentColor = AppTheme.current.colors.onBackground,
 				),
 			)
 		},
@@ -126,7 +128,7 @@ internal fun SettingsCard(
 	Card(
 		modifier = modifier.fillMaxWidth(),
 		shape = RoundedCornerShape(24.dp),
-		colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface, contentColor = AppTheme.colors.onSurface),
+		colors = CardDefaults.cardColors(containerColor = AppTheme.current.colors.surface, contentColor = AppTheme.current.colors.onSurface),
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
 	) {
 		Column(
@@ -143,14 +145,14 @@ internal fun CardHeading(iconRes: Int, text: String) {
 		Image(
 			painter = painterResource(iconRes),
 			contentDescription = null,
-			colorFilter = ColorFilter.tint(AppTheme.colors.accent),
+			colorFilter = ColorFilter.tint(AppTheme.current.colors.accent),
 			modifier = Modifier.size(22.dp),
 		)
 		Spacer(Modifier.width(10.dp))
 		Text(
 			text = text,
-			style = AppTheme.typography.titleMedium,
-			color = AppTheme.colors.onSurface,
+			fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold,
+			color = AppTheme.current.colors.onSurface,
 		)
 	}
 }
@@ -159,8 +161,8 @@ internal fun CardHeading(iconRes: Int, text: String) {
 internal fun CardBody(text: String) {
 	Text(
 		text = text,
-		style = AppTheme.typography.bodyMedium,
-		color = AppTheme.colors.textMuted,
+		fontSize = 14.sp, lineHeight = 20.sp,
+		color = AppTheme.current.colors.textMuted,
 	)
 }
 
@@ -175,12 +177,17 @@ private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () ->
 		) {
 			KeyboardStatusIndicator(keyboardEnabled)
 			if (keyboardEnabled) {
-				SmallActionButton(stringResource(R.string.enable_keyboard_settings_button), onEnableKeyboard)
+				AppButton(
+					text = stringResource(R.string.enable_keyboard_settings_button),
+					onClick = onEnableKeyboard,
+					style = AppButtonStyle.Secondary,
+					compact = true,
+				)
 			}
 		}
 		if (!keyboardEnabled) {
 			CardBody(stringResource(R.string.enable_keyboard_info))
-			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
+			AppButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard, Modifier.fillMaxWidth())
 		}
 	}
 }
@@ -188,7 +195,7 @@ private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () ->
 /** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
 @Composable
 internal fun KeyboardStatusIndicator(enabled: Boolean) {
-	val color = if (enabled) AppTheme.colors.accent else AppTheme.colors.error
+	val color = if (enabled) AppTheme.current.colors.accent else AppTheme.current.colors.error
 	val label = stringResource(
 		if (enabled) {
 			R.string.keyboard_status_enabled
@@ -201,7 +208,7 @@ internal fun KeyboardStatusIndicator(enabled: Boolean) {
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 	) {
 		Box(Modifier.size(10.dp).background(color, CircleShape))
-		Text(text = label, style = AppTheme.typography.bodyMedium, color = color)
+		Text(text = label, fontSize = 14.sp, lineHeight = 20.sp, color = color)
 	}
 }
 
@@ -238,14 +245,14 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 	} else {
 		Box(
 			modifier = boxModifier
-				.background(AppTheme.colors.placeholder)
+				.background(AppTheme.current.colors.placeholder)
 				.padding(vertical = 16.dp),
 			contentAlignment = Alignment.Center,
 		) {
 			Text(
 				text = stringResource(R.string.try_it_out_placeholder_text),
-				style = AppTheme.typography.labelSmall,
-				color = AppTheme.colors.textMuted,
+				fontSize = 11.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium,
+				color = AppTheme.current.colors.textMuted,
 				textAlign = TextAlign.Center,
 				modifier = Modifier.padding(horizontal = 4.dp),
 			)
@@ -257,9 +264,9 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifier = Modifier) {
 	val hint = stringResource(R.string.try_it_out_hint)
 	val currentOnMediaReceived by rememberUpdatedState(onMediaReceived)
-	val textColor = AppTheme.colors.onSurface.toArgb()
-	val hintColor = AppTheme.colors.textMuted.toArgb()
-	val backgroundColor = AppTheme.colors.placeholder.toArgb()
+	val textColor = AppTheme.current.colors.onSurface.toArgb()
+	val hintColor = AppTheme.current.colors.textMuted.toArgb()
+	val backgroundColor = AppTheme.current.colors.placeholder.toArgb()
 	val paddingPx = with(LocalDensity.current) { 16.dp.roundToPx() }
 	AndroidView(
 		modifier = modifier.fillMaxWidth(),
@@ -296,7 +303,7 @@ private fun ViewStickersCard(onViewStickers: () -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_recent, stringResource(R.string.view_stickers_heading))
 		CardBody(stringResource(R.string.view_stickers_info))
-		FilledActionButton(stringResource(R.string.view_stickers_button), onViewStickers)
+		AppButton(stringResource(R.string.view_stickers_button), onViewStickers, Modifier.fillMaxWidth())
 	}
 }
 
@@ -305,58 +312,7 @@ private fun DebugCard(onOpenDebug: () -> Unit) {
 	SettingsCard {
 		CardHeading(R.drawable.ic_search, stringResource(R.string.debug_heading))
 		CardBody(stringResource(R.string.debug_info))
-		TonalActionButton(stringResource(R.string.debug_open_button), onOpenDebug)
-	}
-}
-
-@Composable
-internal fun FilledActionButton(
-	text: String,
-	onClick: () -> Unit,
-	enabled: Boolean = true,
-	modifier: Modifier = Modifier,
-) {
-	Button(
-		onClick = onClick,
-		enabled = enabled,
-		shape = RoundedCornerShape(16.dp),
-		colors = appButtonColors(),
-		modifier = modifier.fillMaxWidth(),
-	) {
-		Text(text)
-	}
-}
-
-@Composable
-internal fun TonalActionButton(
-	text: String,
-	onClick: () -> Unit,
-	enabled: Boolean = true,
-	modifier: Modifier = Modifier,
-) {
-	FilledTonalButton(
-		onClick = onClick,
-		enabled = enabled,
-		shape = RoundedCornerShape(16.dp),
-		colors = appTonalButtonColors(),
-		modifier = modifier.fillMaxWidth(),
-	) {
-		Text(text)
-	}
-}
-
-/** A compact, content-width button - for inline use alongside other content, unlike the
- * full-width [FilledActionButton]/[TonalActionButton] used for a card's primary action. */
-@Composable
-internal fun SmallActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-	FilledTonalButton(
-		onClick = onClick,
-		shape = RoundedCornerShape(12.dp),
-		colors = appTonalButtonColors(),
-		contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-		modifier = modifier,
-	) {
-		Text(text, style = AppTheme.typography.labelLarge)
+		AppButton(stringResource(R.string.debug_open_button), onOpenDebug, Modifier.fillMaxWidth(), AppButtonStyle.Secondary)
 	}
 }
 

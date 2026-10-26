@@ -22,14 +22,16 @@
 ## Theme
 
 - There is one theme, `AppTheme { }` (`theme/AppTheme.kt`), and **there is no `MaterialTheme`**: never call it or read it. The UI reads
-  its values through `object AppTheme`: `AppTheme.colors` (`AppColors`, named by use: `accent`, `textMuted`, `placeholder`, ...),
-  `AppTheme.typography` (`AppTypography`) and `AppTheme.keyboardColors` (`KeyboardColors`, for the keyboard only). The two colour sets
-  stay independent, so restyling the settings pages can never change how the keyboard looks. A new use gets a new name in
-  `AppColors`, not a borrowed slot.
-- Since nothing sets Material's defaults, **every Material component is given its colours**: `Scaffold(containerColor, contentColor)`,
-  `TopAppBarDefaults.topAppBarColors(...)`, `Card`, `ModalBottomSheet`, `AlertDialog`, `Icon(tint)`, `Text(color)`, and the shared
-  `appButtonColors()`, `appTonalButtonColors()`, `appTextButtonColors()` and `appTextFieldColors()` (`theme/`). Text and icons
-  without a colour would be Material's baseline light colours, wrong in dark mode.
+  `AppTheme.current`: `.colors` (`AppColors`, named by use, e.g. `accent`, `textMuted`, `placeholder`, and one `AppButtonColors` per
+  button style), `.keyboardColors` (`KeyboardColors`, for the keyboard only) and `.fontFamily`. The two colour sets stay independent,
+  so restyling the settings pages can never change how the keyboard looks. A new use gets a new name in `AppColors`, not a borrowed slot.
+- **No shared text styles**: the theme holds colours and the typeface only. Each `Text` sets its own `fontSize`, `lineHeight` and
+  `fontWeight` inline.
+- **Buttons are `AppButton`** (`theme/AppButton.kt`) in one of the `AppButtonStyle`s (Primary, Secondary, Text, Destructive), each with one set
+  of colours and a 48dp minimum height. Do not add a one-off button and do not use Material's `Button`, `FilledTonalButton` or `TextButton`.
+- Any other Material component that is used (`Scaffold`, `TopAppBar`, `Card`, `ModalBottomSheet`, `AlertDialog`, `OutlinedTextField`, ...) is
+  **given its colours explicitly** from `AppTheme.current.colors` (`appTextFieldColors()` for text fields), because nothing sets Material's
+  defaults and a component left alone draws in Material's baseline light colours, wrong in dark mode.
 
 ## Shared debug library
 

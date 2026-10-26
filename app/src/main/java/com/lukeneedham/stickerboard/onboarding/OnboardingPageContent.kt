@@ -4,6 +4,10 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
+import com.lukeneedham.stickerboard.theme.AppButtonStyle
+import com.lukeneedham.stickerboard.theme.AppButton
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import android.app.Activity
@@ -45,10 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.KeyboardStatusIndicator
 import com.lukeneedham.stickerboard.settings.SettingsCard
-import com.lukeneedham.stickerboard.settings.TonalActionButton
 import kotlinx.coroutines.launch
 
 private object OnboardingPageConstants {
@@ -100,7 +102,7 @@ internal fun OnboardingPageContent(
 	Column(
 		modifier
 			.fillMaxSize()
-			.background(AppTheme.colors.background)
+			.background(AppTheme.current.colors.background)
 			// The only page without a Scaffold/TopAppBar of its own to absorb system bar insets -
 			// every other page gets this for free from Scaffold's default contentWindowInsets.
 			.windowInsetsPadding(WindowInsets.systemBars),
@@ -114,8 +116,8 @@ internal fun OnboardingPageContent(
 		}
 		Text(
 			text = stringResource(R.string.onboarding_step_label, pagerState.currentPage + 1, OnboardingPageConstants.PAGE_COUNT),
-			style = AppTheme.typography.bodyMedium,
-			color = AppTheme.colors.textMuted,
+			fontSize = 14.sp, lineHeight = 20.sp,
+			color = AppTheme.current.colors.textMuted,
 			textAlign = TextAlign.Center,
 			modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
 		)
@@ -124,13 +126,14 @@ internal fun OnboardingPageContent(
 			horizontalArrangement = Arrangement.spacedBy(20.dp),
 		) {
 			if (pagerState.currentPage != OnboardingPageConstants.PAGE_WELCOME) {
-				TonalActionButton(
+				AppButton(
 					text = stringResource(R.string.onboarding_back_button),
 					onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
 					modifier = Modifier.weight(1f),
+					style = AppButtonStyle.Secondary,
 				)
 			}
-			FilledActionButton(
+			AppButton(
 				text = if (pagerState.currentPage == OnboardingPageConstants.LAST_PAGE_INDEX) {
 					stringResource(R.string.onboarding_finish_button)
 				} else {
@@ -178,7 +181,7 @@ private fun OnboardingKeyboardPage(keyboardEnabled: Boolean, onEnableKeyboard: (
 		SettingsCard {
 			OnboardingHeading(stringResource(R.string.onboarding_keyboard_heading))
 			CardBody(stringResource(R.string.enable_keyboard_info))
-			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
+			AppButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard, Modifier.fillMaxWidth())
 			KeyboardStatusIndicator(keyboardEnabled)
 		}
 	}
@@ -194,9 +197,10 @@ private fun OnboardingFolderPage(
 		SettingsCard {
 			OnboardingHeading(stringResource(R.string.onboarding_folder_heading))
 			CardBody(stringResource(R.string.onboarding_folder_text))
-			FilledActionButton(
+			AppButton(
 				stringResource(R.string.update_sticker_pack_button),
 				onChooseDir,
+				Modifier.fillMaxWidth(),
 				enabled = !isImporting,
 			)
 			if (isImporting) {
@@ -207,19 +211,19 @@ private fun OnboardingFolderPage(
 					CircularProgressIndicator(
 						modifier = Modifier.size(20.dp),
 						strokeWidth = 2.dp,
-						color = AppTheme.colors.accent,
+						color = AppTheme.current.colors.accent,
 					)
 					Text(
 						text = stringResource(R.string.onboarding_folder_loading),
-						style = AppTheme.typography.bodyMedium,
-						color = AppTheme.colors.textMuted,
+						fontSize = 14.sp, lineHeight = 20.sp,
+						color = AppTheme.current.colors.textMuted,
 					)
 				}
 			} else if (loadedStickerCount != null) {
 				Text(
 					text = stringResource(R.string.onboarding_folder_loaded, loadedStickerCount),
-					style = AppTheme.typography.bodyMedium,
-					color = AppTheme.colors.accent,
+					fontSize = 14.sp, lineHeight = 20.sp,
+					color = AppTheme.current.colors.accent,
 				)
 			}
 		}
@@ -230,8 +234,8 @@ private fun OnboardingFolderPage(
 private fun OnboardingHeading(text: String) {
 	Text(
 		text = text,
-		style = AppTheme.typography.headlineSmall,
-		color = AppTheme.colors.accent,
+		fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold,
+		color = AppTheme.current.colors.accent,
 	)
 }
 

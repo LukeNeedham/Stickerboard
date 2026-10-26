@@ -2,6 +2,8 @@
 
 package com.lukeneedham.stickerboard.settings
 
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,22 +28,22 @@ fun SettingsTopBar(
 ) {
 	TopAppBar(
 		modifier = modifier,
-		title = { Text(text = title, style = AppTheme.typography.titleLarge) },
+		title = { Text(text = title, fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold) },
 		navigationIcon = {
 			IconButton(onClick = onBack) {
 				Icon(
 					painter = painterResource(R.drawable.ic_back),
 					contentDescription = stringResource(R.string.back_button),
-					tint = AppTheme.colors.onBackground,
+					tint = AppTheme.current.colors.onBackground,
 				)
 			}
 		},
 		actions = actions,
 		colors = TopAppBarDefaults.topAppBarColors(
-			containerColor = AppTheme.colors.background,
-			titleContentColor = AppTheme.colors.onBackground,
-			navigationIconContentColor = AppTheme.colors.onBackground,
-			actionIconContentColor = AppTheme.colors.onBackground,
+			containerColor = AppTheme.current.colors.background,
+			titleContentColor = AppTheme.current.colors.onBackground,
+			navigationIconContentColor = AppTheme.current.colors.onBackground,
+			actionIconContentColor = AppTheme.current.colors.onBackground,
 		),
 	)
 }

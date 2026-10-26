@@ -4,6 +4,10 @@
 
 package com.lukeneedham.stickerboard.share
 
+import com.lukeneedham.stickerboard.theme.AppButton
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.lukeneedham.stickerboard.theme.AppTheme
 import com.lukeneedham.stickerboard.theme.appTextFieldColors
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,7 +44,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
-import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
 
@@ -63,8 +66,8 @@ internal fun ShareImportPageContent(
 
 	Scaffold(
 		modifier = modifier,
-		containerColor = AppTheme.colors.background,
-		contentColor = AppTheme.colors.onBackground,
+		containerColor = AppTheme.current.colors.background,
+		contentColor = AppTheme.current.colors.onBackground,
 		topBar = {
 			SettingsTopBar(title = stringResource(R.string.share_import_heading), onBack = onBack)
 		},
@@ -80,8 +83,8 @@ internal fun ShareImportPageContent(
 
 			Text(
 				text = stringResource(R.string.share_import_prompt),
-				style = AppTheme.typography.bodyMedium,
-				color = AppTheme.colors.textMuted,
+				fontSize = 14.sp, lineHeight = 20.sp,
+				color = AppTheme.current.colors.textMuted,
 			)
 
 			NewPackRow(
@@ -129,13 +132,13 @@ private fun PackRow(packName: String, onClick: () -> Unit, modifier: Modifier = 
 			Icon(
 				painter = painterResource(R.drawable.ic_folder),
 				contentDescription = null,
-				tint = AppTheme.colors.accent,
+				tint = AppTheme.current.colors.accent,
 				modifier = Modifier.size(22.dp),
 			)
 			Text(
 				text = StickerNames.prettifyPackName(packName),
-				style = AppTheme.typography.titleMedium,
-				color = AppTheme.colors.onSurface,
+				fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold,
+				color = AppTheme.current.colors.onSurface,
 				modifier = Modifier.padding(start = 10.dp),
 			)
 		}
@@ -160,9 +163,10 @@ private fun NewPackRow(
 			label = { Text(stringResource(R.string.share_import_new_pack_hint)) },
 			singleLine = true,
 			colors = appTextFieldColors(),
+			textStyle = TextStyle(fontSize = 16.sp, lineHeight = 22.sp),
 			modifier = Modifier.weight(1f),
 		)
-		FilledActionButton(
+		AppButton(
 			text = stringResource(R.string.share_import_new_pack_button),
 			onClick = onAdd,
 			enabled = packName.isNotBlank(),
