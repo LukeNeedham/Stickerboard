@@ -115,7 +115,7 @@ internal fun OnboardingPageContent(
 		Text(
 			text = stringResource(R.string.onboarding_step_label, pagerState.currentPage + 1, OnboardingPageConstants.PAGE_COUNT),
 			style = AppTheme.typography.bodyMedium,
-			color = AppTheme.colors.onSurfaceVariant,
+			color = AppTheme.colors.textMuted,
 			textAlign = TextAlign.Center,
 			modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
 		)
@@ -207,19 +207,19 @@ private fun OnboardingFolderPage(
 					CircularProgressIndicator(
 						modifier = Modifier.size(20.dp),
 						strokeWidth = 2.dp,
-						color = AppTheme.colors.primary,
+						color = AppTheme.colors.accent,
 					)
 					Text(
 						text = stringResource(R.string.onboarding_folder_loading),
 						style = AppTheme.typography.bodyMedium,
-						color = AppTheme.colors.onSurfaceVariant,
+						color = AppTheme.colors.textMuted,
 					)
 				}
 			} else if (loadedStickerCount != null) {
 				Text(
 					text = stringResource(R.string.onboarding_folder_loaded, loadedStickerCount),
 					style = AppTheme.typography.bodyMedium,
-					color = AppTheme.colors.primary,
+					color = AppTheme.colors.accent,
 				)
 			}
 		}
@@ -231,7 +231,7 @@ private fun OnboardingHeading(text: String) {
 	Text(
 		text = text,
 		style = AppTheme.typography.headlineSmall,
-		color = AppTheme.colors.primary,
+		color = AppTheme.colors.accent,
 	)
 }
 

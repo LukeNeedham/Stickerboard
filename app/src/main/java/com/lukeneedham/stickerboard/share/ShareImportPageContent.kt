@@ -5,6 +5,7 @@
 package com.lukeneedham.stickerboard.share
 
 import com.lukeneedham.stickerboard.theme.AppTheme
+import com.lukeneedham.stickerboard.theme.appTextFieldColors
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
@@ -63,6 +64,7 @@ internal fun ShareImportPageContent(
 	Scaffold(
 		modifier = modifier,
 		containerColor = AppTheme.colors.background,
+		contentColor = AppTheme.colors.onBackground,
 		topBar = {
 			SettingsTopBar(title = stringResource(R.string.share_import_heading), onBack = onBack)
 		},
@@ -79,7 +81,7 @@ internal fun ShareImportPageContent(
 			Text(
 				text = stringResource(R.string.share_import_prompt),
 				style = AppTheme.typography.bodyMedium,
-				color = AppTheme.colors.onSurfaceVariant,
+				color = AppTheme.colors.textMuted,
 			)
 
 			NewPackRow(
@@ -127,7 +129,7 @@ private fun PackRow(packName: String, onClick: () -> Unit, modifier: Modifier = 
 			Icon(
 				painter = painterResource(R.drawable.ic_folder),
 				contentDescription = null,
-				tint = AppTheme.colors.primary,
+				tint = AppTheme.colors.accent,
 				modifier = Modifier.size(22.dp),
 			)
 			Text(
@@ -157,6 +159,7 @@ private fun NewPackRow(
 			onValueChange = onPackNameChange,
 			label = { Text(stringResource(R.string.share_import_new_pack_hint)) },
 			singleLine = true,
+			colors = appTextFieldColors(),
 			modifier = Modifier.weight(1f),
 		)
 		FilledActionButton(

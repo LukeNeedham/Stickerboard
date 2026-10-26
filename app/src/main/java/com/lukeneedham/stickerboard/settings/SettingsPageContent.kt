@@ -3,6 +3,8 @@
 package com.lukeneedham.stickerboard.settings
 
 import com.lukeneedham.stickerboard.theme.AppTheme
+import com.lukeneedham.stickerboard.theme.appTonalButtonColors
+import com.lukeneedham.stickerboard.theme.appButtonColors
 import androidx.compose.ui.tooling.preview.Preview
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
@@ -49,7 +51,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -79,17 +80,20 @@ internal fun SettingsPageContent(
 	Scaffold(
 		modifier = modifier,
 		containerColor = AppTheme.colors.background,
+		contentColor = AppTheme.colors.onBackground,
 		topBar = {
 			TopAppBar(
 				title = {
 					Text(
 						text = stringResource(R.string.app_name),
-						fontWeight = FontWeight.Bold,
+						style = AppTheme.typography.titleLarge,
 					)
 				},
 				colors = TopAppBarDefaults.topAppBarColors(
 					containerColor = AppTheme.colors.background,
 					titleContentColor = AppTheme.colors.onBackground,
+					navigationIconContentColor = AppTheme.colors.onBackground,
+					actionIconContentColor = AppTheme.colors.onBackground,
 				),
 			)
 		},
@@ -122,7 +126,7 @@ internal fun SettingsCard(
 	Card(
 		modifier = modifier.fillMaxWidth(),
 		shape = RoundedCornerShape(24.dp),
-		colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface),
+		colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface, contentColor = AppTheme.colors.onSurface),
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
 	) {
 		Column(
@@ -139,7 +143,7 @@ internal fun CardHeading(iconRes: Int, text: String) {
 		Image(
 			painter = painterResource(iconRes),
 			contentDescription = null,
-			colorFilter = ColorFilter.tint(AppTheme.colors.primary),
+			colorFilter = ColorFilter.tint(AppTheme.colors.accent),
 			modifier = Modifier.size(22.dp),
 		)
 		Spacer(Modifier.width(10.dp))
@@ -156,7 +160,7 @@ internal fun CardBody(text: String) {
 	Text(
 		text = text,
 		style = AppTheme.typography.bodyMedium,
-		color = AppTheme.colors.onSurfaceVariant,
+		color = AppTheme.colors.textMuted,
 	)
 }
 
@@ -184,7 +188,7 @@ private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () ->
 /** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
 @Composable
 internal fun KeyboardStatusIndicator(enabled: Boolean) {
-	val color = if (enabled) AppTheme.colors.primary else AppTheme.colors.error
+	val color = if (enabled) AppTheme.colors.accent else AppTheme.colors.error
 	val label = stringResource(
 		if (enabled) {
 			R.string.keyboard_status_enabled
@@ -234,14 +238,14 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 	} else {
 		Box(
 			modifier = boxModifier
-				.background(AppTheme.colors.surfaceVariant)
+				.background(AppTheme.colors.placeholder)
 				.padding(vertical = 16.dp),
 			contentAlignment = Alignment.Center,
 		) {
 			Text(
 				text = stringResource(R.string.try_it_out_placeholder_text),
 				style = AppTheme.typography.labelSmall,
-				color = AppTheme.colors.onSurfaceVariant,
+				color = AppTheme.colors.textMuted,
 				textAlign = TextAlign.Center,
 				modifier = Modifier.padding(horizontal = 4.dp),
 			)
@@ -254,8 +258,8 @@ private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifie
 	val hint = stringResource(R.string.try_it_out_hint)
 	val currentOnMediaReceived by rememberUpdatedState(onMediaReceived)
 	val textColor = AppTheme.colors.onSurface.toArgb()
-	val hintColor = AppTheme.colors.onSurfaceVariant.toArgb()
-	val backgroundColor = AppTheme.colors.surfaceVariant.toArgb()
+	val hintColor = AppTheme.colors.textMuted.toArgb()
+	val backgroundColor = AppTheme.colors.placeholder.toArgb()
 	val paddingPx = with(LocalDensity.current) { 16.dp.roundToPx() }
 	AndroidView(
 		modifier = modifier.fillMaxWidth(),
@@ -316,6 +320,7 @@ internal fun FilledActionButton(
 		onClick = onClick,
 		enabled = enabled,
 		shape = RoundedCornerShape(16.dp),
+		colors = appButtonColors(),
 		modifier = modifier.fillMaxWidth(),
 	) {
 		Text(text)
@@ -333,6 +338,7 @@ internal fun TonalActionButton(
 		onClick = onClick,
 		enabled = enabled,
 		shape = RoundedCornerShape(16.dp),
+		colors = appTonalButtonColors(),
 		modifier = modifier.fillMaxWidth(),
 	) {
 		Text(text)
@@ -346,6 +352,7 @@ internal fun SmallActionButton(text: String, onClick: () -> Unit, modifier: Modi
 	FilledTonalButton(
 		onClick = onClick,
 		shape = RoundedCornerShape(12.dp),
+		colors = appTonalButtonColors(),
 		contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
 		modifier = modifier,
 	) {

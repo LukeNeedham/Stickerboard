@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import com.lukeneedham.stickerboard.R
 
 /** The back-button top bar shared by every non-root page in the settings app. */
@@ -27,12 +26,13 @@ fun SettingsTopBar(
 ) {
 	TopAppBar(
 		modifier = modifier,
-		title = { Text(text = title, fontWeight = FontWeight.Bold) },
+		title = { Text(text = title, style = AppTheme.typography.titleLarge) },
 		navigationIcon = {
 			IconButton(onClick = onBack) {
 				Icon(
 					painter = painterResource(R.drawable.ic_back),
 					contentDescription = stringResource(R.string.back_button),
+					tint = AppTheme.colors.onBackground,
 				)
 			}
 		},
@@ -40,6 +40,8 @@ fun SettingsTopBar(
 		colors = TopAppBarDefaults.topAppBarColors(
 			containerColor = AppTheme.colors.background,
 			titleContentColor = AppTheme.colors.onBackground,
+			navigationIconContentColor = AppTheme.colors.onBackground,
+			actionIconContentColor = AppTheme.colors.onBackground,
 		),
 	)
 }

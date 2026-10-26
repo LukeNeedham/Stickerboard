@@ -5,6 +5,8 @@
 package com.lukeneedham.stickerboard.gallery
 
 import com.lukeneedham.stickerboard.theme.AppTheme
+import com.lukeneedham.stickerboard.theme.appTextButtonColors
+import com.lukeneedham.stickerboard.theme.appTextFieldColors
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerFiles
 import com.lukeneedham.stickerboard.utilities.StickerMedia
@@ -43,6 +45,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -54,6 +57,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -137,6 +142,7 @@ internal fun GalleryPageContent(
 	Scaffold(
 		modifier = modifier,
 		containerColor = AppTheme.colors.background,
+		contentColor = AppTheme.colors.onBackground,
 		topBar = {
 			if (selectedStickers.isNotEmpty()) {
 				SettingsTopBar(
@@ -160,10 +166,21 @@ internal fun GalleryPageContent(
 			}
 		},
 	) { innerPadding ->
+		val pullToRefreshState = rememberPullToRefreshState()
 		PullToRefreshBox(
 			isRefreshing = isRefreshing,
 			onRefresh = onRefresh,
+			state = pullToRefreshState,
 			modifier = Modifier.padding(innerPadding).fillMaxSize(),
+			indicator = {
+				PullToRefreshDefaults.Indicator(
+					state = pullToRefreshState,
+					isRefreshing = isRefreshing,
+					modifier = Modifier.align(Alignment.TopCenter),
+					containerColor = AppTheme.colors.surface,
+					color = AppTheme.colors.accent,
+				)
+			},
 		) {
 			val packSummaries = remember(items) {
 				val boardItems = items.orEmpty()
@@ -214,14 +231,14 @@ internal fun GalleryPageContent(
 							modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
 							contentAlignment = Alignment.Center,
 						) {
-							CircularProgressIndicator(color = AppTheme.colors.primary)
+							CircularProgressIndicator(color = AppTheme.colors.accent)
 						}
 					}
 				} else if (items.isEmpty()) {
 					item(span = { GridItemSpan(maxLineSpan) }) {
 						Text(
 							text = stringResource(R.string.view_stickers_empty),
-							color = AppTheme.colors.onSurfaceVariant,
+							color = AppTheme.colors.textMuted,
 							textAlign = TextAlign.Center,
 							modifier = Modifier.fillMaxWidth().padding(32.dp),
 						)
@@ -368,7 +385,7 @@ private fun StickerSourceCard(
 				Icon(
 					painter = painterResource(R.drawable.ic_folder),
 					contentDescription = null,
-					tint = AppTheme.colors.primary,
+					tint = AppTheme.colors.accent,
 					modifier = Modifier.size(22.dp),
 				)
 				Text(
@@ -382,7 +399,7 @@ private fun StickerSourceCard(
 				Icon(
 					painter = painterResource(R.drawable.ic_chevron_right),
 					contentDescription = null,
-					tint = AppTheme.colors.onSurfaceVariant,
+					tint = AppTheme.colors.textMuted,
 					modifier = Modifier.padding(start = 4.dp).size(18.dp),
 				)
 			}
@@ -390,7 +407,7 @@ private fun StickerSourceCard(
 				Icon(
 					painter = painterResource(R.drawable.ic_edit),
 					contentDescription = stringResource(R.string.sticker_source_change_button),
-					tint = AppTheme.colors.onSurfaceVariant,
+					tint = AppTheme.colors.textMuted,
 					modifier = Modifier.size(20.dp),
 				)
 			}
@@ -400,13 +417,13 @@ private fun StickerSourceCard(
 			Icon(
 				painter = painterResource(R.drawable.ic_recent),
 				contentDescription = null,
-				tint = AppTheme.colors.onSurfaceVariant,
+				tint = AppTheme.colors.textMuted,
 				modifier = Modifier.size(20.dp),
 			)
 			Text(
 				text = stringResource(R.string.sticker_source_last_refreshed, lastUpdateDate),
 				style = AppTheme.typography.bodyMedium,
-				color = AppTheme.colors.onSurfaceVariant,
+				color = AppTheme.colors.textMuted,
 				modifier = Modifier.weight(1f).padding(start = 8.dp),
 			)
 			if (isRefreshing) {
@@ -414,7 +431,7 @@ private fun StickerSourceCard(
 					CircularProgressIndicator(
 						modifier = Modifier.size(18.dp),
 						strokeWidth = 2.dp,
-						color = AppTheme.colors.primary,
+						color = AppTheme.colors.accent,
 					)
 				}
 			} else {
@@ -422,7 +439,7 @@ private fun StickerSourceCard(
 					Icon(
 						painter = painterResource(R.drawable.ic_refresh),
 						contentDescription = stringResource(R.string.reload_sticker_pack_button),
-						tint = AppTheme.colors.onSurfaceVariant,
+						tint = AppTheme.colors.textMuted,
 					)
 				}
 			}
@@ -485,7 +502,7 @@ private fun PackTile(pack: PackSummary, onClick: () -> Unit, modifier: Modifier 
 		modifier = modifier
 			.height(72.dp)
 			.clip(RoundedCornerShape(16.dp))
-			.background(AppTheme.colors.surfaceVariant)
+			.background(AppTheme.colors.placeholder)
 			.clickable(onClick = onClick)
 			.padding(horizontal = 6.dp, vertical = 8.dp),
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -503,7 +520,7 @@ private fun PackTile(pack: PackSummary, onClick: () -> Unit, modifier: Modifier 
 		Text(
 			text = stringResource(R.string.gallery_pack_sticker_count, pack.stickerCount),
 			style = AppTheme.typography.labelMedium,
-			color = AppTheme.colors.onSurfaceVariant,
+			color = AppTheme.colors.textMuted,
 		)
 	}
 }
@@ -526,7 +543,7 @@ private fun GallerySectionHeader(text: String, onClick: () -> Unit) {
 		Icon(
 			painter = painterResource(R.drawable.ic_chevron_right),
 			contentDescription = null,
-			tint = AppTheme.colors.onSurfaceVariant,
+			tint = AppTheme.colors.textMuted,
 			modifier = Modifier.padding(start = 4.dp).size(18.dp),
 		)
 	}
@@ -537,7 +554,7 @@ private fun GallerySectionEmptyMessage(text: String) {
 	Text(
 		text = text,
 		style = AppTheme.typography.bodyMedium,
-		color = AppTheme.colors.onSurfaceVariant,
+		color = AppTheme.colors.textMuted,
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(horizontal = 20.dp)
@@ -588,7 +605,7 @@ private fun GalleryStickerCell(
 					if (isSelected) {
 						imageModifier
 							.clip(RoundedCornerShape(10.dp))
-							.border(2.dp, AppTheme.colors.primary, RoundedCornerShape(10.dp))
+							.border(2.dp, AppTheme.colors.accent, RoundedCornerShape(10.dp))
 					} else {
 						imageModifier
 					}
@@ -622,7 +639,7 @@ private fun GalleryStickerCell(
 					.clip(CircleShape)
 					.background(
 						if (isSelected) {
-							AppTheme.colors.primary
+							AppTheme.colors.accent
 						} else {
 							Color.Black.copy(alpha = 0.35f)
 						},
@@ -644,7 +661,7 @@ private fun GalleryStickerCell(
 			CircularProgressIndicator(
 				modifier = Modifier.align(Alignment.Center).size(24.dp),
 				strokeWidth = 2.dp,
-				color = AppTheme.colors.primary,
+				color = AppTheme.colors.accent,
 			)
 		}
 	}
@@ -672,13 +689,13 @@ private fun GalleryAddPhotoCell(onClick: () -> Unit, enabled: Boolean) {
 			modifier = Modifier
 				.size(40.dp)
 				.clip(CircleShape)
-				.background(AppTheme.colors.surfaceVariant),
+				.background(AppTheme.colors.placeholder),
 			contentAlignment = Alignment.Center,
 		) {
 			Icon(
 				painter = painterResource(R.drawable.ic_add),
 				contentDescription = stringResource(R.string.add_photo_content_description),
-				tint = AppTheme.colors.onSurfaceVariant,
+				tint = AppTheme.colors.textMuted,
 				modifier = Modifier.size(20.dp),
 			)
 		}
@@ -695,13 +712,13 @@ private fun GalleryLoadingCell() {
 			.padding(4.dp)
 			.aspectRatio(1f)
 			.clip(RoundedCornerShape(10.dp))
-			.background(AppTheme.colors.surfaceVariant),
+			.background(AppTheme.colors.placeholder),
 		contentAlignment = Alignment.Center,
 	) {
 		CircularProgressIndicator(
 			modifier = Modifier.size(24.dp),
 			strokeWidth = 2.dp,
-			color = AppTheme.colors.primary,
+			color = AppTheme.colors.accent,
 		)
 	}
 }
@@ -731,6 +748,10 @@ private fun StickerPreviewSheet(
 	ModalBottomSheet(
 		onDismissRequest = onDismiss,
 		sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+		containerColor = AppTheme.colors.surface,
+		contentColor = AppTheme.colors.onSurface,
+		scrimColor = AppTheme.colors.scrim,
+		dragHandle = { BottomSheetDefaults.DragHandle(color = AppTheme.colors.textMuted.copy(alpha = 0.4f)) },
 	) {
 		Box(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 20.dp)) {
 			Column(
@@ -741,7 +762,7 @@ private fun StickerPreviewSheet(
 					text = StickerNames.prettifyPackName(current.parentFile?.name.orEmpty()),
 					style = AppTheme.typography.titleMedium,
 					fontWeight = FontWeight.Bold,
-					color = AppTheme.colors.primary,
+					color = AppTheme.colors.accent,
 					maxLines = 1,
 					overflow = TextOverflow.Ellipsis,
 					modifier = Modifier.padding(horizontal = 48.dp),
@@ -750,7 +771,7 @@ private fun StickerPreviewSheet(
 					Text(
 						text = StickerNames.trim(current.name),
 						style = AppTheme.typography.bodySmall,
-						color = AppTheme.colors.onSurfaceVariant,
+						color = AppTheme.colors.textMuted,
 						maxLines = 1,
 						overflow = TextOverflow.Ellipsis,
 						modifier = Modifier.weight(1f, fill = false),
@@ -760,7 +781,7 @@ private fun StickerPreviewSheet(
 							CircularProgressIndicator(
 								modifier = Modifier.size(16.dp),
 								strokeWidth = 2.dp,
-								color = AppTheme.colors.primary,
+								color = AppTheme.colors.accent,
 							)
 						}
 					} else {
@@ -768,7 +789,7 @@ private fun StickerPreviewSheet(
 							Icon(
 								painter = painterResource(R.drawable.ic_edit),
 								contentDescription = stringResource(R.string.rename_sticker_button),
-								tint = AppTheme.colors.onSurfaceVariant,
+								tint = AppTheme.colors.textMuted,
 								modifier = Modifier.size(16.dp),
 							)
 						}
@@ -814,13 +835,17 @@ private fun RenameStickerDialog(
 	val isValid = target != null && (target == sticker || !target.exists())
 	AlertDialog(
 		onDismissRequest = onDismiss,
-		title = { Text(stringResource(R.string.rename_sticker_title)) },
+		containerColor = AppTheme.colors.surface,
+		titleContentColor = AppTheme.colors.onSurface,
+		textContentColor = AppTheme.colors.textMuted,
+		title = { Text(stringResource(R.string.rename_sticker_title), style = AppTheme.typography.headlineSmall) },
 		text = {
 			OutlinedTextField(
 				value = name,
 				onValueChange = { name = it },
 				label = { Text(stringResource(R.string.rename_sticker_label)) },
 				singleLine = true,
+				colors = appTextFieldColors(),
 				isError = !isValid,
 				supportingText = if (!isValid) {
 					{ Text(stringResource(R.string.rename_sticker_error)) }
@@ -830,12 +855,12 @@ private fun RenameStickerDialog(
 			)
 		},
 		confirmButton = {
-			TextButton(onClick = { onConfirm(name) }, enabled = isValid) {
+			TextButton(onClick = { onConfirm(name) }, enabled = isValid, colors = appTextButtonColors()) {
 				Text(stringResource(R.string.rename_button))
 			}
 		},
 		dismissButton = {
-			TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel_button)) }
+			TextButton(onClick = onDismiss, colors = appTextButtonColors()) { Text(stringResource(R.string.cancel_button)) }
 		},
 	)
 }
@@ -850,10 +875,13 @@ private fun DeleteConfirmationDialog(
 ) {
 	AlertDialog(
 		onDismissRequest = onDismiss,
-		title = { Text(title) },
+		containerColor = AppTheme.colors.surface,
+		titleContentColor = AppTheme.colors.onSurface,
+		textContentColor = AppTheme.colors.textMuted,
+		title = { Text(title, style = AppTheme.typography.headlineSmall) },
 		text = { Text(message) },
 		confirmButton = {
-			TextButton(onClick = onConfirm) {
+			TextButton(onClick = onConfirm, colors = appTextButtonColors()) {
 				Text(
 					text = stringResource(R.string.delete_button),
 					color = AppTheme.colors.error,
@@ -861,7 +889,7 @@ private fun DeleteConfirmationDialog(
 			}
 		},
 		dismissButton = {
-			TextButton(onClick = onDismiss) {
+			TextButton(onClick = onDismiss, colors = appTextButtonColors()) {
 				Text(stringResource(R.string.cancel_button))
 			}
 		},

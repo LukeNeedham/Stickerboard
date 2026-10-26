@@ -21,10 +21,15 @@
 
 ## Theme
 
-- There is one theme, `AppTheme { }` (`theme/AppTheme.kt`), and the UI reads its values only through `object AppTheme`, never
-  `MaterialTheme`: `AppTheme.colors` and `AppTheme.typography` for the settings pages and everything else, `AppTheme.keyboardColors`
-  for the keyboard. The two stay independent value sets, so restyling the settings pages can never change how the keyboard
-  looks. `MaterialTheme` is only populated by `AppTheme { }`, so that Material components pick up matching defaults.
+- There is one theme, `AppTheme { }` (`theme/AppTheme.kt`), and **there is no `MaterialTheme`**: never call it or read it. The UI reads
+  its values through `object AppTheme`: `AppTheme.colors` (`AppColors`, named by use: `accent`, `textMuted`, `placeholder`, ...),
+  `AppTheme.typography` (`AppTypography`) and `AppTheme.keyboardColors` (`KeyboardColors`, for the keyboard only). The two colour sets
+  stay independent, so restyling the settings pages can never change how the keyboard looks. A new use gets a new name in
+  `AppColors`, not a borrowed slot.
+- Since nothing sets Material's defaults, **every Material component is given its colours**: `Scaffold(containerColor, contentColor)`,
+  `TopAppBarDefaults.topAppBarColors(...)`, `Card`, `ModalBottomSheet`, `AlertDialog`, `Icon(tint)`, `Text(color)`, and the shared
+  `appButtonColors()`, `appTonalButtonColors()`, `appTextButtonColors()` and `appTextFieldColors()` (`theme/`). Text and icons
+  without a colour would be Material's baseline light colours, wrong in dark mode.
 
 ## Shared debug library
 

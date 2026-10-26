@@ -32,6 +32,7 @@ internal fun AppDebugPageContent(
 	Scaffold(
 		modifier = modifier,
 		containerColor = AppTheme.colors.background,
+		contentColor = AppTheme.colors.onBackground,
 		topBar = { SettingsTopBar(title = stringResource(R.string.debug_heading), onBack = onBack) },
 	) { innerPadding ->
 		Column(
