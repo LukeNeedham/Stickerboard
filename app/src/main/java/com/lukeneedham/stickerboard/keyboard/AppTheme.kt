@@ -47,7 +47,7 @@ internal object AppThemeConstants {
 val LocalAppTheme = staticCompositionLocalOf { AppThemeConstants.LightColors }
 
 /** Provides [LocalAppTheme], light/dark aware. Installed at the root of both the keyboard IME's own
- * UI ([KeyboardView]) and the settings app's UI ([com.lukeneedham.stickerboard.StickerBoardApp]). */
+ * UI ([KeyboardView]) and the settings app's UI ([com.lukeneedham.stickerboard.Root]). */
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
 	val colors = if (isSystemInDarkTheme()) AppThemeConstants.DarkColors else AppThemeConstants.LightColors

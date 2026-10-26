@@ -24,9 +24,9 @@
 - Logging, crash capture and the Debug / Logs / Crashes pages come from `com.lukeneedham:common`
   (source in `LukeNeedham/ci-workflows`, `common/`; docs in its `docs/using-the-library.md`). The
   maven repo is declared in `settings.gradle`; the version is in `app/build.gradle.kts`.
-- `StickerBoardApplication.onCreate` calls `DebugKit.init(DebugKitConfig(enabled = BuildConfig.DEBUG))`
+- `App.onCreate` calls `DebugKit.init(DebugKitConfig(enabled = BuildConfig.DEBUG))`
   first, so the non-debuggable `perf` build has the debug UI off (crashes are still saved).
-- `StickerBoardApp` wraps the UI in `ProvideDebugSettings` (the library's single provider of debug composition
+- `Root` (called only by `MainActivity`) wraps the UI in `ProvideDebugSettings` (the library's single provider of debug composition
   locals). Keep it wrapped so a debug setting added to the library later reaches every screen; read them through
   `LocalDebugSettings` / `LocalAnimationSpeed`.
 - Log with `Logger.d/i/w/e(msg, throwable)` from `com.lukeneedham.common.logger`; never `Log`,
@@ -35,7 +35,7 @@
   only); it has a card that opens the shared library's page (`Route.Debug`: animation speed, links to Logs and Crashes). The library's
   page shows only the library's things and has no slot for anything else, so add app-specific debug tools to `AppDebugPage`, never to the library's page.
 - Animation durations go through `LocalAnimationSpeed.current.scale(ms)` (see the page slide in
-  `StickerBoardApp`) so the Debug page's animation speed applies.
+  `AppNavigation`) so the Debug page's animation speed applies.
 
 <!-- ci-workflows:begin (managed by LukeNeedham/ci-workflows, do not edit) -->
 - `.claude/skills/lukeneedham-conventions` and the callers `trigger_on_pull_request.yml`, `build_main.yml`, `delete_prereleases.yml`, `release.yml` in `.github/workflows/` are kept in sync from
