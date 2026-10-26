@@ -22,7 +22,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import coil.imageLoader
 import com.lukeneedham.common.logger.Logger
-import com.lukeneedham.stickerboard.keyboard.AppThemeConstants
+import com.lukeneedham.stickerboard.theme.AppThemeConstants
 import com.lukeneedham.stickerboard.keyboard.KeyboardDataSource
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel
 import com.lukeneedham.stickerboard.keyboard.KeyboardModel.Companion.RECENT_PACK_NAME

@@ -2,7 +2,6 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import androidx.compose.ui.tooling.preview.Preview
 import android.app.Activity
 import android.content.Intent

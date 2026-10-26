@@ -2,7 +2,6 @@
 
 package com.lukeneedham.stickerboard.gallery
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerFiles
 import com.lukeneedham.stickerboard.utilities.StickerMedia

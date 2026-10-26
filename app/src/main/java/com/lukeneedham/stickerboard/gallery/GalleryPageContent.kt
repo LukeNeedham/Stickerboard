@@ -4,7 +4,7 @@
 
 package com.lukeneedham.stickerboard.gallery
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerFiles
 import com.lukeneedham.stickerboard.utilities.StickerMedia
@@ -872,7 +872,7 @@ private fun DeleteConfirmationDialog(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		GalleryPageContent(
 			items = listOf(
 				BoardItem.Header("Cats", "Cats"),

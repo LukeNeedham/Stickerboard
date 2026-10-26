@@ -2,7 +2,6 @@
 
 package com.lukeneedham.stickerboard.share
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri

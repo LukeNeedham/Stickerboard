@@ -4,7 +4,7 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import android.app.Activity
 import android.content.Intent
@@ -239,7 +239,7 @@ private fun OnboardingHeading(text: String) {
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		OnboardingPageContent(
 			state = OnboardingUiState(keyboardEnabled = false, isImporting = false, loadedStickerCount = null),
 			onEnableKeyboard = {},

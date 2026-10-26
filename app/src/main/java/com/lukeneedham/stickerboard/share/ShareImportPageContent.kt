@@ -4,7 +4,7 @@
 
 package com.lukeneedham.stickerboard.share
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
@@ -172,7 +172,7 @@ private fun NewPackRow(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		ShareImportPageContent(
 			imageUris = emptyList(),
 			packNames = listOf("Cats", "Memes"),

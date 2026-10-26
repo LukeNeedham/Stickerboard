@@ -2,7 +2,7 @@ package com.lukeneedham.stickerboard.screenshot
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import com.lukeneedham.stickerboard.settings.SettingsPageContent
 import com.lukeneedham.stickerboard.settings.SettingsUiState
 
@@ -10,7 +10,7 @@ import com.lukeneedham.stickerboard.settings.SettingsUiState
 @Preview
 @Composable
 private fun SettingsPageScreenshot() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		SettingsPageContent(
 			state = SettingsUiState(keyboardEnabled = true),
 			onEnableKeyboard = {},

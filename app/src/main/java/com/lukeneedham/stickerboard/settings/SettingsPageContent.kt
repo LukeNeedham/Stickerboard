@@ -2,7 +2,7 @@
 
 package com.lukeneedham.stickerboard.settings
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
@@ -357,7 +357,7 @@ internal fun SmallActionButton(text: String, onClick: () -> Unit, modifier: Modi
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		SettingsPageContent(
 			state = SettingsUiState(keyboardEnabled = true),
 			onEnableKeyboard = {},

@@ -2,9 +2,8 @@ package com.lukeneedham.stickerboard
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import com.lukeneedham.stickerboard.keyboard.AppTheme
 import com.lukeneedham.stickerboard.settings.ProvideAppDebugSettings
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 
 /**
  * The one composable [MainActivity] calls: the theme and providers the UI sits in, then [AppNavigation]. Keep it wrapped
@@ -19,13 +18,11 @@ fun Root(
 	onCancelShareImport: () -> Unit,
 ) {
 	AppTheme {
-		StickerBoardSettingsTheme {
-			ProvideAppDebugSettings {
-				AppNavigation(
-					sharedImageUris = sharedImageUris,
-					onCancelShareImport = onCancelShareImport,
-				)
-			}
+		ProvideAppDebugSettings {
+			AppNavigation(
+				sharedImageUris = sharedImageUris,
+				onCancelShareImport = onCancelShareImport,
+			)
 		}
 	}
 }

@@ -2,7 +2,6 @@
 
 package com.lukeneedham.stickerboard.settings
 
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
 import androidx.compose.ui.tooling.preview.Preview
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable

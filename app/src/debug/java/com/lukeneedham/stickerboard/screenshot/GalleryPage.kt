@@ -2,7 +2,7 @@ package com.lukeneedham.stickerboard.screenshot
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import com.lukeneedham.stickerboard.gallery.GalleryPageContent
 import com.lukeneedham.stickerboard.model.BoardItem
 
@@ -10,7 +10,7 @@ import com.lukeneedham.stickerboard.model.BoardItem
 @Preview
 @Composable
 private fun GalleryPageScreenshot() {
-	StickerBoardSettingsTheme {
+	AppTheme {
 		GalleryPageContent(
 			items = listOf(
 				BoardItem.Header("Cats", "Cats"),

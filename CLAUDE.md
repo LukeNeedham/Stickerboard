@@ -19,6 +19,12 @@
 - The APK is built to the standard path every app uses, `app/build/outputs/apk/debug/app-debug.apk` (see
   `archivesBaseName` in `app/build.gradle.kts`): the shared workflow expects exactly that.
 
+## Theme
+
+- There is one theme, `AppTheme { }` (`theme/AppTheme.kt`). It provides the keyboard colours (read with `AppTheme.colors`)
+  and the Material 3 theme of the settings pages. The two stay independent value sets, so restyling the settings pages can
+  never change how the keyboard looks. The pages still read `MaterialTheme` for the Material 3 values.
+
 ## Shared debug library
 
 - Logging, crash capture and the Debug / Logs / Crashes pages come from `com.lukeneedham:common`
