@@ -1,84 +1,62 @@
+<!-- Generated from readme.yml by LukeNeedham/ci-workflows (docs/readme.md). Edit readme.yml, not this file. -->
+<p align="center">
+  <img src="app-icon.png" width="128" alt="StickerBoard icon">
+</p>
 
 # StickerBoard
 
-StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any
-app - built from a folder of images you choose yourself. It started life as a fork of
-[EweSticker](https://github.com/FredHappyface/Android.EweSticker).
+An Android keyboard for sending your own stickers, GIFs and short videos in any app.
 
-## Features
+## Description
 
-- **Send stickers anywhere**: StickerBoard works as a normal Android keyboard, so it can send stickers directly into any app's text field. Where an app doesn't support that directly, it automatically falls back to sending a PNG version, then to the system share sheet, so a sticker almost always gets through.
+StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any app. 
 
-- **Wide format support**: gif, png, webp, jpeg, heif and svg images, plus 3gpp, mp4, mkv and webm video.
+Recently used stickers get their own section, a built-in search finds stickers by file or pack name, keyboard is fully resizable, and a long press previews a sticker before it is sent. The gallery in the app browses every pack and adds photos from your gallery into any of them.
 
-- **Your own sticker folder**: point StickerBoard at any folder on your device (chosen with the system folder picker) and it copies the contents in, with every sub-folder becoming a sticker pack. Sub-folders can be nested arbitrarily deep - a pack's name is built from the chain of folder names leading to it, e.g. `A/B/C` becomes pack "A-B-C". Supports up to 4096 stickers in total, 128 per pack.
+## Screenshots
 
-- **Stays in sync with your folder**: pull down on the keyboard, or on the in-app Stickers page, to re-scan your source folder for changes - only what's actually changed gets re-copied.
+<img src="docs/screenshots/01-OnboardingPage.png" width="240" alt="Onboarding Page">
+<img src="docs/screenshots/02-SettingsPage.png" width="240" alt="Settings Page">
+<img src="docs/screenshots/03-GalleryPage.png" width="240" alt="Gallery Page">
+<img src="docs/screenshots/04-ShareImportPage.png" width="240" alt="Share Import Page">
 
-- **Sticker gallery**: a dedicated screen in the app to browse every pack, see stats on your sticker collection, jump to or change your source folder, and add photos straight from your device's gallery into any pack.
+## Getting started as a user
 
-- **Recently used**: stickers you've sent recently automatically appear in their own section at the top of the keyboard.
+1. Install the latest build from the [AppHub](https://www.lukeneedham.com/apphub) app, or download the APK from the [Releases](https://github.com/LukeNeedham/Stickerboard/releases) page.
+2. {'Open the app and follow the setup': 'enable the keyboard, then choose the folder your stickers are in.'}
+3. Switch to StickerBoard from any text field and tap a sticker to send it.
 
-- **Built-in search**: switch to a dedicated search view, with its own compact keyboard, to find stickers by file or pack name as you type.
+Requires Android 8.0 (API 26) or newer.
 
-- **Pinch to zoom**: pinch or spread on the keyboard to change how many stickers are shown per row.
+## Getting started as a developer
 
-- **Resizable keyboard**: drag the handle at the top of the keyboard to make it taller or shorter - your preferred height is remembered.
+Requirements: JDK 17 and the Android SDK (platform 36), for example through Android Studio.
 
-- **Long-press preview**: long-press any sticker to see an enlarged preview before sending it.
+```
+git clone https://github.com/LukeNeedham/Stickerboard.git
+cd Stickerboard
+./gradlew assembleDebug    # the APK is in app/build/outputs/apk/debug/
+./gradlew test             # unit tests
+```
 
-- **Guided first-run setup**: a short onboarding flow walks new users through enabling the keyboard and choosing a sticker folder, with live progress feedback at every step.
+Every pull request is built by CI, which comments on it with a link to install the APK.
 
-- **Try it out**: a test field on the Settings screen lets you send a sticker and see the result immediately, without needing to leave the app or find another text field.
+Like all my apps, it follows the shared architecture and conventions (single activity, Jetpack Compose, Navigation 3, MVVM with every page split into a `Page` and a `PageContent`, Koin): see [ci-workflows](https://github.com/LukeNeedham/ci-workflows/blob/main/docs/new-app.md).
 
-- **Translated UI**: available in Arabic, Bengali, German, Spanish, French, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Urdu, and both Simplified and Traditional Chinese, alongside English.
+This app started life as a fork of [EweSticker](https://github.com/FredHappyface/Android.EweSticker).
 
-- **Follows your system theme**: a Material 3 UI that adapts to your device's light or dark theme.
-
-## Documentation
-
-A high-level overview of how the documentation is organized will help you know
-where to look for certain things:
-
-- [Tutorials](/documentation/tutorials) take you by the hand through a series of steps to get
-  started using the software. Start here if you're new.
-- The [Help](/documentation/help) guide provides a starting point and outlines common issues that you
-  may have.
-
-## Installation
-
-Every pull request build publishes a debug APK as a GitHub Release. Grab the latest one from
-the Releases page:
-
-[<img src="readme-assets/badges/badge_github.png" alt="Get it on GitHub" height="80">](../../releases)
-
-
-
-## Development
-
-### Gradle tasks
-
-- `./gradlew assembleDebug`: build a debug APK
-- `./gradlew assemblePerf`: build a non-debuggable, debug-signed APK for judging performance (see
-  [Performance testing](#performance-testing))
-- `./gradlew ktlintCheck`: run ktlint over the codebase
-- `./gradlew ktlintFormat`: auto-format the codebase with ktlint
-
-### Performance testing
-
-Debug builds are much slower than release builds at things like scrolling Compose lists, so don't
-judge scroll smoothness from a debug APK. The `perf` build type is non-debuggable (and signed with
-the debug key, so it installs over a debug build), which makes it representative.
-
-Pull request CI builds only the debug APK. To get a perf APK, build it locally with
-`./gradlew assemblePerf`.
-
-The perf build skips `lintVital*`, which would otherwise fail it on existing lint errors.
-
-### Code style
+`./gradlew assemblePerf` builds a non-debuggable, debug-signed APK for judging performance (debug builds are much
+slower at things like scrolling Compose lists); pull request CI builds only the debug APK, so build it locally.
+`./gradlew ktlintCheck` and `./gradlew ktlintFormat` check and format the code.
 
 Code style is enforced with [ktlint](https://github.com/JLLeitschuh/ktlint-gradle), and
-[pre-commit](https://pre-commit.com/) hooks are configured in `.pre-commit-config.yaml` to catch
-common issues (trailing whitespace, oversized images, merge conflict markers, etc.) before a
-commit is made.
+[pre-commit](https://pre-commit.com/) hooks in `.pre-commit-config.yaml` catch trailing whitespace, oversized
+images and merge conflict markers before a commit is made.
 
+## Contributing
+
+Branch from `main`, make the change, and open a pull request. CI must be green before it is merged.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

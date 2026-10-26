@@ -1,0 +1,27 @@
+# The data of this app's README.md. CI renders README.md from it (docs/readme.md in LukeNeedham/ci-workflows):
+# edit this file, never README.md.
+
+name: StickerBoard
+tagline: An Android keyboard for sending your own stickers, GIFs and short videos in any app.
+
+description: |
+  StickerBoard is an Android keyboard for sending your own stickers, GIFs and short videos in any app. 
+
+  Recently used stickers get their own section, a built-in search finds stickers by file or pack name, keyboard is fully resizable, and a long press previews a sticker before it is sent. The gallery in the app browses every pack and adds photos from your gallery into any of them.
+
+user:
+  steps:
+    - Open the app and follow the setup: enable the keyboard, then choose the folder your stickers are in.
+    - Switch to StickerBoard from any text field and tap a sticker to send it.
+
+developer:
+  notes: |
+    This app started life as a fork of [EweSticker](https://github.com/FredHappyface/Android.EweSticker).
+
+    `./gradlew assemblePerf` builds a non-debuggable, debug-signed APK for judging performance (debug builds are much
+    slower at things like scrolling Compose lists); pull request CI builds only the debug APK, so build it locally.
+    `./gradlew ktlintCheck` and `./gradlew ktlintFormat` check and format the code.
+
+    Code style is enforced with [ktlint](https://github.com/JLLeitschuh/ktlint-gradle), and
+    [pre-commit](https://pre-commit.com/) hooks in `.pre-commit-config.yaml` catch trailing whitespace, oversized
+    images and merge conflict markers before a commit is made.

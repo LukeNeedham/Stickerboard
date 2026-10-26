@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-/** Owns [SettingsPage]'s state - the try-it-out media received so far, and whether the keyboard is
+/** Owns [SettingsPageContent]'s state - the try-it-out media received so far, and whether the keyboard is
  * currently enabled in system settings. Enabling the keyboard and navigating elsewhere are one-off
- * platform actions with no state of their own, so they stay as callbacks on [SettingsRoute]
+ * platform actions with no state of their own, so they stay as callbacks on [SettingsPage]
  * instead. */
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 	private val _uiState = MutableStateFlow(

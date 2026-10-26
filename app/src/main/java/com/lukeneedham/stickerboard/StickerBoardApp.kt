@@ -1,5 +1,6 @@
 package com.lukeneedham.stickerboard
 
+import com.lukeneedham.stickerboard.navigation.Route
 import com.lukeneedham.stickerboard.utilities.SetupStatus
 import android.content.Context
 import android.net.Uri
@@ -25,14 +26,13 @@ import com.lukeneedham.common.ui.LocalAnimationSpeed
 import com.lukeneedham.common.ui.LogsPage
 import com.lukeneedham.stickerboard.settings.ProvideAppDebugSettings
 import com.lukeneedham.stickerboard.data.AppPreferences
-import com.lukeneedham.stickerboard.debug.DebugRoute
-import com.lukeneedham.stickerboard.gallery.GalleryRoute
+import com.lukeneedham.stickerboard.debug.AppDebugPage
+import com.lukeneedham.stickerboard.gallery.GalleryPage
 import com.lukeneedham.stickerboard.keyboard.AppTheme
-import com.lukeneedham.stickerboard.navigation.Route
-import com.lukeneedham.stickerboard.onboarding.OnboardingRoute
-import com.lukeneedham.stickerboard.settings.SettingsRoute
+import com.lukeneedham.stickerboard.onboarding.OnboardingPage
+import com.lukeneedham.stickerboard.settings.SettingsPage
 import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
-import com.lukeneedham.stickerboard.share.ShareImportRoute
+import com.lukeneedham.stickerboard.share.ShareImportPage
 
 private object StickerBoardAppConstants {
 	const val SLIDE_DURATION_MS = 300
@@ -88,7 +88,7 @@ fun StickerBoardApp(
 					predictivePopTransitionSpec = { slideBackward(slideSpec) },
 					entryProvider = entryProvider {
 						entry<Route.Onboarding> {
-							OnboardingRoute(
+							OnboardingPage(
 								onFinished = {
 									backStack.clear()
 									backStack.add(Route.Settings)
@@ -96,20 +96,20 @@ fun StickerBoardApp(
 							)
 						}
 						entry<Route.Settings> {
-							SettingsRoute(
+							SettingsPage(
 								onViewStickers = { backStack.add(Route.Gallery()) },
-								onOpenDebug = { backStack.add(Route.Debug) },
+								onOpenDebug = { backStack.add(Route.AppDebug) },
 							)
 						}
 						entry<Route.Gallery> { route ->
-							GalleryRoute(
+							GalleryPage(
 								onBack = { backStack.removeLastOrNull() },
 								pendingImportPackName = route.pendingImportPackName,
 								pendingImportUris = route.pendingImportUris,
 							)
 						}
 						entry<Route.ShareImport> { route ->
-							ShareImportRoute(
+							ShareImportPage(
 								imageUris = route.imageUris.map { Uri.parse(it) },
 								onCancel = onCancelShareImport,
 								onPackChosen = { packName ->
@@ -131,14 +131,14 @@ fun StickerBoardApp(
 								},
 							)
 						}
-						entry<Route.Debug> {
-							DebugRoute(
+						entry<Route.AppDebug> {
+							AppDebugPage(
 								onBack = { backStack.removeLastOrNull() },
-								onOpenSdkDebug = { backStack.add(Route.SdkDebug) },
+								onOpenSdkDebug = { backStack.add(Route.Debug) },
 								onOpenOnboarding = { backStack.add(Route.Onboarding) },
 							)
 						}
-						entry<Route.SdkDebug> {
+						entry<Route.Debug> {
 							DebugPage(
 								onBack = { backStack.removeLastOrNull() },
 								onOpenLogs = { backStack.add(Route.Logs) },

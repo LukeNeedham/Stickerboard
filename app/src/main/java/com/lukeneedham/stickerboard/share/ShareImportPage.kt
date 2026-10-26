@@ -2,6 +2,8 @@
 
 package com.lukeneedham.stickerboard.share
 
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import androidx.compose.ui.tooling.preview.Preview
 import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -39,140 +41,16 @@ import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.FilledActionButton
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
+import com.lukeneedham.stickerboard.navigation.Route
 
 /**
- * Shown when another app shares image(s) into StickerBoard: a small preview of what's being
- * imported, then either a list of existing sticker packs to add them to, or a field to name a new
- * one. Picking a pack (or naming a new one) doesn't do any importing here - it immediately hands the
- * choice back to the caller, which navigates to the Stickers page and runs the actual copy there,
- * showing its own loading indicator while it does.
- */
-@Composable
-fun ShareImportPage(
-	imageUris: List<Uri>,
-	packNames: List<String>,
-	onBack: () -> Unit,
-	onPackSelected: (String) -> Unit,
-	modifier: Modifier = Modifier,
-) {
-	var newPackName by remember { mutableStateOf("") }
-
-	Scaffold(
-		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
-		topBar = {
-			SettingsTopBar(title = stringResource(R.string.share_import_heading), onBack = onBack)
-		},
-	) { innerPadding ->
-		Column(
-			modifier = Modifier
-				.padding(innerPadding)
-				.fillMaxSize()
-				.padding(horizontal = 20.dp, vertical = 8.dp),
-			verticalArrangement = Arrangement.spacedBy(16.dp),
-		) {
-			SharePreviewRow(imageUris)
-
-			Text(
-				text = stringResource(R.string.share_import_prompt),
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
-			)
-
-			NewPackRow(
-				packName = newPackName,
-				onPackNameChange = { newPackName = it },
-				onAdd = {
-					val trimmed = newPackName.trim()
-					if (trimmed.isNotEmpty()) onPackSelected(trimmed)
-				},
-			)
-
-			if (packNames.isNotEmpty()) {
-				LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-					items(packNames) { packName ->
-						PackRow(packName = packName, onClick = { onPackSelected(packName) })
-					}
-				}
-			}
-		}
-	}
-}
-
-/** A row of small thumbnails of the images being imported, capped so a large multi-share doesn't
- * blow out the layout. */
-@Composable
-private fun SharePreviewRow(imageUris: List<Uri>, modifier: Modifier = Modifier) {
-	Row(
-		horizontalArrangement = Arrangement.spacedBy(8.dp),
-		modifier = modifier.fillMaxWidth(),
-	) {
-		imageUris.take(4).forEach { uri ->
-			AsyncImage(
-				model = uri,
-				contentDescription = null,
-				modifier = Modifier.size(64.dp).clip(RoundedCornerShape(12.dp)),
-			)
-		}
-	}
-}
-
-@Composable
-private fun PackRow(packName: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-	SettingsCard(modifier = modifier.clickable(onClick = onClick)) {
-		Row(verticalAlignment = Alignment.CenterVertically) {
-			Icon(
-				painter = painterResource(R.drawable.ic_folder),
-				contentDescription = null,
-				tint = MaterialTheme.colorScheme.primary,
-				modifier = Modifier.size(22.dp),
-			)
-			Text(
-				text = StickerNames.prettifyPackName(packName),
-				style = MaterialTheme.typography.titleMedium,
-				color = MaterialTheme.colorScheme.onSurface,
-				modifier = Modifier.padding(start = 10.dp),
-			)
-		}
-	}
-}
-
-@Composable
-private fun NewPackRow(
-	packName: String,
-	onPackNameChange: (String) -> Unit,
-	onAdd: () -> Unit,
-	modifier: Modifier = Modifier,
-) {
-	Row(
-		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.spacedBy(8.dp),
-		modifier = modifier.fillMaxWidth(),
-	) {
-		OutlinedTextField(
-			value = packName,
-			onValueChange = onPackNameChange,
-			label = { Text(stringResource(R.string.share_import_new_pack_hint)) },
-			singleLine = true,
-			modifier = Modifier.weight(1f),
-		)
-		FilledActionButton(
-			text = stringResource(R.string.share_import_new_pack_button),
-			onClick = onAdd,
-			enabled = packName.isNotBlank(),
-			modifier = Modifier.weight(0.6f),
-		)
-	}
-}
-
-/**
- * Wires [ShareImportPage] up with [ShareImportViewModel] - the nav-host destination reached from
+ * Wires [ShareImportPageContent] up with [ShareImportViewModel] - the nav-host destination reached from
  * [com.lukeneedham.stickerboard.navigation.Route.ShareImport]. Picking a pack calls [onPackChosen]
  * immediately, before anything is actually copied - the caller is expected to navigate to the
  * Stickers page and run the import there. Backing out before picking a pack calls [onCancel] instead.
  */
 @Composable
-fun ShareImportRoute(
+fun ShareImportPage(
 	imageUris: List<Uri>,
 	onCancel: () -> Unit,
 	onPackChosen: (packName: String) -> Unit,
@@ -181,7 +59,7 @@ fun ShareImportRoute(
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-	ShareImportPage(
+	ShareImportPageContent(
 		imageUris = imageUris,
 		packNames = uiState.packNames,
 		onBack = onCancel,

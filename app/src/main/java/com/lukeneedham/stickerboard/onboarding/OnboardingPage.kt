@@ -2,6 +2,8 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
+import com.lukeneedham.stickerboard.settings.StickerBoardSettingsTheme
+import androidx.compose.ui.tooling.preview.Preview
 import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
@@ -48,206 +50,14 @@ import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.TonalActionButton
 import kotlinx.coroutines.launch
 
-private object OnboardingPageConstants {
-	const val PAGE_WELCOME = 0
-
-	const val PAGE_KEYBOARD = 1
-
-	const val PAGE_FOLDER = 2
-
-	const val PAGE_COUNT = 3
-
-	const val LAST_PAGE_INDEX = PAGE_FOLDER
-}
-
-/** Everything the onboarding page needs to render - plain state, matching the rest of the app. */
-data class OnboardingUiState(
-	val keyboardEnabled: Boolean,
-	val isImporting: Boolean,
-	// Null until stickers have been successfully loaded at least once this session.
-	val loadedStickerCount: Int?,
-)
-
 /**
- * Walks first-time users through what StickerBoard is, how to enable it as a keyboard, and how to
- * choose a sticker source directory, before handing off to MainActivity. A page's "next" step is
- * blocked - by disabling the next/finish button, and by simply not including the following page in
- * the pager yet - until that page's requirement (if any) is met.
- */
-@Composable
-fun OnboardingPage(
-	state: OnboardingUiState,
-	onEnableKeyboard: () -> Unit,
-	onChooseDir: () -> Unit,
-	onFinish: () -> Unit,
-	modifier: Modifier = Modifier,
-) {
-	fun isPageRequirementMet(page: Int): Boolean = when (page) {
-		OnboardingPageConstants.PAGE_KEYBOARD -> state.keyboardEnabled
-		OnboardingPageConstants.PAGE_FOLDER -> state.loadedStickerCount != null
-		else -> true
-	}
-
-	// The earliest page whose requirement isn't met yet, capped at the last page - there's nothing
-	// beyond that left to protect. The pager's page count tracks this directly, so a page can't be
-	// swiped to before its predecessor's requirement is met: there's simply no further page yet for
-	// the gesture to move to.
-	fun firstUnmetPage(): Int {
-		for (page in OnboardingPageConstants.PAGE_WELCOME until OnboardingPageConstants.LAST_PAGE_INDEX) {
-			if (!isPageRequirementMet(page)) return page
-		}
-		return OnboardingPageConstants.LAST_PAGE_INDEX
-	}
-
-	val pagerState = rememberPagerState(pageCount = { firstUnmetPage() + 1 })
-	val scope = rememberCoroutineScope()
-
-	Column(
-		modifier
-			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.background)
-			// The only page without a Scaffold/TopAppBar of its own to absorb system bar insets -
-			// every other page gets this for free from Scaffold's default contentWindowInsets.
-			.windowInsetsPadding(WindowInsets.systemBars),
-	) {
-		HorizontalPager(state = pagerState, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
-			when (page) {
-				OnboardingPageConstants.PAGE_KEYBOARD -> OnboardingKeyboardPage(state.keyboardEnabled, onEnableKeyboard)
-				OnboardingPageConstants.PAGE_FOLDER -> OnboardingFolderPage(state.isImporting, state.loadedStickerCount, onChooseDir)
-				else -> OnboardingWelcomePage()
-			}
-		}
-		Text(
-			text = stringResource(R.string.onboarding_step_label, pagerState.currentPage + 1, OnboardingPageConstants.PAGE_COUNT),
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurfaceVariant,
-			textAlign = TextAlign.Center,
-			modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-		)
-		Row(
-			modifier = Modifier.fillMaxWidth().padding(20.dp),
-			horizontalArrangement = Arrangement.spacedBy(20.dp),
-		) {
-			if (pagerState.currentPage != OnboardingPageConstants.PAGE_WELCOME) {
-				TonalActionButton(
-					text = stringResource(R.string.onboarding_back_button),
-					onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
-					modifier = Modifier.weight(1f),
-				)
-			}
-			FilledActionButton(
-				text = if (pagerState.currentPage == OnboardingPageConstants.LAST_PAGE_INDEX) {
-					stringResource(R.string.onboarding_finish_button)
-				} else {
-					stringResource(R.string.onboarding_next_button)
-				},
-				onClick = {
-					val page = pagerState.currentPage
-					if (page >= OnboardingPageConstants.LAST_PAGE_INDEX) {
-						onFinish()
-					} else {
-						scope.launch { pagerState.animateScrollToPage(page + 1) }
-					}
-				},
-				enabled = isPageRequirementMet(pagerState.currentPage),
-				modifier = Modifier.weight(1f),
-			)
-		}
-	}
-}
-
-@Composable
-private fun OnboardingPageContainer(
-	modifier: Modifier = Modifier,
-	content: @Composable ColumnScope.() -> Unit,
-) {
-	Column(
-		modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
-		content = content,
-	)
-}
-
-@Composable
-private fun OnboardingWelcomePage() {
-	OnboardingPageContainer {
-		SettingsCard {
-			OnboardingHeading(stringResource(R.string.onboarding_welcome_heading))
-			CardBody(stringResource(R.string.onboarding_welcome_text))
-		}
-	}
-}
-
-@Composable
-private fun OnboardingKeyboardPage(keyboardEnabled: Boolean, onEnableKeyboard: () -> Unit) {
-	OnboardingPageContainer {
-		SettingsCard {
-			OnboardingHeading(stringResource(R.string.onboarding_keyboard_heading))
-			CardBody(stringResource(R.string.enable_keyboard_info))
-			FilledActionButton(stringResource(R.string.enable_keyboard_button), onEnableKeyboard)
-			KeyboardStatusIndicator(keyboardEnabled)
-		}
-	}
-}
-
-@Composable
-private fun OnboardingFolderPage(
-	isImporting: Boolean,
-	loadedStickerCount: Int?,
-	onChooseDir: () -> Unit,
-) {
-	OnboardingPageContainer {
-		SettingsCard {
-			OnboardingHeading(stringResource(R.string.onboarding_folder_heading))
-			CardBody(stringResource(R.string.onboarding_folder_text))
-			FilledActionButton(
-				stringResource(R.string.update_sticker_pack_button),
-				onChooseDir,
-				enabled = !isImporting,
-			)
-			if (isImporting) {
-				Row(
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.spacedBy(8.dp),
-				) {
-					CircularProgressIndicator(
-						modifier = Modifier.size(20.dp),
-						strokeWidth = 2.dp,
-						color = MaterialTheme.colorScheme.primary,
-					)
-					Text(
-						text = stringResource(R.string.onboarding_folder_loading),
-						style = MaterialTheme.typography.bodyMedium,
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
-					)
-				}
-			} else if (loadedStickerCount != null) {
-				Text(
-					text = stringResource(R.string.onboarding_folder_loaded, loadedStickerCount),
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.primary,
-				)
-			}
-		}
-	}
-}
-
-@Composable
-private fun OnboardingHeading(text: String) {
-	Text(
-		text = text,
-		style = MaterialTheme.typography.headlineSmall,
-		color = MaterialTheme.colorScheme.primary,
-	)
-}
-
-/**
- * Wires [OnboardingPage] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
+ * Wires [OnboardingPageContent] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
  * intents - the nav-host destination that used to be OnboardingActivity. [onFinished] replaces
  * this destination with the settings page on the shared back stack so the user can never
  * swipe/back their way back into onboarding.
  */
 @Composable
-fun OnboardingRoute(
+fun OnboardingPage(
 	onFinished: () -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: OnboardingViewModel = viewModel(),
@@ -265,7 +75,7 @@ fun OnboardingRoute(
 		}
 	}
 
-	OnboardingPage(
+	OnboardingPageContent(
 		state = uiState,
 		onEnableKeyboard = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
 		onChooseDir = {

@@ -175,7 +175,7 @@ class KeyboardModel(context: Context) {
 		return result
 	}
 
-	// The same reload GalleryRoute's refresh action performs on the Stickers page, sharing its
+	// The same reload GalleryPage's refresh action performs on the Stickers page, sharing its
 	// logic - so both mean exactly the same thing. A no-op when no source directory is set, or its
 	// contents still match what's already imported.
 	suspend fun refreshStickers() {

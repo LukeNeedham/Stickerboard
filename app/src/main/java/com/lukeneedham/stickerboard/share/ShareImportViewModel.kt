@@ -7,9 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
 
-/** Everything [ShareImportPage] needs to render: the existing packs to choose from. */
-data class ShareImportUiState(val packNames: List<String> = emptyList())
-
 /**
  * Owns the "choose a sticker pack to add shared images to" flow reached when another app shares
  * image(s) into StickerBoard: lists the packs already on disk, so the user can add to one of them

@@ -1,0 +1,4 @@
+OnboardingPage
+SettingsPage
+GalleryPage
+ShareImportPage

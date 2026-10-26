@@ -3,7 +3,7 @@ package com.lukeneedham.stickerboard.navigation
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
-/** Every page reachable from [com.lukeneedham.stickerboard.MainActivity]'s single-activity nav host. */
+/** Every page reachable from [com.lukeneedham.stickerboard.MainActivity]'s single-activity nav host: [Onboarding] is `OnboardingPage`, and so on. */
 @Serializable
 sealed interface Route : NavKey {
 	@Serializable
@@ -27,13 +27,13 @@ sealed interface Route : NavKey {
 	@Serializable
 	data class ShareImport(val imageUris: List<String>) : Route
 
-	/** The app's own debug page, which opens [SdkDebug]. */
+	/** The app's own debug page, which opens [Debug]. */
 	@Serializable
-	data object Debug : Route
+	data object AppDebug : Route
 
 	/** The shared debug library's page (animation speed, links to its logs and crashes pages). */
 	@Serializable
-	data object SdkDebug : Route
+	data object Debug : Route
 
 	@Serializable
 	data object Logs : Route
