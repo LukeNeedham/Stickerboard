@@ -2,6 +2,7 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.ui.tooling.preview.Preview
 import android.app.Activity
 import android.content.Intent
@@ -26,7 +27,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

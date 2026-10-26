@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,7 +31,7 @@ internal fun AppDebugPageContent(
 ) {
 	Scaffold(
 		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
+		containerColor = AppTheme.colors.background,
 		topBar = { SettingsTopBar(title = stringResource(R.string.debug_heading), onBack = onBack) },
 	) { innerPadding ->
 		Column(

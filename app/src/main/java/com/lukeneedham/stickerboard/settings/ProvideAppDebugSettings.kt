@@ -1,6 +1,6 @@
 package com.lukeneedham.stickerboard.settings
 
-import androidx.compose.material3.MaterialTheme
+import com.lukeneedham.stickerboard.theme.AppTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontFamily
 import com.lukeneedham.common.ui.DebugTheme
@@ -12,7 +12,7 @@ import com.lukeneedham.common.ui.ProvideDebugSettings
  */
 @Composable
 fun ProvideAppDebugSettings(content: @Composable () -> Unit) {
-	val colors = MaterialTheme.colorScheme
+	val colors = AppTheme.colors
 	ProvideDebugSettings(
 		theme = DebugTheme(
 			background = colors.background,
@@ -24,7 +24,7 @@ fun ProvideAppDebugSettings(content: @Composable () -> Unit) {
 			outline = colors.outline,
 			error = colors.error,
 			warning = colors.tertiary,
-			fontFamily = MaterialTheme.typography.bodyMedium.fontFamily ?: FontFamily.Default,
+			fontFamily = AppTheme.typography.bodyMedium.fontFamily ?: FontFamily.Default,
 		),
 		content = content,
 	)

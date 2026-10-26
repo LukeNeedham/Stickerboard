@@ -29,7 +29,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -101,7 +100,7 @@ internal fun OnboardingPageContent(
 	Column(
 		modifier
 			.fillMaxSize()
-			.background(MaterialTheme.colorScheme.background)
+			.background(AppTheme.colors.background)
 			// The only page without a Scaffold/TopAppBar of its own to absorb system bar insets -
 			// every other page gets this for free from Scaffold's default contentWindowInsets.
 			.windowInsetsPadding(WindowInsets.systemBars),
@@ -115,8 +114,8 @@ internal fun OnboardingPageContent(
 		}
 		Text(
 			text = stringResource(R.string.onboarding_step_label, pagerState.currentPage + 1, OnboardingPageConstants.PAGE_COUNT),
-			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			style = AppTheme.typography.bodyMedium,
+			color = AppTheme.colors.onSurfaceVariant,
 			textAlign = TextAlign.Center,
 			modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
 		)
@@ -208,19 +207,19 @@ private fun OnboardingFolderPage(
 					CircularProgressIndicator(
 						modifier = Modifier.size(20.dp),
 						strokeWidth = 2.dp,
-						color = MaterialTheme.colorScheme.primary,
+						color = AppTheme.colors.primary,
 					)
 					Text(
 						text = stringResource(R.string.onboarding_folder_loading),
-						style = MaterialTheme.typography.bodyMedium,
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
+						style = AppTheme.typography.bodyMedium,
+						color = AppTheme.colors.onSurfaceVariant,
 					)
 				}
 			} else if (loadedStickerCount != null) {
 				Text(
 					text = stringResource(R.string.onboarding_folder_loaded, loadedStickerCount),
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.primary,
+					style = AppTheme.typography.bodyMedium,
+					color = AppTheme.colors.primary,
 				)
 			}
 		}
@@ -231,8 +230,8 @@ private fun OnboardingFolderPage(
 private fun OnboardingHeading(text: String) {
 	Text(
 		text = text,
-		style = MaterialTheme.typography.headlineSmall,
-		color = MaterialTheme.colorScheme.primary,
+		style = AppTheme.typography.headlineSmall,
+		color = AppTheme.colors.primary,
 	)
 }
 

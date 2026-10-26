@@ -33,7 +33,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -79,7 +78,7 @@ internal fun SettingsPageContent(
 ) {
 	Scaffold(
 		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
+		containerColor = AppTheme.colors.background,
 		topBar = {
 			TopAppBar(
 				title = {
@@ -89,8 +88,8 @@ internal fun SettingsPageContent(
 					)
 				},
 				colors = TopAppBarDefaults.topAppBarColors(
-					containerColor = MaterialTheme.colorScheme.background,
-					titleContentColor = MaterialTheme.colorScheme.onBackground,
+					containerColor = AppTheme.colors.background,
+					titleContentColor = AppTheme.colors.onBackground,
 				),
 			)
 		},
@@ -123,7 +122,7 @@ internal fun SettingsCard(
 	Card(
 		modifier = modifier.fillMaxWidth(),
 		shape = RoundedCornerShape(24.dp),
-		colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+		colors = CardDefaults.cardColors(containerColor = AppTheme.colors.surface),
 		elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
 	) {
 		Column(
@@ -140,14 +139,14 @@ internal fun CardHeading(iconRes: Int, text: String) {
 		Image(
 			painter = painterResource(iconRes),
 			contentDescription = null,
-			colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+			colorFilter = ColorFilter.tint(AppTheme.colors.primary),
 			modifier = Modifier.size(22.dp),
 		)
 		Spacer(Modifier.width(10.dp))
 		Text(
 			text = text,
-			style = MaterialTheme.typography.titleMedium,
-			color = MaterialTheme.colorScheme.onSurface,
+			style = AppTheme.typography.titleMedium,
+			color = AppTheme.colors.onSurface,
 		)
 	}
 }
@@ -156,8 +155,8 @@ internal fun CardHeading(iconRes: Int, text: String) {
 internal fun CardBody(text: String) {
 	Text(
 		text = text,
-		style = MaterialTheme.typography.bodyMedium,
-		color = MaterialTheme.colorScheme.onSurfaceVariant,
+		style = AppTheme.typography.bodyMedium,
+		color = AppTheme.colors.onSurfaceVariant,
 	)
 }
 
@@ -185,7 +184,7 @@ private fun EnableKeyboardCard(keyboardEnabled: Boolean, onEnableKeyboard: () ->
 /** Live readout of whether the StickerBoard keyboard is currently enabled in system settings. */
 @Composable
 internal fun KeyboardStatusIndicator(enabled: Boolean) {
-	val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+	val color = if (enabled) AppTheme.colors.primary else AppTheme.colors.error
 	val label = stringResource(
 		if (enabled) {
 			R.string.keyboard_status_enabled
@@ -198,7 +197,7 @@ internal fun KeyboardStatusIndicator(enabled: Boolean) {
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 	) {
 		Box(Modifier.size(10.dp).background(color, CircleShape))
-		Text(text = label, style = MaterialTheme.typography.bodyMedium, color = color)
+		Text(text = label, style = AppTheme.typography.bodyMedium, color = color)
 	}
 }
 
@@ -235,14 +234,14 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 	} else {
 		Box(
 			modifier = boxModifier
-				.background(MaterialTheme.colorScheme.surfaceVariant)
+				.background(AppTheme.colors.surfaceVariant)
 				.padding(vertical = 16.dp),
 			contentAlignment = Alignment.Center,
 		) {
 			Text(
 				text = stringResource(R.string.try_it_out_placeholder_text),
-				style = MaterialTheme.typography.labelSmall,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				style = AppTheme.typography.labelSmall,
+				color = AppTheme.colors.onSurfaceVariant,
 				textAlign = TextAlign.Center,
 				modifier = Modifier.padding(horizontal = 4.dp),
 			)
@@ -254,9 +253,9 @@ private fun TryItOutMediaBox(media: Uri?, modifier: Modifier = Modifier) {
 private fun TryItOutInputField(onMediaReceived: (Uri) -> Unit, modifier: Modifier = Modifier) {
 	val hint = stringResource(R.string.try_it_out_hint)
 	val currentOnMediaReceived by rememberUpdatedState(onMediaReceived)
-	val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
-	val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
-	val backgroundColor = MaterialTheme.colorScheme.surfaceVariant.toArgb()
+	val textColor = AppTheme.colors.onSurface.toArgb()
+	val hintColor = AppTheme.colors.onSurfaceVariant.toArgb()
+	val backgroundColor = AppTheme.colors.surfaceVariant.toArgb()
 	val paddingPx = with(LocalDensity.current) { 16.dp.roundToPx() }
 	AndroidView(
 		modifier = modifier.fillMaxWidth(),
@@ -350,7 +349,7 @@ internal fun SmallActionButton(text: String, onClick: () -> Unit, modifier: Modi
 		contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
 		modifier = modifier,
 	) {
-		Text(text, style = MaterialTheme.typography.labelLarge)
+		Text(text, style = AppTheme.typography.labelLarge)
 	}
 }
 

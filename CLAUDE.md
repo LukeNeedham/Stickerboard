@@ -21,9 +21,10 @@
 
 ## Theme
 
-- There is one theme, `AppTheme { }` (`theme/AppTheme.kt`). It provides the keyboard colours (read with `AppTheme.colors`)
-  and the Material 3 theme of the settings pages. The two stay independent value sets, so restyling the settings pages can
-  never change how the keyboard looks. The pages still read `MaterialTheme` for the Material 3 values.
+- There is one theme, `AppTheme { }` (`theme/AppTheme.kt`), and the UI reads its values only through `object AppTheme`, never
+  `MaterialTheme`: `AppTheme.colors` and `AppTheme.typography` for the settings pages and everything else, `AppTheme.keyboardColors`
+  for the keyboard. The two stay independent value sets, so restyling the settings pages can never change how the keyboard
+  looks. `MaterialTheme` is only populated by `AppTheme { }`, so that Material components pick up matching defaults.
 
 ## Shared debug library
 

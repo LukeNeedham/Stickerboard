@@ -1,6 +1,7 @@
 package com.lukeneedham.stickerboard.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -115,15 +116,27 @@ val LocalAppTheme = staticCompositionLocalOf { AppThemeConstants.LightColors }
 /** Reads the values of the current [AppTheme]. */
 object AppTheme {
 	/** The keyboard colors, light/dark aware. */
-	val colors: Colors
+	val keyboardColors: Colors
 		@Composable
 		@ReadOnlyComposable
 		get() = LocalAppTheme.current
+
+	/** The colors of the settings pages and everything else that is not the keyboard, light/dark aware. */
+	val colors: ColorScheme
+		@Composable
+		@ReadOnlyComposable
+		get() = MaterialTheme.colorScheme
+
+	/** The text styles of the settings pages and everything else that is not the keyboard. */
+	val typography: Typography
+		@Composable
+		@ReadOnlyComposable
+		get() = MaterialTheme.typography
 }
 
 /**
- * The app's one theme, light/dark aware: it provides the keyboard [Colors] (read through [AppTheme.colors]) and the
- * Material 3 theme the settings pages' Material components use. Installed at the root of both the keyboard IME's own UI
+ * The app's one theme, light/dark aware: it provides the keyboard [Colors] (read through [AppTheme.keyboardColors]) and the
+ * Material 3 theme of everything else (read through [AppTheme.colors] and [AppTheme.typography]; Material components use it as their default). Installed at the root of both the keyboard IME's own UI
  * ([com.lukeneedham.stickerboard.keyboard.KeyboardView]) and the settings app's UI ([com.lukeneedham.stickerboard.Root]).
  */
 @Composable

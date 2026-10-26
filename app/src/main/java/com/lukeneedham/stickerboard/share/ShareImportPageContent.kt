@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -63,7 +62,7 @@ internal fun ShareImportPageContent(
 
 	Scaffold(
 		modifier = modifier,
-		containerColor = MaterialTheme.colorScheme.background,
+		containerColor = AppTheme.colors.background,
 		topBar = {
 			SettingsTopBar(title = stringResource(R.string.share_import_heading), onBack = onBack)
 		},
@@ -79,8 +78,8 @@ internal fun ShareImportPageContent(
 
 			Text(
 				text = stringResource(R.string.share_import_prompt),
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				style = AppTheme.typography.bodyMedium,
+				color = AppTheme.colors.onSurfaceVariant,
 			)
 
 			NewPackRow(
@@ -128,13 +127,13 @@ private fun PackRow(packName: String, onClick: () -> Unit, modifier: Modifier = 
 			Icon(
 				painter = painterResource(R.drawable.ic_folder),
 				contentDescription = null,
-				tint = MaterialTheme.colorScheme.primary,
+				tint = AppTheme.colors.primary,
 				modifier = Modifier.size(22.dp),
 			)
 			Text(
 				text = StickerNames.prettifyPackName(packName),
-				style = MaterialTheme.typography.titleMedium,
-				color = MaterialTheme.colorScheme.onSurface,
+				style = AppTheme.typography.titleMedium,
+				color = AppTheme.colors.onSurface,
 				modifier = Modifier.padding(start = 10.dp),
 			)
 		}
