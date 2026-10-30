@@ -1,14 +1,9 @@
 package com.lukeneedham.stickerboard.settings
 
-import com.lukeneedham.stickerboard.utilities.SetupStatus
-import android.app.Application
-import android.database.ContentObserver
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
-import android.provider.Settings
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import com.lukeneedham.stickerboard.BuildConfig
+import com.lukeneedham.stickerboard.utilities.KeyboardStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,36 +13,23 @@ import kotlinx.coroutines.flow.update
  * currently enabled in system settings. Enabling the keyboard and navigating elsewhere are one-off
  * platform actions with no state of their own, so they stay as callbacks on [SettingsPage]
  * instead. */
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+class SettingsViewModel(private val keyboardStatus: KeyboardStatus) : ViewModel() {
 	private val _uiState = MutableStateFlow(
 		SettingsUiState(
-			keyboardEnabled = SetupStatus.isKeyboardEnabled(application),
+			keyboardEnabled = keyboardStatus.isEnabled(),
 			showDebugCard = BuildConfig.DEBUG,
 		),
 	)
 	val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-	// Refreshes as soon as Android reports the enabled-keyboards list changed, rather than only on
-	// resume - the security-warning dialog on the keyboard settings screen means users can return
-	// via several back presses, and multi-window/split-screen users may never leave this app at all.
-	private val inputMethodObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
-		override fun onChange(selfChange: Boolean) = refreshKeyboardEnabled()
-	}
-
-	init {
-		application.contentResolver.registerContentObserver(
-			Settings.Secure.getUriFor(Settings.Secure.ENABLED_INPUT_METHODS),
-			false,
-			inputMethodObserver,
-		)
-	}
+	private val stopObserving = keyboardStatus.observe { refreshKeyboardEnabled() }
 
 	override fun onCleared() {
-		getApplication<Application>().contentResolver.unregisterContentObserver(inputMethodObserver)
+		stopObserving()
 	}
 
 	fun refreshKeyboardEnabled() {
-		_uiState.update { it.copy(keyboardEnabled = SetupStatus.isKeyboardEnabled(getApplication())) }
+		_uiState.update { it.copy(keyboardEnabled = keyboardStatus.isEnabled()) }
 	}
 
 	fun onTryItOutMediaReceived(uri: Uri) {

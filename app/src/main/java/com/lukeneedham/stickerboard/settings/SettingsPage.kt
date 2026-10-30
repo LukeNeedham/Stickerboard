@@ -2,8 +2,6 @@
 
 package com.lukeneedham.stickerboard.settings
 
-import com.lukeneedham.stickerboard.theme.AppTheme
-import androidx.compose.ui.tooling.preview.Preview
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
@@ -51,15 +49,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.theme.AppTheme
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Wires [SettingsPageContent] up with its real dependencies (the enable-keyboard system intent) and
@@ -70,7 +70,7 @@ fun SettingsPage(
 	onViewStickers: () -> Unit,
 	onOpenDebug: () -> Unit,
 	modifier: Modifier = Modifier,
-	viewModel: SettingsViewModel = viewModel(),
+	viewModel: SettingsViewModel = koinViewModel(),
 ) {
 	val context = LocalContext.current
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()

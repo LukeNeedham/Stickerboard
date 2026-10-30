@@ -1,11 +1,10 @@
 package com.lukeneedham.stickerboard.share
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import com.lukeneedham.stickerboard.utilities.StickerStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.io.File
 
 /**
  * Owns the "choose a sticker pack to add shared images to" flow reached when another app shares
@@ -14,14 +13,12 @@ import java.io.File
  * [com.lukeneedham.stickerboard.gallery.GalleryViewModel.runPendingImport], which the Stickers page
  * runs once it's navigated to with the pack the user picked here.
  */
-class ShareImportViewModel(application: Application) : AndroidViewModel(application) {
-	private val internalDir = File(application.filesDir, "stickers")
-
+class ShareImportViewModel(private val stickerStorage: StickerStorage) : ViewModel() {
 	private val _uiState = MutableStateFlow(ShareImportUiState(packNames = existingPackNames()))
 	val uiState: StateFlow<ShareImportUiState> = _uiState.asStateFlow()
 
 	private fun existingPackNames(): List<String> =
-		internalDir.listFiles { file -> file.isDirectory }
+		stickerStorage.internalDir.listFiles { file -> file.isDirectory }
 			?.map { it.name }
 			?.sorted()
 			.orEmpty()

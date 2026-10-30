@@ -1,17 +1,11 @@
 package com.lukeneedham.stickerboard.onboarding
 
-import com.lukeneedham.stickerboard.utilities.SetupStatus
-import android.app.Application
-import android.content.Intent
-import android.database.ContentObserver
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
-import android.provider.Settings
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lukeneedham.stickerboard.data.AppPreferences
-import com.lukeneedham.stickerboard.utilities.StickerImporter
+import com.lukeneedham.stickerboard.utilities.KeyboardStatus
+import com.lukeneedham.stickerboard.utilities.StickerStorage
 import com.lukeneedham.stickerboard.utilities.Toaster
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,40 +19,30 @@ import kotlinx.coroutines.withContext
  * Owns [OnboardingPageContent]'s state and every side effect it triggers - checking/watching whether
  * the keyboard is enabled, and importing stickers from a chosen source directory.
  */
-class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
-	private val prefs = AppPreferences(application)
+class OnboardingViewModel(
+	private val prefs: AppPreferences,
+	private val keyboardStatus: KeyboardStatus,
+	private val stickerStorage: StickerStorage,
+) : ViewModel() {
 	private val toaster = Toaster()
 
 	private val _uiState = MutableStateFlow(
 		OnboardingUiState(
-			keyboardEnabled = SetupStatus.isKeyboardEnabled(application),
+			keyboardEnabled = keyboardStatus.isEnabled(),
 			isImporting = false,
 			loadedStickerCount = if (prefs.stickerDirPath != null) prefs.numStickersImported else null,
 		),
 	)
 	val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
-	// Refreshes as soon as Android reports the enabled-keyboards list changed, rather than only on
-	// resume - the security-warning dialog on the keyboard settings screen means users can return
-	// via several back presses, and multi-window/split-screen users may never leave this app at all.
-	private val inputMethodObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
-		override fun onChange(selfChange: Boolean) = refreshRequirements()
-	}
-
-	init {
-		application.contentResolver.registerContentObserver(
-			Settings.Secure.getUriFor(Settings.Secure.ENABLED_INPUT_METHODS),
-			false,
-			inputMethodObserver,
-		)
-	}
+	private val stopObserving = keyboardStatus.observe { refreshRequirements() }
 
 	override fun onCleared() {
-		getApplication<Application>().contentResolver.unregisterContentObserver(inputMethodObserver)
+		stopObserving()
 	}
 
 	fun refreshRequirements() {
-		_uiState.update { it.copy(keyboardEnabled = SetupStatus.isKeyboardEnabled(getApplication())) }
+		_uiState.update { it.copy(keyboardEnabled = keyboardStatus.isEnabled()) }
 	}
 
 	/**
@@ -67,11 +51,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 	 * how the underlying ActivityResultContract reports that.
 	 */
 	fun onDirectorySelected(uri: Uri?) {
-		val context = getApplication<Application>()
-		if (uri != null) {
-			val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-			context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-		}
+		if (uri != null) stickerStorage.takePersistableAccess(uri)
 		val stickerDirPath = uri.toString()
 		prefs.stickerDirPath = stickerDirPath
 		prefs.lastUpdateEpochMillis = System.currentTimeMillis()
@@ -87,7 +67,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 	private fun importStickers(stickerDirPath: String) {
 		_uiState.update { it.copy(isImporting = true, loadedStickerCount = null) }
 		viewModelScope.launch(Dispatchers.IO) {
-			val totalStickers = StickerImporter(getApplication(), toaster).importStickers(stickerDirPath)
+			val totalStickers = stickerStorage.importStickers(toaster, stickerDirPath)
 			withContext(Dispatchers.Main) {
 				prefs.numStickersImported = totalStickers
 				_uiState.update { it.copy(isImporting = false, loadedStickerCount = totalStickers) }

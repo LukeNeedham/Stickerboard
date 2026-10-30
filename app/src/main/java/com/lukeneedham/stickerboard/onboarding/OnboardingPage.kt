@@ -2,8 +2,6 @@
 
 package com.lukeneedham.stickerboard.onboarding
 
-import com.lukeneedham.stickerboard.theme.AppTheme
-import androidx.compose.ui.tooling.preview.Preview
 import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
@@ -36,16 +34,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.settings.CardBody
 import com.lukeneedham.stickerboard.settings.KeyboardStatusIndicator
 import com.lukeneedham.stickerboard.settings.SettingsCard
+import com.lukeneedham.stickerboard.theme.AppTheme
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Wires [OnboardingPageContent] up with [OnboardingViewModel] and the enable-keyboard/choose-dir system
@@ -57,7 +57,7 @@ import kotlinx.coroutines.launch
 fun OnboardingPage(
 	onFinished: () -> Unit,
 	modifier: Modifier = Modifier,
-	viewModel: OnboardingViewModel = viewModel(),
+	viewModel: OnboardingViewModel = koinViewModel(),
 ) {
 	val context = LocalContext.current
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
