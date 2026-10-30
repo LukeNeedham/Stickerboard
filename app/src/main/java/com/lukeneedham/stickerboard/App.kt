@@ -10,7 +10,7 @@ import coil.decode.SvgDecoder
 import coil.decode.VideoFrameDecoder
 import com.lukeneedham.common.DebugKit
 import com.lukeneedham.common.DebugKitConfig
-import com.lukeneedham.stickerboard.di.appModule
+import com.lukeneedham.stickerboard.di.KoinModules
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -29,7 +29,7 @@ class App : Application(), ImageLoaderFactory {
 		DebugKit.init(DebugKitConfig(enabled = BuildConfig.DEBUG))
 		startKoin {
 			androidContext(this@App)
-			modules(appModule)
+			modules(KoinModules.modules)
 		}
 	}
 
