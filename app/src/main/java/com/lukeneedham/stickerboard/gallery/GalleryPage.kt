@@ -2,11 +2,6 @@
 
 package com.lukeneedham.stickerboard.gallery
 
-import com.lukeneedham.stickerboard.theme.AppTheme
-import androidx.compose.ui.tooling.preview.Preview
-import com.lukeneedham.stickerboard.utilities.StickerFiles
-import com.lukeneedham.stickerboard.utilities.StickerMedia
-import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -27,8 +22,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -49,8 +44,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,20 +67,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lukeneedham.stickerboard.R
 import com.lukeneedham.stickerboard.model.BoardItem
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
+import com.lukeneedham.stickerboard.theme.AppTheme
+import com.lukeneedham.stickerboard.utilities.StickerFiles
 import com.lukeneedham.stickerboard.utilities.StickerImage
-import java.io.File
+import com.lukeneedham.stickerboard.utilities.StickerMedia
+import com.lukeneedham.stickerboard.utilities.StickerNames
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.viewmodel.koinViewModel
+import java.io.File
 
 /**
  * Wires [GalleryPageContent] up with its real dependencies (prefs, the internal sticker dir, the
@@ -99,7 +99,7 @@ fun GalleryPage(
 	pendingImportPackName: String? = null,
 	pendingImportUris: List<String> = emptyList(),
 	modifier: Modifier = Modifier,
-	viewModel: GalleryViewModel = viewModel(),
+	viewModel: GalleryViewModel = koinViewModel(),
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

@@ -10,6 +10,9 @@ import coil.decode.SvgDecoder
 import coil.decode.VideoFrameDecoder
 import com.lukeneedham.common.DebugKit
 import com.lukeneedham.common.DebugKitConfig
+import com.lukeneedham.stickerboard.di.appModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 
 /**
  * Starts the shared debug kit (logger, crash handler) as early as possible - before any activity
@@ -24,6 +27,10 @@ class App : Application(), ImageLoaderFactory {
 	override fun onCreate() {
 		super.onCreate()
 		DebugKit.init(DebugKitConfig(enabled = BuildConfig.DEBUG))
+		startKoin {
+			androidContext(this@App)
+			modules(appModule)
+		}
 	}
 
 	override fun newImageLoader(): ImageLoader =

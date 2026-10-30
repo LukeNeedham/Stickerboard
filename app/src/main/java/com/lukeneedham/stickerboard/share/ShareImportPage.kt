@@ -2,9 +2,6 @@
 
 package com.lukeneedham.stickerboard.share
 
-import com.lukeneedham.stickerboard.theme.AppTheme
-import androidx.compose.ui.tooling.preview.Preview
-import com.lukeneedham.stickerboard.utilities.StickerNames
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,14 +29,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lukeneedham.stickerboard.R
+import com.lukeneedham.stickerboard.navigation.Route
 import com.lukeneedham.stickerboard.settings.SettingsCard
 import com.lukeneedham.stickerboard.settings.SettingsTopBar
-import com.lukeneedham.stickerboard.navigation.Route
+import com.lukeneedham.stickerboard.theme.AppTheme
+import com.lukeneedham.stickerboard.utilities.StickerNames
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Wires [ShareImportPageContent] up with [ShareImportViewModel] - the nav-host destination reached from
@@ -53,7 +53,7 @@ fun ShareImportPage(
 	onCancel: () -> Unit,
 	onPackChosen: (packName: String) -> Unit,
 	modifier: Modifier = Modifier,
-	viewModel: ShareImportViewModel = viewModel(),
+	viewModel: ShareImportViewModel = koinViewModel(),
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

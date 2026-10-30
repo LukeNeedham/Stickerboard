@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.lukeneedham.common.logger.Logger
 import com.lukeneedham.stickerboard.R
